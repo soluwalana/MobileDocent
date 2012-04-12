@@ -1,0 +1,14 @@
+Environment Expected
+
+MySQL v5.1 (Persistance/MetaData store)
+Apache - Static File Server Only
+Python 2.6 +
+Cassandra (Storing of Video/Audio Data Only)
+
+Node v0.6.15
+  - NPM Modules
+    - Mocha - Testing Framework
+    - cassandra-node
+	- db-mysql
+  
+

@@ -1,0 +1,6 @@
+Environment Expected
+
+MySQL v5.1
+Node v0.6.15
+
+Cassandra (Storing of Video/Audio Data)
