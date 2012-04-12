@@ -8,7 +8,16 @@ Cassandra (Storing of Video/Audio Data Only)
 Node v0.6.15
   - NPM Modules
     - Mocha - Testing Framework
-    - cassandra-node
-	- db-mysql
+	- Should - easier testing
+    - cassandra-client - Cassandra Bindings
+	- db-mysql - Mysql Bindings
   
+References:
+
+node			   http://nodejs.org/api/
+db-mysql           http://nodejsdb.org/db-mysql/
+should-mocha       https://github.com/visionmedia/should.js - http://visionmedia.github.com/mocha/
+cassandra          http://cassandra.apache.org/
+cassandra-client   http://code.google.com/a/apache-extras.org/p/cassandra-node/
+shellScripting     http://www.freeos.com/guides/lsst/
 
