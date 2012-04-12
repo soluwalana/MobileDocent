@@ -1,0 +1,41 @@
+db methods:
+connect
+disconnect
+isConnected
+escape  ***
+name    ***
+query   ***
+setMaxListeners
+emit
+addListener
+on
+once
+removeListener
+removeAllListeners
+listeners
+
+
+query() chain methods:
+select
+from
+join
+where
+and
+or
+order
+limit
+add
+insert
+update
+set
+delete
+sql
+execute
+setMaxListeners
+emit
+addListener
+on
+once
+removeListener
+removeAllListeners
+listeners
