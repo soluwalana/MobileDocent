@@ -1,19 +1,47 @@
+#run as root
+
+# mysql
+apt-get install mysql-common mysql-client mysql-server libmysqld-dev -y
+
+# apache
+apt-get install apache2 -y
+
+#python2.6
+apt-get install python2.6 -y
+
+# cassandra
+if [ `cat /etc/apt/sources.list | grep -c cassandra` -eq 0 ]
+then
+	echo 'deb http://www.apache.org/dist/cassandra/debian 10x main' >> /etc/apt/sources.list
+	echo 'deb-src http://www.apache.org/dist/cassandra/debian 10x main' >> /etc/apt/sources.list
+fi
+gpg --keyserver pgp.mit.edu --recv-keys F758CE318D77295D
+gpg --export --armor F758CE318D77295D | sudo apt-key add -
+gpg --keyserver pgp.mit.edu --recv-keys 2B5C1B00
+gpg --export --armor 2B5C1B00 | sudo apt-key add -
+sudo apt-get update
+sudo apt-get install cassandra
+
 #Install Node.JS
-wget 'http://nodejs.org/dist/node-v0.6.15.tar.gz' -O node.tar.gz
+wget 'http://nodejs.org/dist/v0.6.15/node-v0.6.15.tar.gz' -O node.tar.gz
 tar -xvzf node.tar.gz
-cd node-v0.4.12
+cd node-v0.6.15
 ./configure
 make
 make install
 cd ..
-rm -rf node
+rm -rf node-v0.6.15
 rm node.tar.gz
 
-#install NPM
+# Mysql C connector
+wget 'http://mysql.he.net/Downloads/Connector-C/mysql-connector-c-6.0.2.tar.gz' -O mysql-connector-c-6.0.2.tar.gz
+tar -xvf mysql-connector-c-6.0.2.tar.gz
+cd mysql-connector-c-6.0.2
+cmake -G "Unix Makefiles"
+make
+make install
+cd ..
+rm -rf mysql-connector-c-6.0.2
+rm -rf mysql-connector-c-6.0.2.tar.gz
+
 curl http://npmjs.org/install.sh | sh
-
-npm install mocha
-npm install should
-npm install cassandra-cleint
-npm install db-mysql
-
