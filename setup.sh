@@ -19,8 +19,11 @@ gpg --keyserver pgp.mit.edu --recv-keys F758CE318D77295D
 gpg --export --armor F758CE318D77295D | sudo apt-key add -
 gpg --keyserver pgp.mit.edu --recv-keys 2B5C1B00
 gpg --export --armor 2B5C1B00 | sudo apt-key add -
-sudo apt-get update
-sudo apt-get install cassandra
+apt-get update
+apt-get install cassandra
+
+# mongodb
+apt-get install mongodb 
 
 #Install Node.JS
 wget 'http://nodejs.org/dist/v0.6.15/node-v0.6.15.tar.gz' -O node.tar.gz
@@ -45,3 +48,11 @@ rm -rf mysql-connector-c-6.0.2
 rm -rf mysql-connector-c-6.0.2.tar.gz
 
 curl http://npmjs.org/install.sh | sh
+
+npm install -g express
+npm install -g mocha
+npm install -g should
+npm install -g cassandra-client
+npm install -g db-mysql
+npm install -g GridFS
+npm install -g mongodb --mongodb:native
