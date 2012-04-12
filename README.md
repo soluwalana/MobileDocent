@@ -1,3 +1,5 @@
+__MobileDocent__ A full Server Stack and IOS/Android interaction project
+
 ## Environment Expected
 
     MySQL v5.1 (Persistance/MetaData store)
