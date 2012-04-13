@@ -14,7 +14,8 @@ __MobileDocent__ A full Server Stack and IOS/Android interaction project
     Express           - Web Server
     Mocha             - Testing Framework
 	Should            - easier testing
-    cassandra-client  - Cassandra Bindings
+    cassandra         - Cassandra Driver
+	helenus           - CQL/Thrift Wrapper
 	gridfs            - GridFS binding
 	mongodb             MongoDB  
 	db-mysql          - Mysql Bindings
@@ -22,10 +23,10 @@ __MobileDocent__ A full Server Stack and IOS/Android interaction project
 ## References:
 
 	node			   http://nodejs.org/api/
-	db-mysql           http://nodejsdb.org/db-mysql/
 	should-mocha       https://github.com/visionmedia/should.js - http://visionmedia.github.com/mocha/
-	cassandra          http://cassandra.apache.org/
-	cassandra-client   http://code.google.com/a/apache-extras.org/p/cassandra-node/
+	db-mysql           http://nodejsdb.org/db-mysql/
+	cassandra          http://www.datastax.com/docs/1.0/index - http://cassandra.apache.org/
+	helenus			   https://github.com/simplereach/helenus
 	express            http://expressjs.com/
 	shellScripting     http://www.freeos.com/guides/lsst/
 	GridFS			   http://www.mongodb.org/display/DOCS/GridFS

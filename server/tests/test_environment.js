@@ -150,10 +150,3 @@ describe('Mysql Setup Test', function(){
 	});
 });
 
-/*
-describe('Cassandra Setup Test', function(){
-	it('Access Name Space', function(){
-		var CassandraSystem = require('cassandra-client').System;
-		var cassSys = new CassandraSystem('1.0.0.1:9160');
-	});
-});*/

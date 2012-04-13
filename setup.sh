@@ -52,7 +52,20 @@ curl http://npmjs.org/install.sh | sh
 npm install -g express
 npm install -g mocha
 npm install -g should
-npm install -g cassandra-client
+npm install -g helenus
 npm install -g db-mysql
 npm install -g GridFS
 npm install -g mongodb --mongodb:native
+npm install -g mime
+
+su samo
+npm install express
+npm install mocha
+npm install should
+npm install helenus
+npm install db-mysql
+npm install GridFS
+npm install mongodb --mongodb:native
+npm install mime
+
+logout

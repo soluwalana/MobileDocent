@@ -1,0 +1,2 @@
+Definitions are here:
+/usr/local/lib/node_modules/cassandra-client/lib/gen-nodejs
