@@ -32,3 +32,4 @@ __MobileDocent__ A full Server Stack and IOS/Android interaction project
 	GridFS			   http://www.mongodb.org/display/DOCS/GridFS
    				   	   https://github.com/siddMahen/GridFS
 	mongodb			   http://www.mongodb.org/display/DOCS/Home
+					   https://github.com/christkv/node-mongodb-native
