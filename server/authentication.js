@@ -9,6 +9,7 @@ var authentication = function(req, res, callback){
 	} else {
 		/* Make sure authenticated and then continue */
 	}
+	callback();
 };
 
 exports.authentication = authentication;
