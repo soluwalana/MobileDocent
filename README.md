@@ -20,8 +20,9 @@ __MobileDocent__ A full Server Stack and IOS/Android interaction project
 	gridfs            - GridFS binding
 	mongodb             MongoDB  
 	db-mysql          - Mysql Bindings
-	logger			  - Console logging
+	log4js			  - Console logging
 	supervisor		  - Auto Reload
+	crypto			  - SHA1 HMAC for passwords
 
 ## References:
 
