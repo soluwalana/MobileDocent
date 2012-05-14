@@ -4,3 +4,4 @@
 .classpath
 .project
 *.class
+client/android/bin/classes/*
