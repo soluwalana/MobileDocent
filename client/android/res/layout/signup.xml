@@ -8,7 +8,7 @@
         android:id="@+id/textView1"
         android:layout_width="wrap_content"
         android:layout_height="76dp"
-        android:text="Welcome to MobileDocent"
+        android:text="Choose a Username and Password"
         android:textAppearance="?android:attr/textAppearanceLarge" />
 
     <TextView
@@ -35,19 +35,21 @@
         android:layout_width="198dp"
         android:layout_height="wrap_content" />
 
-
-    <Button
-        android:id="@+id/login_button"
-        android:layout_width="129dp"
-        android:layout_height="wrap_content"
-        android:text="Login" />
-
     <TextView
         android:id="@+id/textView4"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="First time?"
+        android:text="Confirm Password"
         android:textAppearance="?android:attr/textAppearanceMedium" />
+
+    <EditText
+        android:id="@+id/editText1"
+        android:layout_width="198dp"
+        android:layout_height="wrap_content"
+        android:ems="10" >
+
+        <requestFocus />
+    </EditText>
 
     <Button
         android:id="@+id/signup_button"

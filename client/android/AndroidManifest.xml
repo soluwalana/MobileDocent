@@ -25,6 +25,9 @@
         <activity 
             android:name=".MobileDocentActivity" >
         </activity>
+                <activity 
+            android:name=".SignupActivity" >
+        </activity>
         <uses-library android:name="com.google.android.maps" />
         
     </application>
