@@ -1,6 +1,7 @@
 var mysql = require('db-mysql');
 var mongodb = require('mongodb');
-var crypto = require('crypto');
+var helpers = require('./helpers.js')
+var logger = require('./customLogger.js').getLogger();
 
 var mysqlConfig = {
 	hostname : 'localhost',
@@ -12,25 +13,6 @@ var mysqlConfig = {
 var MONGO_HOST = 'localhost';
 var MONGO_DB_NAME = 'docent';
 var MONGO_COLLECTION = 'docent_docs';
-
-var SHA1_KEY = 'Docent_2012_SHA1_Private';
-var SALT_POSSIBLE = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-var SALT_LENGTH = 8;
-
-var generateSalt = function(){
-	var text = "";
-	for (var i = 0; i < SALT_LENGTH; i++){
-		text += SALT_POSSIBLE.charAt(Math.floor(Math.random() * SALT_POSSIBLE.length));
-	}
-	return text;
-};
-
-var generatePassword = function(password, salt){
-	var hmac = crypto.createHmac('sha1', SHA1_KEY);
-	var hash = hmac.update(password + salt);
-	return hmac.digest(encoding = 'base64');
-};
-
 
 function DataStore (init_callback){
 	
@@ -45,11 +27,10 @@ function DataStore (init_callback){
 	
 	self.init = function(init_callback){
 		mysql_db.connect(function(err){
-			console.log('MySQL connected')
 			self.db = this;
 			mongo_db.open(function(err, mongo){
-				console.log('mongo connected');
 				self.mongo = mongo;
+                logger.info('DataStore Initialized')
 				init_callback();
 			});
 		});

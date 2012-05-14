@@ -4,6 +4,7 @@ var LOGOUT_URL = '/logout';
 var authentication = function(req, res, callback){
 	if (req.method === 'POST' && req.url === LOGIN_URL){
 		/* login */
+        
 	} else if (req.url === LOGOUT_URL){
 		/* logout */
 	} else {
