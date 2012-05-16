@@ -2,7 +2,6 @@ use docent_db;
 drop table if exists users;
 create table users (
 	user_id integer unsigned not null auto_increment,
-	device_id varchar(256) not null,
 	user_name varchar(256) not null,
 	password varchar(256) not null,
 	salt varchar(16) not null,
@@ -11,10 +10,17 @@ create table users (
 	fb_id integer default null,
 	twitter_id integer default null, 
 	primary key (user_id),
-	unique(device_id),
 	unique(user_name)
 ) ENGINE MyISAM character set utf8 collate utf8_general_ci;
 
+drop table if exists user_devices;
+create table user_devices(
+    user_id integer unsigned not null,
+    device_id varchar(256) not null,
+    primary key (user_id, device_id),
+    foreign key (user_id) references users(user_id)
+) ENGINE MyISAM character set utf8 collate utf8_general_ci;
+    
 drop table if exists locations;
 create table locations (
   loc_id integer unsigned not null,
@@ -43,6 +49,18 @@ create table tours (
 	foreign key (loc_id) references locations(loc_id)
 ) ENGINE MyISAM character set utf8 collate utf8_general_ci;
 
+drop table if exists tour_history;
+create table tour_history (
+    user_id integer not null,
+    tour_id integer not null,
+    time_started timestamp not null default CURRENT_TIMESTAMP,
+    finished tinyint(1) default 0,
+    time_finished datetime default null,
+    rating integer default null,
+    foreign key (user_id) references users(user_id),
+    foreign key (tour_id) references tours(tour_id)
+) ENGINE MyISAM character set utf8 collate utf8_general_ci;
+    
 drop table if exists tags;
 create table tags (
     tag_id integer not null auto_increment,

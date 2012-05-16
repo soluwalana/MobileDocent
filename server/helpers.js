@@ -26,3 +26,8 @@ exports.generatePassword = function(password, salt){
 	var hash = hmac.update(password + salt);
 	return hmac.digest(encoding = 'base64');
 };
+
+exports.errorCallback = function (message, callback){
+    logger.error(message);
+    callback({'error' : message}, null);
+}

@@ -1,6 +1,6 @@
 var log4js = require('log4js');
 
-var getFileLineColumn = function (message){
+var getFileLineColumn = function (message, basic){
 	try {(0)()} catch (e){
 		// Remove the error message
 		var stack = e.stack.replace(/^(?:.*?\n){4}/, '');
@@ -13,8 +13,16 @@ var getFileLineColumn = function (message){
 
 		var file = stack[0].replace(/^.*\//, '').replace(/(\(|\))/g, '');
 		file = file.split(':');
-		if (message){
-			return "("+file[1]+":"+file[2]+") - "+message;
+		if (!basic){
+            var print_message = message;
+            if (typeof(message) === 'object'){
+                try{
+                    print_message = JSON.stringify(message);
+                } catch (e){
+                    print_message = '[Circular Object] (use console.log)';
+                }
+            }
+			return "("+file[1]+":"+file[2]+") - "+print_message;
 		} else {
 			return file;
 		}
@@ -22,7 +30,7 @@ var getFileLineColumn = function (message){
 };
 
 exports.getLogger = function(){
-	var fileInfo = getFileLineColumn();
+	var fileInfo = getFileLineColumn(null, true);
 	var logger = log4js.getLogger(fileInfo[0]);
 	var wrappedLogger = {};
 
