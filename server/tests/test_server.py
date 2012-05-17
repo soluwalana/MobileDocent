@@ -1,10 +1,25 @@
 #!/usr/local/bin/python2.7
 import urllib2, json, time, os, re
 
+from poster.encode import multipart_encode
+from poster.streaminghttp import register_openers
+
 os.system('./reset_db.sh')
+
+register_openers()
+
 SERVER_ADDR = 'http://samo.stanford.edu:8787/'
 
-def send_request(link='', data=None, cookie = None):
+def send_files(link = '', file_map = {}, cookie = None):
+    datagen, headers = multipart_encode(file_map)
+    if cookie:
+        headers['Cookie'] = cookie
+    url = SERVER_ADDR+link
+    req = urllib2.Request(url, datagen, headers)
+    print urllib2.urlopen(req).read()
+    
+
+def send_request(link = '', data = None, cookie = None):
     
     try:
         if data:
@@ -166,7 +181,7 @@ def test_user_auth():
 
     
     success_test('echo', data, data, cookie)
-
+    
     success_test('logout', 'Logged Out', None, cookie)
 
     err_test('echo', 'Session is not authenticated', data, cookie)
@@ -179,12 +194,12 @@ def compare_users (res, data):
         assert res[key] == data[key]
     
 def test_user_get():
-    user = {'user_name' : 'samo',
-             'device_id' : 'X28934',
+    user = {'userName' : 'samo',
+             'deviceId' : 'X28934',
              'about' : 'I like CS',
              'email' : 'soluwalana@gmail.com'}
-    user1 = {'user_name' : 'samo1',
-             'device_id' : 'X28934',
+    user1 = {'userName' : 'samo1',
+             'deviceId' : 'X28934',
              'about' : 'I like CS',
              'email' : None}
     
@@ -208,16 +223,83 @@ def test_user_get():
 
     res = send_request('user?deviceId=X28934', None, cookie)[0]
     assert len(res) == 2
+
+    res = send_request('user?userName=X28934', None, cookie)[0]
+    assert len(res) == 0
     
     print 'Successful test user get'
             
-    
+def test_create_tour():
+    cookie = success_test('login', 'Successfully authenticated',
+                          {'userName' : 'samo',
+                           'deviceId' : 'X28934',
+                           'pass' : 'samo'
+                           })
+
+    send_request('tour', {'tourName' : 'Stanford',
+                          'description' : 'Tour of Memorable Stanford Locations',
+                          'locId' : 11382,
+                          'walkingDistance' : '1.5'
+                          }, cookie)
+
+def test_file_upload():
+    cookie = success_test('login', 'Successfully authenticated',
+                          {'userName' : 'samo',
+                           'deviceId' : 'X28934',
+                           'pass' : 'samo'
+                           })
+
+
+    node_data = {
+        'latitude': 123.43,
+        'longitude': 42.42,
+        'brief' : {
+            'title' : 'Test Node',
+            'description' : 'This is a test node that has three repetive pics',
+            'thumb_id' : 'thumb1' },
+        'content' : [
+            [{'xpos' : 0, 'ypos' : 0,
+              'width' : 20, 'height': 20,
+              'content_type' : 'image/jpg',
+              'content_id' : 'image1'},
+             {'xpos' : 20, 'ypos' : 0,
+              'width' : 40, 'height': 20,
+              'content_type' : 'text/plain',
+              'content' : 'Hello World this is plain'
+              },
+             {'xpos' : 60, 'ypos': 0,
+              'width': 20, 'height': 20,
+              'content_type' : 'image/jpg',
+              'content_id' : 'image2'
+              }
+             ],
+            [{'xpos' : 0, 'ypos' : 0,
+              'width': 60, 'height' : 60,
+              'content_type' : 'image/jpg',
+              'content_id' : 'image3'
+              },
+             {'xpos' : 0, 'ypos' : 60,
+              'width':60, 'height':60,
+              'content_type' : 'text/html',
+              'content' : '<h1>Hello</h1><p>Html World</p><p>For pretty formating perhaps</p>'
+              }
+             ]
+            ]
+        }
+    data = {'image1' : open('IMG_0137.JPG'),
+            'image2' : open('IMG_0137.JPG'),
+            'image3' : open('IMG_0137.JPG'),
+            'thumb1' : open('IMG_0137.JPG'),
+            'nodeData' : node_data
+            }
+    send_files('uploadTest', data, cookie)
     
 test_user_create()
-test_user_auth()
-test_user_get()
+#test_user_auth()
+#test_user_get()
+test_file_upload()
 
-"""res, cookie = send_request('test')
+"""
 res, cookie = send_request('echo', {'data' : 'same'})
 res, cookie = send_request('user/1')
 res, cookie = send_request('tour/1')
@@ -229,11 +311,7 @@ res, cookie = send_request('location', {'city' : 'Stanford',
                                 'region' : 'CA',
                                 'country' : 'USA'})
 
-res, cookie = send_request('tour/1', {'tourName' : 'Stanford',
-                              'description' : 'Tour of Memorable Stanford Locations',
-                              'locId' : 11382,
-                              'walkingDistance' : '1.5'
-                              })"""
+"""
 
 
 

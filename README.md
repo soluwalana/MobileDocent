@@ -3,27 +3,27 @@ __MobileDocent__ A full Server Stack and IOS/Android interaction project
 ## Environment Expected
 
     MySQL v5.1 (Persistance/MetaData store)
-    Apache - Static File Server Only
     Python 2.6 +
-    MongoDB+GridFS (Storing of Video/Audio Data Only)
-    Cassandra (SQL replacement)
-	Node v0.6.15
+    MongoDB+GridFS (Storing of Video/Audio/Node Data)
+   	Node v0.6.15
 	jsdoc (http://code.google.com/p/jsdoc-toolkit/)
 	
-
 ## NPM Modules
     Express           - Web Server
     Mocha             - Testing Framework
 	Should            - easier testing
-    cassandra         - Cassandra Driver
-	helenus           - CQL/Thrift Wrapper
-	gridfs            - GridFS binding
+    gridfs            - GridFS binding
 	mongodb             MongoDB  
 	db-mysql          - Mysql Bindings
 	log4js			  - Console logging
 	supervisor		  - Auto Reload
 	crypto			  - SHA1 HMAC for passwords
+    node-uuid              - uuid generation for unique filenames
 
+## Unused NPM Modules
+    cassandra         - Cassandra Driver
+	helenus           - CQL/Thrift Wrapper
+	
 ## References:
 
 	node			   http://nodejs.org/api/
@@ -50,7 +50,9 @@ __MobileDocent__ A full Server Stack and IOS/Android interaction project
 	mongodb			   http://www.mongodb.org/display/DOCS/Home
 					   http://mongodb.github.com/node-mongodb-native/
 
-## C++ Node Extension
+    node-uuid          https://github.com/broofa/node-uuid
+
+## C++ Node Extension 
 
    Basics
         http://blog.mixu.net/2011/02/01/understanding-the-node-js-event-loop

@@ -70,6 +70,22 @@ app.post('/echo', function (req, res){
     res.send({'success' : req.body});
 });
 
+app.all('/uploadTest', function(req, res){
+    logger.info('File Upload Recieved');
+
+    for (var param in req.files){
+        //logger.debug(param);
+        //logger.debug(JSON.stringify(req.files[param], null, 1));
+        var type = req.files[param].type;
+        req.ds.mongoGrid(type, function(err, gs){
+            logger.debug('Opened');
+        });
+    }
+    logger.debug(req.body);
+    
+    res.send({'success' : 'Request Recieved'});
+});
+
 app.all('/test', function(req, res){
 	logger.info('Got Request for test');
     req.ds.test(function(err, data){

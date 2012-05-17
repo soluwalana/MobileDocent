@@ -16,7 +16,7 @@ def insert_locations(cursor, locations):
         line = line[0:-1]
         line = line.replace('"', '')
         columns = line.split(",")
-        query = 'insert ignore into locations (loc_id, country, region, city, postalCode, latitude, longitude, metroCode, areaCode ) values (%s, %s, %s, %s, %s, %s, %s, %s, %s)'  
+        query = 'insert ignore into locations (locId, country, region, city, postalCode, latitude, longitude, metroCode, areaCode ) values (%s, %s, %s, %s, %s, %s, %s, %s, %s)'  
         for idx, column in enumerate(columns):
             columns[idx] = columns[idx].decode('latin-1')
             
@@ -30,7 +30,7 @@ def insert_blocks(cursor, blocks):
         line = line[0:-1]
         line = line.replace('"', '')
         columns = line.split(",")
-        query = 'insert into ipBlocks (startIpNum, endIpNum, loc_id) values (%s, %s, %s)'
+        query = 'insert into ipBlocks (startIpNum, endIpNum, locId) values (%s, %s, %s)'
         for idx, column in enumerate(columns):
             columns[idx] = columns[idx].decode('utf_8')
         

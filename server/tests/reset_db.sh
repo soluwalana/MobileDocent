@@ -1,4 +1,3 @@
 cd ../schema
-mysql -u docent -pDocent_2012 -e 'source users.sql'
-#python downloadLocations.py
+mysql -u docent -pDocent_2012 -e 'source schema.sql'
 cd ../tests

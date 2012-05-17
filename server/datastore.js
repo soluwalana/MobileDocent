@@ -1,6 +1,7 @@
 var mysql = require('db-mysql');
 var mongodb = require('mongodb');
-var helpers = require('./helpers.js')
+var helpers = require('./helpers.js');
+var uuid = require('node-uuid');
 var logger = require('./customLogger.js').getLogger();
 var queries = require('./sql.js').queries;
 var constants = require('./constants.js');
@@ -10,30 +11,30 @@ var errorCallback = function (message, callback){
     callback({'error' : message}, null);
 }
 
-function DataStore (init_callback){
+function DataStore (initCallback){
 	
 	var self = this;
-	var mysql_db = new mysql.Database(constants.MYSQL_CONF);
+	var mysqlDb = new mysql.Database(constants.MYSQL_CONF);
 	var mongoserver = new mongodb.Server(constants.MONGO_HOST,
                                          mongodb.Connection.DEFAULT_PORT)
     
-	var mongo_db = new mongodb.Db(constants.MONGO_DB_NAME, mongoserver);
+	var mongoDb = new mongodb.Db(constants.MONGO_DB_NAME, mongoserver);
 	
-	var mysql_conn = null
-	var mongo_conn = null;
+	var mysqlConn = null
+	var mongoConn = null;
 	var authenticated = false;
 
     /* Initialize mysql and mongo db, call the initCallback when finished*/
 	self.init = function(initCallback){
-		mysql_db.connect(function(err){
+		mysqlDb.connect(function(err){
             if (err){
                 logger.error(err);
                 initCallback(false);
                 return null;
             }
-            mysql_conn = this;
-            mongo_db.open(function(err, openMongo){
-				mongo_conn = openMongo;
+            mysqlConn = this;
+            mongoDb.open(function(err, openMongo){
+				mongoConn = openMongo;
                 logger.info('DataStore Initialized')
 				initCallback(true);
 			});
@@ -42,9 +43,9 @@ function DataStore (init_callback){
 
     /* A function that will print that there is unauthenticated access
        to the data store and return an error to the caller */
-	self.authenticatedAccess = function(callback){
+	self.authenticatedAccess = function(callback, msg){
 		if (!authenticated){
-			errorCallback('This request was not authenticated', callback);
+			errorCallback('Unauthenticated access to '+msg, callback);
 			return false;
 		}
 		return true;
@@ -52,9 +53,9 @@ function DataStore (init_callback){
 
     self.test = function (callback){
 		var testData = {};
-		mysql_conn.query('show tables').execute(function(err, rows, cols){
+		mysqlConn.query('show tables').execute(function(err, rows, cols){
 			testData['rows'] = rows;
-			mongo_conn.collection(constants.MONGO_COLLECTION, function(err, collection){
+			mongoConn.collection(constants.MONGO_COLLECTION, function(err, collection){
 				testData['collection'] = collection.collectionName;
 				callback(null, testData);
 			});
@@ -87,7 +88,7 @@ function DataStore (init_callback){
         var salt = helpers.generateSalt();
         var password = helpers.generatePassword(userData.pass, salt);
         
-        mysql_conn.query().execute(
+        mysqlConn.query().execute(
             queries.insertUser,
             [userData.userName, password, salt, userData.about, userData.email,
              userData.fbId, userData.twitterId],
@@ -96,7 +97,7 @@ function DataStore (init_callback){
                     errorCallback('Insert User Failed, check duplicate', callback);
                     return null;
                 }
-                mysql_conn.query().execute(
+                mysqlConn.query().execute(
                     queries.insertDevice,
                     [result.id, userData.deviceId],
                     function  (err, result){
@@ -123,7 +124,7 @@ function DataStore (init_callback){
             errorCallback('Request to authenticate had wrong pramaters', callback);
             return null;
         }
-        mysql_conn.query().execute(
+        mysqlConn.query().execute(
             queries.selectUserAuth,
             [userData.userName, userData.deviceId],
             function (err, rows, cols){
@@ -143,7 +144,7 @@ function DataStore (init_callback){
                     return null;
                 }
                 authenticated = true;
-		        callback(null, user.user_id);    
+		        callback(null, user.userId);    
                 
             }
         );
@@ -170,32 +171,47 @@ function DataStore (init_callback){
            two parameters err, and query
     */
     self.sqlQuery = function(callback){
-        if (!self.authenticatedAccess()){
-            errorCallback('Unauthenticated access to MySQL', callback);
-            return null;
+        if (self.authenticatedAccess(callback, 'MySQL')){
+            callback(null, mysqlConn.query());
         }
-        callback(null, mysql_conn.query());
     };
 
     /* Returns a mongo collection to be operated on if authenticated
        access to database has been granted. should expect the err and
        collection */
     self.mongoCollection = function(collectionName, callback){
-        if (!self.authenticatedAccess()){
-            errorCallback('Unauthenticated access to Mongo DB', callback);
-            return null;
+        if (self.authenticatedAccess(callback, 'MongoDB')){
+            mongoConn.collection(collectionName, callback);
+        }        
+    };
+
+    
+    self.mongoGrid = function(type, callback){
+        if (self.authenticatedAccess(callback)){
+            var fileName = uuid.v1();
+            var opts = {
+                'content_type' : type,
+                'chunk_size' : 1024*4
+            };
+            var gs = new mongodb.GridStore(mongoDb, fileName, 'w', opts);
+            gs.open(function(err, gs){
+                if (err){
+                    errorCallback('Error Making grid store', callback);
+                    return null;
+                }
+                callback(null, gs, fileName);
+            });
         }
-        mongo_conn.collection(collectionName, callback);
     };
     
     /* Do clean up here for data store*/
     self.close = function(){
-        mongo_conn.close();
-        mysql_conn.disconnect();
+        mongoConn.close();
+        mysqlConn.disconnect();
     };
     
 	/* Define data store services here */
-	self.init(init_callback)
+	self.init(initCallback)
 	return self;
 }
 /* Going to set up the necessary MySQL and MongoDB services */

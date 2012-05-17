@@ -1,6 +1,6 @@
 var log4js = require('log4js');
 
-var getFileLineColumn = function (message, basic){
+var getFileLineColumn = function (basic, message){
 	try {(0)()} catch (e){
 		// Remove the error message
 		var stack = e.stack.replace(/^(?:.*?\n){4}/, '');
@@ -30,28 +30,28 @@ var getFileLineColumn = function (message, basic){
 };
 
 exports.getLogger = function(){
-	var fileInfo = getFileLineColumn(null, true);
+	var fileInfo = getFileLineColumn(true, null);
 	var logger = log4js.getLogger(fileInfo[0]);
 	var wrappedLogger = {};
 
 	wrappedLogger.debug = function(message){
-		logger.debug(getFileLineColumn(message));
+		logger.debug(getFileLineColumn(false, message));
 	};
 
 	wrappedLogger.info = function(message){
-		logger.info(getFileLineColumn(message));
+		logger.info(getFileLineColumn(false, message));
 	};
 
 	wrappedLogger.warn = function(message){
-		logger.warn(getFileLineColumn(message));
+		logger.warn(getFileLineColumn(false, message));
 	};
 
 	wrappedLogger.error = function(message){
-		logger.error(getFileLineColumn(message));
+		logger.error(getFileLineColumn(false, message));
 	};
 
 	wrappedLogger.fatal = function(message){
-		logger.fatal(getFileLineColumn(message));
+		logger.fatal(getFileLineColumn(false, message));
 	};
 
 	return wrappedLogger;

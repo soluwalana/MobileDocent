@@ -1,5 +1,7 @@
 var logger = require('./customLogger.js').getLogger();
 var queries = require('./sql.js').queries;
+var constants = require('./constants.js');
+var fs = require('fs');
 
 var errorCallback = function (message, callback){
     logger.error(message);
@@ -19,41 +21,37 @@ rest.getUser = function (store, params, callback){
             return null;
         }
         var sql = null;
-        var sql_params = [];
+        var sqlParams = [];
         
         if (params.userId){
             sql = queries.selectUserById;
-            sql_params = [params.userId];
+            sqlParams = [params.userId];
             logger.debug('Select by ID');
         } else if (params.userName){
             sql = queries.selectUserByName;
-            sql_params = [params.userName];
+            sqlParams = [params.userName];
             logger.debug('Select by Name');
         } else if (params.deviceId){
             sql = queries.selectUsersByDevice;
-            sql_params = [params.deviceId];
+            sqlParams = [params.deviceId];
             logger.debug('Select by Device');
         }
         
-        query.execute(sql, sql_params, function (err, rows, cols){
+        query.execute(sql, sqlParams, function (err, rows, cols){
             if (err){
                 errorCallback(err, callback);
                 return null;
             }
             if (rows.length === 0){
-                logger.debug('No Users Found For query');
-                logger.debug(sql, params);
+                logger.warn('No Users Found For query');
+                logger.warn([sql, params]);
                 callback([]);
                 return null;
             }
             if (rows.length === 1){
-                logger.debug('User found');
-                logger.debug(rows[0]);
                 callback(rows[0]);
                 return null;
             }
-            logger.debug('Many Users found');
-            logger.debug(rows);
             callback(rows);
         });
     });
@@ -91,10 +89,82 @@ rest.createTour = function (store, params, callback){
 			  'data' : params});
 };
 
-rest.createNode = function (store, params, callback){
-    logger.info('Node Modification Request Received');
-	callback({'success' : 'add a node to the tour',
-			  'params' : params});
+var storeFile = function (store, files, data, callback){
+    var id = data.id;
+    var idx = data.idx;
+    var type = data.type;
+    
+    store.mongoGrid(type, function(err, gs, name){
+        if (err){
+            commit({'error' : fileName+' couldnt be made'});
+            return null;
+        }
+    });
+};
+
+rest.createNode = function (store, params, files, callback){
+    logger.info('File Upload Recieved');
+
+    // Verify the parameters (This allows you to make empty pages)
+    if (!params.nodeData || !params.nodeData.latitude ||
+        !params.nodeData.longitude || !nodeData.content ||
+        nodeData.content.length === 0){
+        
+        errorCallback('Missing Node Data', callback);
+        return null;
+    }
+    var nodeData = params.nodeData;
+    var numberCommitted = 0;
+    var numberSubmitted = 0;
+    var status = constants.GOOD_STATUS;
+    var message = '';
+    var fileMap = {};
+    
+    var finish = function (){
+        callback({'success': 'committed node'});
+    };
+    
+    var commit = function (err, oldName, newName){
+        numberCommitted ++;
+        if (err){
+            status = constants.WARN_STATUS;
+            if (message === ''){
+                message = [];
+            }
+            message.push(err);
+        }
+        if (numberCommitted == numberSubmitted){
+            logger.debug('All Files Done');
+            finish();
+        }
+    };
+    
+    var fileContent = [];
+    for (var i = 0; i < nodeData.length; i ++){
+        for (var j = 0; j < nodeData[i].length; j++){
+            if (nodeData[i][j].contentId){
+                fileContent.push({'idx' : [i, j], 'id' : nodeData[i][j].contentId});
+            }
+        }
+    }
+    numberSubmitted = fileContent.length;
+    
+    if (numberSubmitted == numberCommitted){
+        finish();
+        return null;
+    }
+    
+    for (i = 0; i < fileContent; i ++){
+        fileContent[i].type = nodeData[idx[0]][idx[1]];
+        if (!files[fileContent[i].id]){
+            commit({'error' : 'File Was Not Uploaded'});
+            continue;
+        }
+        storeFile(store, files, fileContent, commit);
+    }
+    
+    
+    logger.debug(req.body);
 };
 
 rest.createTags = function (store, params, callback){
