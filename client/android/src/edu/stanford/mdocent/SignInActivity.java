@@ -14,7 +14,7 @@ import android.widget.EditText;
 import android.widget.PopupWindow;
 
 
-public class WelcomeActivity extends Activity {
+public class SignInActivity extends Activity {
 	
 	private PopupWindow pw;
 
@@ -22,7 +22,7 @@ public class WelcomeActivity extends Activity {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		setContentView(R.layout.welcome);
+		setContentView(R.layout.signin);
 
 		Button loginButton = (Button) findViewById(R.id.login_button);
 		loginButton.setOnClickListener(new OnClickListener(){
@@ -34,7 +34,7 @@ public class WelcomeActivity extends Activity {
 				String password = pword.getText().toString();
 
 				if(DBInteract.postLoginData(username, password)){
-					startMap();
+					startMainPage();
 				}
 				else {
 					popUpNotification();
@@ -53,8 +53,8 @@ public class WelcomeActivity extends Activity {
 
 	}
 
-	public void startMap (){
-		Intent intent = new Intent(this, MobileDocentActivity.class );
+	public void startMainPage (){
+		Intent intent = new Intent(this, MainPageActivity.class );
 		startActivity(intent);
 	}
 	
@@ -65,7 +65,7 @@ public class WelcomeActivity extends Activity {
 	}
 
 	public void restartWelcome (){
-		Intent intent = new Intent(this, WelcomeActivity.class );
+		Intent intent = new Intent(this, SignInActivity.class );
 		startActivity(intent);
 	}
 	

@@ -1,18 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical" >
 
-<RelativeLayout 
- xmlns:android="http://schemas.android.com/apk/res/android"
- android:orientation="vertical" 
- android:layout_width="fill_parent"
- android:layout_height="fill_parent">
- 
- <com.google.android.maps.MapView
-  xmlns:android="http://schemas.android.com/apk/res/android"
-  android:id="@+id/map_view"
-  android:layout_width="fill_parent" 
-  android:layout_height="fill_parent"
-  android:clickable="true"  
-  android:enabled="true"
-  android:apiKey="0qxBwiyitm83oVJZGSp0U-lI60xIAyxvF-1eawg" />
-   
-</RelativeLayout>
+    <TextView
+        android:id="@+id/textView1"
+        android:layout_width="wrap_content"
+        android:layout_height="45dp"
+        android:text="Welcome to MobileDocent"
+        android:textAppearance="?android:attr/textAppearanceLarge" />
+
+    <Button
+        android:id="@+id/Button00"
+        android:layout_width="match_parent"
+        android:layout_height="78dp"
+        android:text="Take Tour" />
+
+    <Button
+        android:id="@+id/Button01"
+        android:layout_width="319dp"
+        android:layout_height="78dp"
+        android:text="Create Tour" />
+
+    <Button
+        android:id="@+id/Button02"
+        android:layout_width="match_parent"
+        android:layout_height="78dp"
+        android:text="My Tours" />
+
+    <Button
+        android:id="@+id/Button03"
+        android:layout_width="match_parent"
+        android:layout_height="78dp"
+        android:text="Sign Out" />
+
+</LinearLayout>

@@ -9,12 +9,14 @@
         android:targetSdkVersion="8" />
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
     <application
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name" >
         <activity
-            android:name=".WelcomeActivity"
+            android:name=".SignInActivity"
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -23,10 +25,19 @@
             </intent-filter>
         </activity>
         <activity 
-            android:name=".MobileDocentActivity" >
+            android:name=".MainPageActivity" >
         </activity>
-                <activity 
+        <activity 
             android:name=".SignupActivity" >
+        </activity>
+        <activity 
+            android:name=".TourActivity" >
+        </activity>
+        <activity 
+            android:name=".MyToursActivity" >
+        </activity>
+        <activity 
+            android:name=".CreateTourActivity" >
         </activity>
         <uses-library android:name="com.google.android.maps" />
         

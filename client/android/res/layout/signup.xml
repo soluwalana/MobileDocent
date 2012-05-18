@@ -43,7 +43,7 @@
         android:textAppearance="?android:attr/textAppearanceMedium" />
 
     <EditText
-        android:id="@+id/editText1"
+        android:id="@+id/text_confirm"
         android:layout_width="198dp"
         android:layout_height="wrap_content"
         android:ems="10" >
