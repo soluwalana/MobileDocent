@@ -16,7 +16,12 @@ def send_files(link = '', file_map = {}, cookie = None):
         headers['Cookie'] = cookie
     url = SERVER_ADDR+link
     req = urllib2.Request(url, datagen, headers)
-    print urllib2.urlopen(req).read()
+    try:
+        res = json.loads(urllib2.urlopen(req).read())
+        return res
+    except Exception as err:
+        print err
+        return None
     
 
 def send_request(link = '', data = None, cookie = None):
@@ -242,12 +247,10 @@ def test_create_tour():
                            })
 
     
-    res = send_request('tour', {'tourName' : 'Stanford',
-                                'description' : 'Tour of Memorable Stanford Locations',
-                                }, cookie)[0]
-
+    success_test('tour', 'Tour Created', {'tourName' : 'Stanford',
+                                          'description' : 'Tour of Memorable Stanford Locations',
+                                          }, cookie)
     
-    print res
     
     """ Latitude and Longitude are only required fields
     

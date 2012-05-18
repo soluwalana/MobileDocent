@@ -186,7 +186,7 @@ var TourManager = function(store){
         );                    
     };
 
-    self._finishNodeAppend = function (nodeData, result, conn, callback){
+    self._finishNodeAppend = function (nodeData, filesResult, conn, callback){
         var commitToDB = function(){
             
         };
@@ -257,7 +257,8 @@ var TourManager = function(store){
                                     }
                                     result.mongoId = mongoId;
                                     callback({'success' : 'Node Created',
-                                              'result': result});
+                                              'result': result,
+                                              'filesResult' : filesResult});
                                 }
                             );
                         }
