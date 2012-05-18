@@ -38,6 +38,9 @@ var authentication = function(req, res, callback){
 				res.send(err);
 				return null;
 			}
+            if (req.params) req.params.authUserId = userId;
+            if (req.body) req.body.authUserId = userId;
+            if (req.query) req.query.authUserId = userId;
 			callback();
 		});
 	}

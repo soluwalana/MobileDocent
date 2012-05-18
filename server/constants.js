@@ -9,6 +9,9 @@ exports.MONGO_DB_NAME = 'docent';
 exports.MONGO_COLLECTION = 'docent_docs';
 exports.NODE_COLLECTION = 'docent_nodes';
 
-exports.GOOD_STATUS = 0;
-exports.WARN_STATUS = 1;
-exports.ERR_STATUS = 2;
+exports.GOOD_STATUS = 'No Errors';
+exports.WARN_STATUS = 'Errors Occurred, not fatal';
+exports.ERR_STATUS = 'Fatal Errors Occurred';
+exports.INVALID_FILE = 'INVALID';
+
+exports.FILE_BUF_SIZE = 4*1024;

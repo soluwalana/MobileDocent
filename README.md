@@ -18,7 +18,8 @@ __MobileDocent__ A full Server Stack and IOS/Android interaction project
 	log4js			  - Console logging
 	supervisor		  - Auto Reload
 	crypto			  - SHA1 HMAC for passwords
-    node-uuid              - uuid generation for unique filenames
+    node-uuid         - uuid generation for unique filenames
+    
 
 ## Unused NPM Modules
     cassandra         - Cassandra Driver
@@ -51,6 +52,8 @@ __MobileDocent__ A full Server Stack and IOS/Android interaction project
 					   http://mongodb.github.com/node-mongodb-native/
 
     node-uuid          https://github.com/broofa/node-uuid
+
+    underscore         http://underscorejs.org
 
 ## C++ Node Extension 
 

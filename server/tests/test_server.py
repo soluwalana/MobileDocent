@@ -63,7 +63,12 @@ def success_test (link, msg=None, data=None, cookie=None):
     if msg:
         assert res['success'] == msg
     return cookie
-    
+
+def assert_result(res):
+    assert 'success' in res
+    assert 'result' in res
+    assert 'nodeId' in res['result']
+
 def test_user_create():
     #success test
     success_test('user', 'User Created Successfully',
@@ -132,9 +137,9 @@ def test_user_create():
     print 'Successful user_create_test'
 
 def test_user_auth():
-    data = {'city' : 'Stanford',
-            'region' : 'CA',
-            'country' : 'USA'}
+    data = {u'city' : u'Stanford',
+            u'region' : u'CA',
+            u'country' : u'USA'}
     
     err_test('echo', 'Session is not authenticated', data)
     
@@ -236,51 +241,74 @@ def test_create_tour():
                            'pass' : 'samo'
                            })
 
-    send_request('tour', {'tourName' : 'Stanford',
-                          'description' : 'Tour of Memorable Stanford Locations',
-                          'locId' : 11382,
-                          'walkingDistance' : '1.5'
-                          }, cookie)
+    
+    res = send_request('tour', {'tourName' : 'Stanford',
+                                'description' : 'Tour of Memorable Stanford Locations',
+                                }, cookie)[0]
 
-def test_file_upload():
-    cookie = success_test('login', 'Successfully authenticated',
-                          {'userName' : 'samo',
-                           'deviceId' : 'X28934',
-                           'pass' : 'samo'
-                           })
+    
+    print res
+    
+    """ Latitude and Longitude are only required fields
+    
+        if only lat/long are specified then the node is a pseudo node
 
+        brief is for the small pop up on the map that shows
+        up when users are within a 1/4 mile radius from the latitude
+        and longitude it is optional
 
+        prevNode is optional if specified this node will be placed
+            preceeding the node in the tour. Setting the old nodes next
+            to the current node and the prev of the following node to the
+            current node
+            If missing it will be placed as the last node in the tour
+           
+        content is optional it is in the format
+           [ Page, Page, Page]
+           Page = [{section}, {section}, {section}]
+           section = { /* Tentative definition */
+                       xpos, ypos, contentType, contentId||content
+                     }
+
+          contentId is the key to the file that is also being uploaded
+          content is for raw text content (may also be html)
+          contentType is the mime data type for the content
+
+          One of content/contentId is required for each section
+
+    """
     node_data = {
-        'latitude': 123.43,
-        'longitude': 42.42,
+        'tourId' : 1,
+        'latitude': 37.418,
+        'longitude': -122.172,
         'brief' : {
             'title' : 'Test Node',
             'description' : 'This is a test node that has three repetive pics',
-            'thumb_id' : 'thumb1' },
+            'thumbId' : 'thumb1' },
         'content' : [
             [{'xpos' : 0, 'ypos' : 0,
               'width' : 20, 'height': 20,
-              'content_type' : 'image/jpg',
-              'content_id' : 'image1'},
+              'contentType' : 'image/jpg',
+              'contentId' : 'image1'},
              {'xpos' : 20, 'ypos' : 0,
               'width' : 40, 'height': 20,
-              'content_type' : 'text/plain',
+              'contentType' : 'text/plain',
               'content' : 'Hello World this is plain'
               },
              {'xpos' : 60, 'ypos': 0,
               'width': 20, 'height': 20,
-              'content_type' : 'image/jpg',
-              'content_id' : 'image2'
+              'contentType' : 'image/jpg',
+              'contentId' : 'image2'
               }
              ],
             [{'xpos' : 0, 'ypos' : 0,
               'width': 60, 'height' : 60,
-              'content_type' : 'image/jpg',
-              'content_id' : 'image3'
+              'contentType' : 'image/jpg',
+              'contentId' : 'image3'
               },
              {'xpos' : 0, 'ypos' : 60,
               'width':60, 'height':60,
-              'content_type' : 'text/html',
+              'contentType' : 'text/html',
               'content' : '<h1>Hello</h1><p>Html World</p><p>For pretty formating perhaps</p>'
               }
              ]
@@ -290,14 +318,23 @@ def test_file_upload():
             'image2' : open('IMG_0137.JPG'),
             'image3' : open('IMG_0137.JPG'),
             'thumb1' : open('IMG_0137.JPG'),
-            'nodeData' : node_data
+            'nodeData' : json.dumps(node_data)
             }
-    send_files('uploadTest', data, cookie)
+
+    res = send_files('uploadTest', data, cookie)
+    assert_result(res)
+
+    res = send_files('uploadTest', data, cookie)
+    assert_result(res)
     
+    res = send_files('uploadTest', data, cookie)
+    assert_result(res)
+    print 'Successfully created tour with three nodes'
+        
 test_user_create()
-#test_user_auth()
-#test_user_get()
-test_file_upload()
+test_user_auth()
+test_user_get()
+test_create_tour()
 
 """
 res, cookie = send_request('echo', {'data' : 'same'})

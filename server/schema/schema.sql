@@ -1,8 +1,41 @@
 use docent_db;
+drop table if exists nodeData;
+drop table if exists nodes;
+drop table if exists tourTags;
+drop table if exists tags;
+drop table if exists tourHistory;
+drop table if exists tours;
+drop table if exists userDevices;
 drop table if exists users;
+drop table if exists ipBlocks;
+drop table if exists locations;
+    
+create table locations (
+  locId integer unsigned not null,
+  country varchar(2)  character set utf8 collate utf8_general_ci not null,
+  region varchar(2)  character set utf8 collate utf8_general_ci not null,
+  city varchar(255)  character set utf8 collate utf8_general_ci not null,
+  postalCode varchar(8),
+  latitude double,
+  longitude double,
+  metroCode integer,
+  areaCode integer,
+  primary key (locId),
+  unique(country, region, city, postalCode)
+) ENGINE InnoDB character set utf8 collate utf8_general_ci;
+
+create table ipBlocks (
+    locId integer unsigned,
+    startipnum integer unsigned,
+    endipnum integer unsigned,
+    index (startipnum),
+    index (endipnum),
+    foreign key (locId) references locations(locId) on delete cascade
+) ENGINE InnoDB character set utf8 collate utf8_general_ci;
+    
 create table users (
     userId integer unsigned not null auto_increment,
-	userName varchar(256) not null,
+	userName varchar(255) not null,
 	password varchar(256) not null,
 	salt varchar(16) not null,
 	about text default null,
@@ -11,87 +44,68 @@ create table users (
 	twitterId integer default null, 
 	primary key (userId),
 	unique(userName)
-) ENGINE MyISAM character set utf8 collate utf8_general_ci;
+) ENGINE InnoDB character set utf8 collate utf8_general_ci;
 
-drop table if exists userDevices;
 create table userDevices(
     userId integer unsigned not null,
-    deviceId varchar(256) not null,
+    deviceId varchar(255) not null,
     primary key (userId, deviceId),
+
     foreign key (userId) references users(userId)
-) ENGINE MyISAM character set utf8 collate utf8_general_ci;
-    
-drop table if exists tours;
+    on delete cascade
+) ENGINE InnoDB character set utf8 collate utf8_general_ci;
+
 create table tours (
-	tourId integer not null auto_increment,
-    userId integer not null, 
-	tourName varchar(256) not null,
+	tourId integer unsigned not null auto_increment,
+    userId integer unsigned not null, 
+	tourName varchar(255) not null,
  	description text,
-	locId integer,
+	locId integer unsigned,
   	walkingDistance double default null,
     active tinyint(1) default 0,
 	primary key(tourId),
-    foreign key (userId) references users(userId),
-	foreign key (locId) references locations(locId)
-) ENGINE MyISAM character set utf8 collate utf8_general_ci;
+    unique (tourName),
+    foreign key (userId) references users(userId) on delete cascade,
+    foreign key (locId) references locations(locId) on delete cascade
+    
+) ENGINE InnoDB character set utf8 collate utf8_general_ci;
 
-drop table if exists tourHistory;
 create table tourHistory (
-    userId integer not null,
-    tourId integer not null,
+    userId integer unsigned not null,
+    tourId integer unsigned not null,
     timeStarted timestamp not null default CURRENT_TIMESTAMP,
     finished tinyint(1) default 0,
     timeFinished datetime default null,
     rating integer default null,
-    foreign key (userId) references users(userId),
-    foreign key (tourId) references tours(tourId)
-) ENGINE MyISAM character set utf8 collate utf8_general_ci;
-    
-drop table if exists tags;
+    foreign key (userId) references users(userId) on delete cascade,
+    foreign key (tourId) references tours(tourId) on delete cascade
+) ENGINE InnoDB character set utf8 collate utf8_general_ci;
+
 create table tags (
-    tagId integer not null auto_increment,
+    tagId integer unsigned not null auto_increment,
 	tagName varchar(256) not null,
 	description text not null,
 	primary key(tagId)
-) ENGINE MyISAM character set utf8 collate utf8_general_ci;
+) ENGINE InnoDB character set utf8 collate utf8_general_ci;
 
-drop table if exists tourTags;
 create table tourTags (
-	tagId integer not null,
-	tourId integer not null,
-	foreign key(tagId) references tags(tagId),
-	foreign key(tourId) references tags(tourId)
-) ENGINE MyISAM character set utf8 collate utf8_general_ci;
+	tagId integer unsigned not null,
+	tourId integer unsigned not null,
+  	foreign key(tagId) references tags(tagId) on delete cascade,
+  	foreign key(tourId) references tours(tourId) on delete cascade
+) ENGINE InnoDB character set utf8 collate utf8_general_ci;
 
-drop table if exists ipBlocks;
-create table ipBlocks (
-    startipnum bigint unsigned,
-    index (startipnum),
-    endipnum bigint unsigned,
-    index (endipnum),
-    locId bigint unsigned,
-    foreign key (locId) references locations(locId)
-) ENGINE MyISAM character set utf8 collate utf8_general_ci;
-
-drop table if exists nodes;
 create table nodes(
-	nodeId integer not null auto_increment,
+	nodeId integer unsigned not null auto_increment,
     latitude double not null,
     longitude double not null,
-    prevNode integer default null,
-	nextNode integer default null,
+    prevNode integer unsigned default null,
+	nextNode integer unsigned default null,
     pseudo tinyint(1) default 1,
-    tourId integer not null,
+    tourId integer unsigned not null,
+    mongoId varchar(256) default null,
 	primary key (nodeId),
-    foreign key (nextNode) references nodes(nodeId)
-) ENGINE MyISAM character set utf8 collate utf8_general_ci;
+    foreign key (nextNode) references nodes(nodeId) on delete cascade,
+    foreign key (prevNode) references nodes(nodeId) on delete cascade
+) ENGINE InnoDB character set utf8 collate utf8_general_ci;
 
-
-drop table if exists nodeData;
-create table nodeData(
-    nodeId integer not null,
-    mongoId integer not null,
-    brief tinyint(1) default 0,
-    primary key(nodeId, mongoId),
-    foreign key (nodeId) references nodes(nodeId)
-) ENGINE MyISAM character set utf8 collate utf8_general_ci;

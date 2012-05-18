@@ -5,6 +5,7 @@ var logger = require('./customLogger.js').getLogger();
 var rest = require('./rest.js').rest;
 var port = 8787;
 
+
 process.argv.forEach(function(arg, index, array){
 	if (arg.toLowerCase() == '--port' || arg.toLowerCase() == '-p'){
 		port = parseInt(array[index+1], 10);
@@ -66,24 +67,13 @@ app.post('/node', function(req, res){
 app.post('/echo', function (req, res){
     logger.info('Data Received for echo');
     logger.info(JSON.stringify(req.body));
+    req.body.authUserId = undefined;
     //logger.info(req.socket.remoteAddress);
     res.send({'success' : req.body});
 });
 
 app.all('/uploadTest', function(req, res){
-    logger.info('File Upload Recieved');
-
-    for (var param in req.files){
-        //logger.debug(param);
-        //logger.debug(JSON.stringify(req.files[param], null, 1));
-        var type = req.files[param].type;
-        req.ds.mongoGrid(type, function(err, gs){
-            logger.debug('Opened');
-        });
-    }
-    logger.debug(req.body);
-    
-    res.send({'success' : 'Request Recieved'});
+    rest.createNode(req.ds, req.body, req.files, function(data){ res.send(data);});
 });
 
 app.all('/test', function(req, res){

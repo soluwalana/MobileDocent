@@ -34,6 +34,13 @@ db.connect(function(error){
 		console.log(rows);
 		console.log(cols);
 	});
+    this.query('select * from newTable; update newTables set field1=8;').execute(function(err, rows, cols){
+        console.log(this.sql());
+        console.log(err);
+        console.log(rows);
+		console.log(cols);
+    });
 	this.query('drop table newTable').execute();
 	this.query('drop table newTable1').execute();
+    
 });

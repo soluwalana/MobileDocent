@@ -1,10 +1,12 @@
 var mysql = require('db-mysql');
 var mongodb = require('mongodb');
-var helpers = require('./helpers.js');
 var uuid = require('node-uuid');
+
+var helpers = require('./helpers.js');
 var logger = require('./customLogger.js').getLogger();
 var queries = require('./sql.js').queries;
 var constants = require('./constants.js');
+var UserManager = require('./userManager.js').UserManager;
 
 var errorCallback = function (message, callback){
     logger.error(message);
@@ -51,6 +53,22 @@ function DataStore (initCallback){
 		return true;
 	};
 
+    self.unauthenticatedStore = function(){
+        var store = {};
+        store.sqlConn = function(callback){
+            callback(null, mysqlConn);
+        };
+        store.mongoCollection = function(IGNORED, callback){
+            errorCallback('Unauthenticated access to '+msg, callback);
+        };
+        store.mongoGrid = function(IGNORED, callback){
+            errorCallback('Unauthenticated access to '+msg, callback);
+        };
+        return store;
+    };
+
+    /* Functions that do not need authentication */
+
     self.test = function (callback){
 		var testData = {};
 		mysqlConn.query('show tables').execute(function(err, rows, cols){
@@ -68,49 +86,16 @@ function DataStore (initCallback){
        @param {function} callback - A function that should expect two parameters
            err and the resulting user id from the call */
 	self.addUser = function(userData, callback){
-        if (!userData.userName || !userData.deviceId ||
-            !userData.pass || !userData.passConf){
-            errorCallback('Request missing basic parameters', callback);
-            return null;
-        }
-        
-        if (userData.pass !== userData.passConf){
-            errorCallback("Passwords don't match", callback);
-            return null;
-        }
-         
-        /* Set Default values */
-        userData.about = userData.about || null;
-        userData.email = userData.email || null;
-        userData.fbId = userData.fbId || null;
-        userData.twitterId = userData.twitterId || null;
-        
-        var salt = helpers.generateSalt();
-        var password = helpers.generatePassword(userData.pass, salt);
-        
-        mysqlConn.query().execute(
-            queries.insertUser,
-            [userData.userName, password, salt, userData.about, userData.email,
-             userData.fbId, userData.twitterId],
-            function (err, result){
-                if (err){
-                    errorCallback('Insert User Failed, check duplicate', callback);
-                    return null;
-                }
-                mysqlConn.query().execute(
-                    queries.insertDevice,
-                    [result.id, userData.deviceId],
-                    function  (err, result){
-                        if (err){
-                            errorCallback('Insert Device ID failed', callback);
-                            return null;
-                        }
-                        authenticated = true;
-                        callback(null, result.id);
-                    }
-                );
+        var userManager = new UserManager(self.unauthenticatedStore());
+        userManager.addUser(userData, function(err, userId){
+            if (err){
+                callback(err);
+                return null;
             }
-        );
+            authenticated = true;
+            callback(null, userId);
+        });
+        
     };
 
     /* Verifies that the user given by the userData is indeed a valid user
@@ -120,34 +105,15 @@ function DataStore (initCallback){
            err and the resulting user id from the call
        */
 	self.authenticate = function(userData, callback){
-        if (!userData.userName || !userData.pass || !userData.deviceId){
-            errorCallback('Request to authenticate had wrong pramaters', callback);
-            return null;
-        }
-        mysqlConn.query().execute(
-            queries.selectUserAuth,
-            [userData.userName, userData.deviceId],
-            function (err, rows, cols){
-                if (err || rows.length === 0){
-                    errorCallback('User lookup failed for authentication', callback);
-                    return null;
-                }
-
-                if (rows.length !== 1){
-                    errorCallback('More than one user matches the userName/device');
-                    return null;
-                }
-                var user = rows[0];
-                var password = helpers.generatePassword(userData.pass, user.salt);
-                if (password !== user.password){
-                    errorCallback('Authentication failure', callback);
-                    return null;
-                }
-                authenticated = true;
-		        callback(null, user.userId);    
-                
+        var userManager = new UserManager(self.unauthenticatedStore());        
+        userManager.authenticate(userData, function(err, userId){
+            if (err){
+                callback(err);
+                return null;
             }
-        );
+            authenticated = true;
+            callback(null, userId);
+        });
 	};
 
     /* Verified that the session is authenticated and then sets authenticated
@@ -165,14 +131,16 @@ function DataStore (initCallback){
         }
     };
 
+    /* Functions that must be authenticated */
+    
     /* Returns a query object to be executed on to the callback,
        will return an error on unauthenticated access
        @param {function} callback - A function that should be expecting
            two parameters err, and query
     */
-    self.sqlQuery = function(callback){
+    self.sqlConn = function(callback){
         if (self.authenticatedAccess(callback, 'MySQL')){
-            callback(null, mysqlConn.query());
+            callback(null, mysqlConn);
         }
     };
 
@@ -188,10 +156,10 @@ function DataStore (initCallback){
     
     self.mongoGrid = function(type, callback){
         if (self.authenticatedAccess(callback)){
-            var fileName = uuid.v1();
+            var fileName = uuid.v4();
             var opts = {
                 'content_type' : type,
-                'chunk_size' : 1024*4
+                'chunk_size' : constants.FILE_BUF_SIZE
             };
             var gs = new mongodb.GridStore(mongoDb, fileName, 'w', opts);
             gs.open(function(err, gs){
