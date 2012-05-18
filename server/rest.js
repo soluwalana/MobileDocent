@@ -1,68 +1,65 @@
 var logger = require('./customLogger.js').getLogger();
-
+var TourManager = require('./tourManager.js').TourManager;
+var UserManager = require('./userManager.js').UserManager;
+var queries = require('./sql.js').queries;
 
 var rest = {}
+
+
 /* Get API's*/
-rest.getUser = function (dataStore, params, callback){
-    logger.info('User Request Received');
-	callback({'success' : 'Ran',
-			  'data' : params});
+rest.getUser = function (store, params, callback){
+    var userManager = new UserManager(store);
+    userManager.getUser(params, callback);
 };
 
-rest.getTour = function (dataStore, params, callback){
-    logger.info('Tour Request Received');
+rest.getTour = function (store, params, callback){
+    logger.info('Tour Get Request Received');
 	callback({'success' : 'got tour request',
 			  'data' : params});
 };
 
-rest.getNode = function (dataStore, params, callback){
+rest.getNode = function (store, params, callback){
     logger.info('Node Request Received');
 	callback({ 'success' : 'get node by id',
 			   'data' : params});
 };
 
-rest.getLocation = function (dataStore, params, callback){
+rest.getLocation = function (store, params, callback){
     logger.info('Request for location');
     callback({'success' : 'get location',
               'data' : params});
 };
 
-rest.getTags = function (dataStore, params, callback){
+rest.getTags = function (store, params, callback){
     logger.info('List Tags Request');
     callback({'success' : 'get tags',
               'data' : params});
 };
 
 /* Create API's */
-rest.createUser = function (dataStore, params, callback){
-    logger.info('User Creation Request Received');
-	callback({'success' : 'got user create request',
-			  'data' : params});
+
+rest.createTour = function (store, params, callback){
+    var tourManager = new TourManager(store);
+    tourManager.createTour(params, callback);
 };
 
-rest.createTour = function (dataStore, params, callback){
-    logger.info('Tour Creation Request Received');
-	callback({'success' : 'got tour create request',
-			  'data' : params});
+rest.createNode = function (store, params, files, callback){
+    var tourManager = new TourManager(store);
+    tourManager.createNode(params, files, callback);
 };
 
-rest.createNode = function (dataStore, params, callback){
-    logger.info('Node Modification Request Received');
-	callback({'success' : 'add a node to the tour',
-			  'params' : params});
-};
-
-rest.createTags = function (dataStore, params, callback){
+rest.createTags = function (store, params, callback){
 };
 
 /* Modification API's */
-rest.modifyUser = function (dataStore, params, callback){
+rest.modifyUser = function (store, params, callback){
 };
  
-rest.modifyTour = function (dataStore, params, callback){
+rest.modifyTour = function (store, params, callback){
 };
 
-rest.modifyNode = function (dataStore, params, callback){
+rest.modifyNode = function (store, params, callback){
+    
 };
 
 

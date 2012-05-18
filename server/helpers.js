@@ -1,4 +1,5 @@
 var crypto = require('crypto');
+var logger = require('./customLogger.js').getLogger(1);
 
 var SHA1_KEY = 'Docent_2012_SHA1_Private';
 var SALT_POSSIBLE = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
