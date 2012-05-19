@@ -19,7 +19,7 @@ public class MainPageActivity extends Activity {
 		Button takeButton = (Button) findViewById(R.id.Button00);
 		takeButton.setOnClickListener(new OnClickListener(){
 			public void onClick(View v) {
-					startTour();
+					startSearchTour();
 				
 			}
 
@@ -54,7 +54,7 @@ public class MainPageActivity extends Activity {
 
 	}
 
-	public void startTour (){
+	public void startSearchTour (){
 		Intent intent = new Intent(this, TourActivity.class );
 		startActivity(intent);
 	}

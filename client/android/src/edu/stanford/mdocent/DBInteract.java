@@ -18,17 +18,22 @@ import org.apache.http.protocol.HTTP;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import android.provider.Settings.Secure;
+import android.util.Log;
+
 
 public class DBInteract {
-	
+
 	private static String serverURL = "http://samo.stanford.edu:8787";
-	
-	private static String postData(JSONObject jo, String urlEnd){
-		
+	private static final String TAG = "DBInteract";
+	//private static String cookie = "";
+
+	private static JSONObject postData(JSONObject jo, String urlEnd){
+
 		DefaultHttpClient httpclient = new DefaultHttpClient();
 		HttpConnectionParams.setConnectionTimeout(httpclient.getParams(), 10000);
 		HttpResponse response;
-        try {
+		try {
 
 			HttpPost post = new HttpPost(serverURL + urlEnd);
 			StringEntity se = new StringEntity( jo.toString());  
@@ -37,36 +42,36 @@ public class DBInteract {
 			response = httpclient.execute(post);
 
 			if(response!=null){
-				
-				
 				String str = inputStreamToString(response.getEntity().getContent()).toString();
-				
-				return str;
+				JSONObject recvObj = new JSONObject(str);
+				return recvObj;
 			}
 
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		return "";
+		return null;
 	}
-	
+
 	public static boolean postLoginData(String username, String password) { 
 		
 		JSONObject sndObject = new JSONObject();
 		try {
 			sndObject.put("userName", username);
-		} catch (JSONException e1) {
+			sndObject.put("pass", password);
+			JSONObject rcvObj = postData(sndObject, "/login");
+			if(rcvObj != null) {
+				Log.v(TAG, rcvObj.toString());
+				if(rcvObj.get("success")!=null){
+					Log.v(TAG, "Authenticated " + rcvObj.toString());
+					return true;
+				}
+				else return false;
+			}
+		}
+		catch (JSONException e1) {
 			e1.printStackTrace();
 		}
-		try {
-			sndObject.put("password", password);
-		} catch (JSONException e1) {
-			e1.printStackTrace();
-		}
-		
-		String response = postData(sndObject, "/echo");
-		if(response != "") return true;
-		if(password.toString().equalsIgnoreCase("b")&&username.toString().equalsIgnoreCase("d")) return true;   
 		return false;
 	} 
 	public static boolean postSignupData(String username, String password, String confirm) { 
@@ -76,18 +81,20 @@ public class DBInteract {
 		JSONObject sndObject = new JSONObject();
 		try {
 			sndObject.put("userName", username);
+			sndObject.put("pass", password);
+			sndObject.put("passConf", confirm);
+			JSONObject rcvObj = postData(sndObject, "/user");
+			if(rcvObj != null) {
+				Log.v(TAG, rcvObj.toString());
+				if(rcvObj.get("success")!=null){
+					Log.v(TAG, "Authenticated " + rcvObj.toString());
+					return true;
+				}
+				else return false;
+			}
 		} catch (JSONException e1) {
 			e1.printStackTrace();
 		}
-		try {
-			sndObject.put("password", password);
-		} catch (JSONException e1) {
-			e1.printStackTrace();
-		}
-		
-		String response = postData(sndObject, "/echo");
-		if(response != "") return true;
-		if(password.toString().equalsIgnoreCase("b")&&username.toString().equalsIgnoreCase("d")) return true;   
 		return false;
 	}
 
