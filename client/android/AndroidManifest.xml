@@ -13,7 +13,7 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
     <application
-        android:icon="@drawable/ic_launcher"
+        android:icon="@drawable/icon"
         android:label="@string/app_name" >
         <activity
             android:name=".SignInActivity"
@@ -35,6 +35,9 @@
         </activity>
         <activity 
             android:name=".MyToursActivity" >
+        </activity>
+        <activity 
+            android:name=".TourSearchActivity" >
         </activity>
         <activity 
             android:name=".CreateTourActivity" >

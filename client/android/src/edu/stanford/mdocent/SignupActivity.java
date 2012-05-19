@@ -3,6 +3,7 @@ package edu.stanford.mdocent;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.provider.Settings.Secure;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;

@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.provider.Settings.Secure;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
