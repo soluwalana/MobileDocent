@@ -1,11 +1,22 @@
 var queries = require('./sql.js').queries;
-var logger = require('./customLogger.js').getLogger();
 var helpers = require('./helpers.js');
+var logger = require('./customLogger.js').getLogger();
+var getLineNum = require('./customLogger.js').getLineNumber;
 
-var errorCallback = function (message, callback){
-    logger.error(message, 1);
+var errorCallback = function (message, callback, lineInfo){
+	logger.error(message, lineInfo);
     callback({'error' : message});
 }
+
+var errorWrap = function (retCallback, callback){
+	var lineInfo = getLineNum();
+	return function (err, res, extra){
+		if (err){
+			return errorCallback(err, retCallback, lineInfo);
+		}
+		callback(res, extra);
+	};
+};
 
 var UserManager = function(store){
     var self = this;
@@ -19,12 +30,12 @@ var UserManager = function(store){
             return errorCallback('Request to authenticate had wrong pramaters', callback);
         }
         
-        self.store.sqlConn(function(err, conn){
+        self.store.sqlConn(errorWrap(callback, function(conn){
             var sql = params.userName ? queries.selectUserByName : queries.selectUserById;
             var sqlParams = [params.userName ? params.userName : params.userId];
             conn.query(sql, sqlParams).execute(
-                function (err, rows, cols){
-                    if (err || rows.length === 0){
+                errorWrap(callback, function (rows, cols){
+                    if (rows.length === 0){
                         return errorCallback('User lookup failed for authentication', callback);
                     }
                     
@@ -40,9 +51,9 @@ var UserManager = function(store){
                     
 		            callback(null, user.userId);    
                     
-                }
+                })
             );
-        })
+        }));
     };
     
     self.addUser = function(params, callback){
@@ -63,30 +74,24 @@ var UserManager = function(store){
         var salt = helpers.generateSalt();
         var password = helpers.generatePassword(params.pass, salt);
         
-        self.store.sqlConn(function(err, conn){
-            if (err){
-                return callback(err);
-            }
+        self.store.sqlConn(errorWrap(callback, function(conn){
             var sql = queries.insertUser;
             var sqlParams = [params.userName, password, salt, params.about,
                              params.email, params.fbId, params.twitterId];
-            conn.query(sql, sqlParams).execute(function (err, result){
-                if (err){
-                    return errorCallback('Insert User Failed, check duplicate', callback);
-                }
-                callback(null, result.id);
-            });
-        });
+
+			conn.query(sql, sqlParams).execute(errorWrap(
+				callback, function (result){
+					callback(null, result.id);
+				}
+			));
+        }));
     };
 
     self.getUser = function(params, callback){
         if (!params.userName && !params.userId && !params.deviceId){
             return errorCallback('Required Field Missing From User Request', callback);
         }
-        self.store.sqlConn(function(err, conn){
-            if (err){
-                return callback(err);
-                            }
+        self.store.sqlConn(errorWrap(callback, function(conn){
             var sql = null;
             var sqlParams = [];
             
@@ -104,22 +109,20 @@ var UserManager = function(store){
                 logger.debug('Select by Device');
             }
             
-            conn.query(sql, sqlParams).execute(function (err, rows, cols){
-                if (err){
-                    return errorCallback(err, callback);
-                    
-                }
-                if (rows.length === 0){
-                    logger.warn('No Users Found For query');
-                    logger.warn([sql, params]);
-                    return callback([]);
-                }
-                if (rows.length === 1){
-                    return callback(rows[0]);
-                }
-                callback(rows);
-            });
-        });
+            conn.query(sql, sqlParams).execute(errorWrap(
+				callback, function (rows, cols){
+					if (rows.length === 0){
+						logger.warn('No Users Found For query');
+						logger.warn([sql, params]);
+						return callback([]);
+					}
+					if (rows.length === 1){
+						return callback(rows[0]);
+					}
+					callback(rows);
+				}
+			));
+        }));
     };
 
     self.init();

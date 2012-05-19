@@ -2,16 +2,27 @@ var fs = require('fs');
 var uuid = require('node-uuid');
 var _ = require('./lib/underscore.js')._;
 
+
 var constants = require('./constants.js');
 var queries = require('./sql.js').queries;
 var multiQuery = require('./sql.js').multiQuery;
 var logger = require('./customLogger.js').getLogger();
+var getLineNum = require('./customLogger.js').getLineNumber;
 
-var errorCallback = function (message, callback){
-    logger.error(message, 1);
+var errorCallback = function (message, callback, lineInfo){
+	logger.error(message, lineInfo);
     callback({'error' : message});
-    return null;
 }
+
+var errorWrap = function (retCallback, callback){
+	var lineInfo = getLineNum();
+	return function (err, res, extra){
+		if (err){
+			return errorCallback(err, retCallback, lineInfo);
+		}
+		callback(res, extra);
+	};
+};
 
 var addWarning = function (result, err){
     result.status = constants.WARN_STATUS;
@@ -89,73 +100,63 @@ var TourManager = function(store){
             return errorCallback('Required Fields Missing From Tour Creation', callback);
         }
         
-        self.store.sqlConn(function (err, conn){
-            if (err){
-                return callback(err);
-            }
+        self.store.sqlConn(errorWrap(callback, function (conn){
             var sql = queries.insertTour;
             var sqlParams = [params.authUserId, params.tourName, params.description, 0];
-            conn.query(sql, sqlParams).execute(function (err, result){
-                if (err){
-                    return errorCallback('Tour Name Already Created', callback);
-                }
+            conn.query(sql, sqlParams).execute(errorWrap(callback, function (result){
                 callback({'success' : 'Tour Created',
                           'tourId' : result.id});
-            });
-        });
+            }));
+        }));
     };
 
     self.getTour = function (params, callback){
         if (!params.tourId && !params.tourName){
             return errorCallback('Required Fields Missing From Get Tour', callback);
         }
-        self.store.sqlConn(function (err, conn){
-            if (err){
-                return errorCallback(err, callback);
-            }
+		
+        self.store.sqlConn(errorWrap(callback, function (conn){
             var sql = params.tourId ? queries.getTourById: queries.getTourByName;
             var sqlParams = [params.tourId ? params.tourId : params.tourName];
-            conn.query(sql, sqlParams).execute(function (err, rows, cols){
-                if (err){
-                    return errorCallback(err, callback);
-                }
-                if (rows.length === 0){
-                    return errorCallback('Tour Doesnt exist or has no nodes', callback);
-                }
-                var retObj = {};
-                retObj.tourId = rows[0].tourId;
-                retObj.userId = rows[0].userId;
-                retObj.tourName = rows[0].tourName;
-                retObj.description = rows[0].description;
-                retObj.locId = rows[0].locId;
-                retObj.nodes = [];
-                
-                var nodes = {};
-                var curNode = null;
-                for (var i = 0; i < rows.length; i ++){
-                    nodes[rows[i].nodeId] = {
-                        nodeId : rows[i].nodeId,
-                        latitude : rows[i].latitude,
-                        longitude: rows[i].longitude,
-                        prevNode : rows[i].prevNode,
-                        nextNode : rows[i].nextNode,
-                        pseudo: rows[i].pseudo,
-                        mongoId: rows[i].mongoId
-                    };
-                    if (rows[i].prevNode == null) curNode = rows[i].nodeId;
-                }
-                retObj.nodes.push(nodes[curNode]);
-                while(nodes[curNode].nextNode){
-                    curNode = nodes[curNode].nextNode;
-                    retObj.nodes.push(nodes[curNode]);
-                }
-                                
-                callback({'success' : 'Tour Retrieved',
-                          'tour' : retObj});
-            });
-            
-        });
-    };
+            conn.query(sql, sqlParams).execute(errorWrap(
+				callback, function (rows, cols){
+					if (rows.length === 0){
+						return errorCallback('Tour Doesnt exist or has no nodes', callback);
+					}
+					var retObj = {};
+					retObj.tourId = rows[0].tourId;
+					retObj.userId = rows[0].userId;
+					retObj.tourName = rows[0].tourName;
+					retObj.description = rows[0].description;
+					retObj.locId = rows[0].locId;
+					retObj.nodes = [];
+					
+					var nodes = {};
+					var curNode = null;
+					for (var i = 0; i < rows.length; i ++){
+						nodes[rows[i].nodeId] = {
+							nodeId : rows[i].nodeId,
+							latitude : rows[i].latitude,
+							longitude: rows[i].longitude,
+							prevNode : rows[i].prevNode,
+							nextNode : rows[i].nextNode,
+							pseudo: rows[i].pseudo,
+							mongoId: rows[i].mongoId
+						};
+						if (rows[i].prevNode == null) curNode = rows[i].nodeId;
+					}
+					retObj.nodes.push(nodes[curNode]);
+					while(nodes[curNode].nextNode){
+						curNode = nodes[curNode].nextNode;
+						retObj.nodes.push(nodes[curNode]);
+					}
+                    
+					callback({'success' : 'Tour Retrieved',
+							  'tour' : retObj});
+				}
+			));
+		}));
+	};
 
 
     self._modifyTour = function (params, conn, callback){
@@ -169,19 +170,16 @@ var TourManager = function(store){
         self._verifyOwnership(
             [params.authUserId, params.tourId],
             queries.checkTourOwnership,
-            function(err, conn){
-                if(err || !conn){
-                    return errorCallback(err, callback);
-                }
+            errorWrap(callback, function(conn){
                 self._modifyTour(params, conn, callback);
                 
-            }
+            })
         );
     };
 
     
     self._createNode = function (nodeData, files, conn, callback){
-        var numberCommitted = 0;
+		var numberCommitted = 0;
         var numberSubmitted = 0;
         files = files || {};
         var sections = {};
@@ -195,6 +193,8 @@ var TourManager = function(store){
             numberCommitted ++;
             if (err){
                 addWarning(result, err);
+				logger.warn(sections);
+				logger.warn(sectionId);
                 sections[sectionId].contentId = constants.INVALID_FILE;
                 logger.warn('Commit Called but file was missing');
             } else {
@@ -234,6 +234,7 @@ var TourManager = function(store){
             } else {
                 numberSubmitted ++;
                 var type = files[thumbId].contentType;
+				sections.thumb = {};
                 var fileMeta = {'fileId' : thumbId, 'sectionId' : 'thumb',
                                 'type' : type}
                 self._storeFile(files, fileMeta, fileCallback);
@@ -250,7 +251,7 @@ var TourManager = function(store){
             var sectionId = fileMeta.sectionId;
             fileMeta.type = nodeContent.sections[sectionId].contentType;
             if (!files[fileMeta.fileId]){
-                commit({'error' : 'File Was Not Uploaded'});
+				fileCallback({'error' : 'File Was Not Uploaded'}, sectionId, null);
                 continue;
             }
             self._storeFile(files, fileMeta, fileCallback);
@@ -277,27 +278,23 @@ var TourManager = function(store){
         self._verifyOwnership(
             [params.authUserId, nodeData.tourId],
             queries.checkTourOwnership,
-            function(err, conn){
-                if(err || !conn){
-                    return errorCallback(err, callback);
-                }
+            errorWrap(callback, function(conn){
                 if (nodeData.prevNode){
                     var sql = queries.selectNodeById;
                     var sqlParams = [nodeData.prevNode];
-                    conn.query(sql, sqlParams).execute(function (err, rows, cols){
-                        if (err){
-                            return errorCallback(err, callback);
-                        }
-                        if (rows.length === 0){
-                            var msg = 'The previous node specified doesnt exist';
-                            return errorCallback(msg, callback);
-                        }
-                        self._createNode(nodeData, files, conn, callback);
-                    });
+                    conn.query(sql, sqlParams).execute(errorWrap(
+						callback, function (rows, cols){
+							if (rows.length === 0){
+								var msg = 'The previous node specified doesnt exist';
+								return errorCallback(msg, callback);
+							}
+							self._createNode(nodeData, files, conn, callback);
+						}
+					));
                     return null;
                 }
                 self._createNode(nodeData, files, conn, callback);
-            }
+			})
         );                    
     };
 
@@ -313,11 +310,9 @@ var TourManager = function(store){
         if (nodeData.prevNode !== undefined){
             var prevNode  = nodeData.prevNode;
             if (prevNode === null){
-                logger.warn('Prepend');
                 sql = queries.prependNode;
             } else {
                 sql = queries.insertNode;
-                logger.warn('Insert');
                 sqlParams = [latitude, longitude, prevNode, pseudo, tourId,
                               prevNode, prevNode, prevNode];
             }
@@ -328,11 +323,7 @@ var TourManager = function(store){
             delete sections.thumb;
         }
         
-        multiQuery(conn, sql, sqlParams, function (err, result){
-            if (err){
-                return errorCallback(err, callback);
-            }
-
+        multiQuery(conn, sql, sqlParams, errorWrap(callback, function (result){
             if (result.length === 0){
                 return errorCallback('SQL Query Failed', callback);
             }
@@ -354,37 +345,33 @@ var TourManager = function(store){
             }
             store.mongoCollection(
                 constants.NODE_COLLECTION,
-                function (err, collection){
-                    if (err){
-                        var msg = 'Couldnt open Mongo Collection, MySQL modified!';
-                        return errorCallback(msg, callback);
-                    }
+                errorWrap(callback, function (collection){
                     collection.insert(
                         mongoObject, {safe : true },
-                        function(err, records){
-                            if (err || records.length === 0){
+                        errorWrap(callback, function(records){
+                            if (records.length === 0){
                                 var msg = 'Couldnt save to mongo, MySQL modified!';
                                 return errorCallback(msg, callback);
                             }
                             var mongoId = records[0]._id.toHexString();
                             var nodeId = result.nodeId;
-                            conn.query(queries.bindMongoToSql, [mongoId, nodeId]).
-                                execute(function (err, rows, cols){
-                                    if (err){
-                                        return errorCallback(err, callback);
-                                    }
-                                    result.mongoId = mongoId;
-                                    var retObj = {'success' : 'Node Created',
-                                                  'result': result};
-                                    if (filesResult) retObj.filesResult = filesResult;
-                                    callback(retObj);
-                                }
-                            );
-                        }
-                    );
-                }
-            );
-        });
+                            conn.query(
+								queries.bindMongoToSql,
+								[mongoId, nodeId]).execute(errorWrap(
+									callback, function (rows, cols){
+										result.mongoId = mongoId;
+										var retObj = {'success' : 'Node Created',
+													  'result': result};
+										if (filesResult) retObj.filesResult = filesResult;
+										callback(retObj);
+									}
+								)
+							);
+						})
+					);
+                })
+			);
+        }));
     };
 
     self.getNode = function (params, callback){
@@ -394,34 +381,33 @@ var TourManager = function(store){
         var getMongoNode = function (mongoId){
             store.mongoCollection(
                 constants.NODE_COLLECTION,
-                function (err, collection){
-                    if (err){
-                        return errorCallback (err, callback);
-                    }
-                    var _id = self.getMongoIdFromHex(mongoId);
-                    
-                    callback({});
-                }
+                errorWrap(callback, function (collection){
+                    var _id = self.store.getMongoIdFromHex(mongoId);
+					if (!_id){
+						return errorCallback('Invalid Node Id', callback);
+					}
+                    var query = { _id : _id };
+					collection.findOne(query, errorWrap(callback, function (record){
+						record._id = record._id.toHexString();
+						callback(record);
+					}));
+                })
             );
         };
         
-        if (parms.nodeId){
-            self.store.sqlConn(function (err, conn){
-                if (err){
-                    return errorCallback(err, callback);
-                }
+        if (params.nodeId){
+            self.store.sqlConn(errorWrap(callback, function (conn){
                 var sql = queries.selectNodeById;
                 var sqlParams = [params.nodeId];
-                conn.query(sql, sqlParams).execute(function (err, rows, cols){
-                    if (err){
-                        return errorCallback(err, callback);
-                    }
-                    if (rows.length === 0){
-                        return errorCallback('Node ID is invalid', callback);
-                    }
-                    getMongoNode(rows[0].mongoId);
-                });
-            });
+                conn.query(sql, sqlParams).execute(errorWrap(
+					callback, function (rows, cols){
+						if (rows.length === 0){
+							return errorCallback('Node ID is invalid', callback);
+						}
+						getMongoNode(rows[0].mongoId);
+					}
+				));
+            }));
         } else {
             getMongoNode(params.mongoId);
         }
@@ -439,62 +425,57 @@ var TourManager = function(store){
         self._verifyOwnership(
             [params.authUserId, params.tourId, params.nodeId],
             queries.checkNodeOwnership,
-            function(err, conn){
-                if(err || !conn){
-                    return errorCallback(err, callback);
-                }
-                self._modifyTour(params, conn, callback);
-            }
+            errorWrap(callback, function(conn){
+			    self._modifyTour(params, conn, callback);
+            })
         );
     };
-    
-    self._storeFile = function (files, data, callback){
+
+	self._storeFile = function (files, data, callback){
         var fileId = data.fileId;
         var sectionId = data.sectionId;
         var type = data.type;
         
-        self.store.mongoGrid(type, function(err, gs, name){
-            if (err){
-                return callback({'error' : fileId+' couldnt be made'});
-            }
-            var fileStream = fs.createReadStream(files[fileId].path, {
+        self.store.newMongoGrid(type, errorWrap(callback, function(gs, name){
+			//var outStream = fs.createWriteStream('/tmp/'+name);
+			//logger.error(name);
+			var fileStream = fs.createReadStream(files[fileId].path, {
                 'flags' : 'r',
-                'encoding' : 'utf8',
                 'bufferSize' : constants.FILE_BUF_SIZE
             });
             
-            fileStream.addListener('data', function (chunk){
+            fileStream.on('data', function (chunk){
                 fileStream.pause();
-                gs.write(chunk, function(err, result){
+				gs.write(chunk, function(err, result){
                     if (err){
                         fs.unlinkSync(files[fileId].path);
                         gs.close();
+						logger.error('FAILURE');
                         return callback({'error' : fileId+' didnt write to GridFS'});
                     }
+					//outStream.write(chunk);
                     fileStream.resume();
                 });
             });
             
-            fileStream.addListener('close', function(){
+            fileStream.on('close', function(){
                 fs.unlinkSync(files[fileId].path);
                 gs.close(function(){
+					//outStream.end();
                     callback(null, sectionId, name);
                 });
             });
-        });
+        }));
     };
 
     self._verifyOwnership = function (args, sql, callback){
         self.store.sqlConn(function(err, conn){
-            conn.query(sql, args).execute(function (err, rows, cols){
-                if (err){
-                    return errorCallback(err, callback);
-                }
+            conn.query(sql, args).execute(errorWrap(callback, function (rows, cols){
                 if (rows.length === 0){
                     return errorCallback('User Doesnt own this tour', callback);
                 }
                 callback(null, conn);
-            });
+            }));
         });
     };
 
@@ -503,7 +484,4 @@ var TourManager = function(store){
 };
 
 exports.TourManager = TourManager;
-
-
-
     

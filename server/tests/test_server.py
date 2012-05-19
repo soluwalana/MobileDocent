@@ -24,7 +24,7 @@ def send_files(link = '', file_map = {}, cookie = None):
         return None
     
 
-def send_request(link = '', data = None, cookie = None):
+def send_request(link = '', data = None, cookie = None, raw = False):
     
     try:
         if data:
@@ -48,8 +48,11 @@ def send_request(link = '', data = None, cookie = None):
                 cookie = match.group(1)
                  
         res_data =  url_req.read()
-        res_data = json.loads(res_data)
-        return (res_data, cookie)
+        if not raw:
+            res_data = json.loads(res_data)
+            return (res_data, cookie)
+        else:
+            return (res_data, cookie)
     except Exception as err:
         print err
         return None
@@ -73,6 +76,24 @@ def assert_result(res):
     assert 'success' in res
     assert 'result' in res
     assert 'nodeId' in res['result']
+
+def assert_tour(res, name, nodes):
+    assert 'success' in res
+    assert 'tour' in res
+    assert 'tourId' in res['tour']
+    assert 'tourName' in res['tour']
+    assert res['tour']['tourName'] == name
+    assert 'nodes' in res['tour']
+    assert len(res['tour']['nodes']) == nodes
+
+def assert_normal_node(res):
+    pass
+
+def assert_brief_only_node(res):
+    pass
+
+def assert_pseudo_node(res):
+    pass
 
 def test_user_create():
     #success test
@@ -387,71 +408,55 @@ def test_create_tour2 ():
                                           'description' : 'Tour of Memorable Stanford Locations',
                                           }, cookie)
     
-
-    pseudo_node = {
-        'nodeData' : json.dumps({
-                'tourId' : 2,
+    node_data = {'tourId' : 2,
                 'latitude' : 999,
                 'longitude' : 999,
                 'brief' : {
-                    'title' : 'Test Regular Node',
-                    'description' : 'This is a test node that has three repetive pics'
+                    'title' : 'Test Node',
+                    'description' : 'Whatever'
                     }
-                })
-        }
+                 }
 
-    
-    # create 5 nodes 
+    # create 2 nodes 
+    node_data['content'] = [[{'content' : 2}]]
+    pseudo_node = { 'nodeData' : json.dumps(node_data)}
     res = send_request('node', pseudo_node, cookie)[0];
     assert_result(res)
     first_node = res['result']['nodeId']
-    res = send_request('node', pseudo_node, cookie)[0];
-    assert_result(res)
-    res = send_request('node', pseudo_node, cookie)[0];
-    assert_result(res)
-    res = send_request('node', pseudo_node, cookie)[0];
-    assert_result(res)
-    res = send_request('node', pseudo_node, cookie)[0];
-    assert_result(res)
+
     
-    #prepend 2 nodes
-    pseudo_node = {
-        'nodeData' : json.dumps({
-                'tourId' : 2,
-                'prevNode' : None,
-                'latitude' : 111,
-                'longitude' : 111,
-                'brief' : {
-                    'title' : 'Test Prepend Node',
-                    'description' : 'This is a test node that has three repetive pics'
-                    }
-                })
-        }
-    res = send_request('node', pseudo_node, cookie)[0];
-    assert_result(res)
+    node_data['content'] = [[{'content' : 4}]]
+    pseudo_node = { 'nodeData' : json.dumps(node_data)}
     res = send_request('node', pseudo_node, cookie)[0];
     assert_result(res)
 
-    #insert 1 node after the first original node
-    pseudo_node = {
-        'nodeData' : json.dumps({
-                'tourId' : 2,
-                'prevNode' : first_node,
-                'latitude' : 200,
-                'longitude' : 200,
-                'brief' : {
-                    'title' : 'Test INsert Node',
-                    'description' : 'This is a test node that has three repetive pics'
-                    }
-                })
-        }
+    node_data['prevNode'] = None
+    node_data['latitude'] = 111
+    node_data['longitude'] = 111
+    node_data['content'] = [[{'content' : 1}]]
+    pseudo_node = { 'nodeData' : json.dumps(node_data)}
     res = send_request('node', pseudo_node, cookie)[0];
+    assert_result(res)
+
+    node_data['content'] = [[{'content' : 0}]]
+    pseudo_node = { 'nodeData' : json.dumps(node_data)}
+    res = send_request('node', pseudo_node, cookie)[0];
+    assert_result(res)
+
     
+    #insert 1 node after the first original node
+    node_data['prevNode'] = first_node
+    node_data['latitude'] = 200
+    node_data['longitude'] = 200
+    node_data['content'] = [[{'content' : 3}]]
+    pseudo_node = { 'nodeData' : json.dumps(node_data)}
+    res = send_request('node', pseudo_node, cookie)[0];
+    assert_result(res)
 
     res = send_request('tour?tourId=2', None, cookie)[0]
-    assert_tour(res, 'Stanford2', 8)
+    assert_tour(res, 'Stanford2', 5)
     
-    expected_order = [111, 111, 999, 200, 999, 999, 999, 999]
+    expected_order = [111, 111, 999, 200, 999, 999]
 
     for idx, val in enumerate(res['tour']['nodes']):
         assert 'latitude' in val
@@ -460,24 +465,9 @@ def test_create_tour2 ():
         assert val['mongoId'] != None
         assert val['latitude'] == expected_order[idx]
         assert val['longitude'] == expected_order[idx]
+
+    print 'Successfully Inserted Prepended and appended nodes'
         
-def assert_tour(res, name, nodes):
-    assert 'success' in res
-    assert 'tour' in res
-    assert 'tourId' in res['tour']
-    assert 'tourName' in res['tour']
-    assert res['tour']['tourName'] == name
-    assert 'nodes' in res['tour']
-    assert len(res['tour']['nodes']) == nodes
-
-def assert_normal_node(res):
-    pass
-
-def assert_brief_only_node(res):
-    pass
-
-def assert_pseudo_node(res):
-    pass
 
 def test_get_tour():
     cookie = success_test('login', 'Successfully authenticated',
@@ -493,17 +483,61 @@ def test_get_tour():
 
     print 'Successfully Retrieved tour with 5 nodes'
 
+def assert_small_node(res, mongo_id, idx):
+    assert '_id' in res
+    assert res['_id'] == unicode(mongo_id)
+    assert 'content' in res
+    assert len(res['content']) == 1
+    assert 'page' in res['content'][0]
+    assert len(res['content'][0]['page']) == 1
+    assert 'content' in res['content'][0]['page'][0]
+    assert res['content'][0]['page'][0]['content'] == idx
+    
 def test_get_nodes():
     cookie = success_test('login', 'Successfully authenticated',
                           {'userName' : 'samo',
                            'pass' : 'samo'
                            })
 
-    res = send_request('tour?tourId=1', None, cookie)[0]
-    assert_tour(res, 'Stanford', 5)
-    for idx, node in enumerate(res['tour']['nodes']):
-        #res = send_request(
-        pass
+    tour = send_request('tour?tourId=2', None, cookie)[0]
+    assert_tour(tour, 'Stanford2', 5)
+    for idx, node in enumerate(tour['tour']['nodes']):
+        assert 'nodeId' in node
+        assert 'mongoId' in node
+        node_id = node['nodeId']
+        mongo_id = node['mongoId']
+        res = send_request('nodeContent?nodeId='+str(node_id), None, cookie)[0]
+        assert_small_node(res, mongo_id, idx)
+
+    for idx, node in enumerate(tour['tour']['nodes']):
+        mongo_id = node['mongoId']
+        res = send_request('nodeContent?mongoId='+str(mongo_id), None, cookie)[0]
+        assert_small_node(res, mongo_id, idx)
+
+    print 'Node Retrieval Tests Successful'
+
+def test_file_retreive():
+    cookie = success_test('login', 'Successfully authenticated',
+                          {'userName' : 'samo',
+                           'pass' : 'samo'
+                           })
+    tour = send_request('tour?tourId=1', None, cookie)[0]
+    assert_tour(tour, 'Stanford', 5);
+    
+    node_id = tour['tour']['nodes'][0]['nodeId']
+    mongo_id = tour['tour']['nodes'][0]['mongoId']
+    res = send_request('nodeContent?nodeId='+str(node_id), None, cookie)[0]
+    content_id = res['content'][0]['page'][0]['contentId']
+    res = send_request('mongoFile?mongoFile='+content_id, None, cookie, True)[0]
+    
+    compare = open('IMG_0137.JPG').read()
+    x = open('out1.jpg', 'w')
+    x.write(res)
+    x.close()
+    assert res == compare
+    print 'File Retrieval Test Successful'
+    
+    
         
 test_user_create()
 test_user_auth()
@@ -512,6 +546,7 @@ test_create_tour()
 test_create_tour2()
 test_get_tour()
 test_get_nodes()
+test_file_retreive()
 
 """
 res, cookie = send_request('echo', {'data' : 'same'})

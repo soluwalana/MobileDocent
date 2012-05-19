@@ -31,8 +31,7 @@ function DataStore (initCallback){
 		mysqlDb.connect(function(err){
             if (err){
                 logger.error(err);
-                initCallback(false);
-                return null;
+                return initCallback(false);
             }
             mysqlConn = this;
             mongoDb.open(function(err, openMongo){
@@ -89,8 +88,7 @@ function DataStore (initCallback){
         var userManager = new UserManager(self.unauthenticatedStore());
         userManager.addUser(userData, function(err, userId){
             if (err){
-                callback(err);
-                return null;
+                return callback(err);
             }
             authenticated = true;
             callback(null, userId);
@@ -108,8 +106,7 @@ function DataStore (initCallback){
         var userManager = new UserManager(self.unauthenticatedStore());        
         userManager.authenticate(userData, function(err, userId){
             if (err){
-                callback(err);
-                return null;
+                return callback(err);
             }
             authenticated = true;
             callback(null, userId);
@@ -147,7 +144,11 @@ function DataStore (initCallback){
     /* Gets the 12 byte mongo db _id type from the given hex
        string */
     self.getMongoIdFromHex = function(hexStr){
-        return mongodb.ObjectID.createFromHexString(hexStr);
+		try{
+			return mongodb.ObjectID.createFromHexString(hexStr);
+		} catch (e){
+			return null;
+		}
     };
     
     /* Returns a mongo collection to be operated on if authenticated
@@ -167,23 +168,41 @@ function DataStore (initCallback){
        @param {string} type: mimetype of file to be opened
        @param {function} callback: should expect err and the gridstore
            as parameters*/
-    self.mongoGrid = function(type, callback){
+    self.newMongoGrid = function(type, callback){
         if (self.authenticatedAccess(callback)){
             var fileName = uuid.v4();
             var opts = {
-                'content_type' : type,
-                'chunk_size' : constants.FILE_BUF_SIZE
+                content_type : type,
+                chunk_size : constants.FILE_BUF_SIZE
             };
             var gs = new mongodb.GridStore(mongoDb, fileName, 'w', opts);
             gs.open(function(err, gs){
                 if (err){
-                    errorCallback('Error Making grid store', callback);
-                    return null;
+                    return errorCallback('Error Making grid store', callback);
                 }
                 callback(null, gs, fileName);
             });
         }
     };
+
+	/* Return a stored GridStore object for reading
+	   @param {string} mongoId: the mongo Id for the stored file
+	   @param {function} callback: should expect err and the gs as parameters*/
+	self.mongoGrid = function(mongoId, callback){
+		if (self.authenticatedAccess(callback)){
+			var gs = new mongodb.GridStore(
+				mongoDb, mongoId, 'r', {chunk_size : constants.FILE_BUF_SIZE});
+			gs.open(function(err, gs){
+				if (err){
+					return errorCallback('Error Opening Grid Store', callack);
+				}
+				if (gs.length === 0){
+					return errorCallback('This File Does Not Have Data', callback);
+				}
+				callback(null, gs);
+			});
+		}
+	};
     
     /* Do clean up here for data store*/
     self.close = function(){
@@ -199,8 +218,7 @@ function DataStore (initCallback){
 var buildDataStore = function (req, res, callback){
 	var ds = new DataStore(function(inited){
         if (!inited){
-            res.send('There was an error initializing the DB', 500);
-            return null;
+            return res.send('There was an error initializing the DB', 500);
         }
         
 		var send = res.send;
