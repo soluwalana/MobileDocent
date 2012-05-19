@@ -18,9 +18,8 @@ rest.getTour = function (store, params, callback){
 };
 
 rest.getNode = function (store, params, callback){
-    logger.info('Node Request Received');
-	callback({ 'success' : 'get node by id',
-			   'data' : params});
+    var tourManager = new TourManager(store);
+    tourManager.getNode(params, callback);
 };
 
 rest.getLocation = function (store, params, callback){

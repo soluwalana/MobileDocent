@@ -15,30 +15,27 @@ var UserManager = function(store){
     };
 
     self.authenticate = function(params, callback){
-        if (!params.userName || !params.pass || !params.deviceId){
-            errorCallback('Request to authenticate had wrong pramaters', callback);
-            return null;
+        if ((!params.userName && !params.userId) || !params.pass ){
+            return errorCallback('Request to authenticate had wrong pramaters', callback);
         }
-        logger.warn(params);
+        
         self.store.sqlConn(function(err, conn){
-            var sql = queries.selectUserAuth;
-            var sqlParams = [params.userName, params.deviceId];
+            var sql = params.userName ? queries.selectUserByName : queries.selectUserById;
+            var sqlParams = [params.userName ? params.userName : params.userId];
             conn.query(sql, sqlParams).execute(
                 function (err, rows, cols){
                     if (err || rows.length === 0){
-                        errorCallback('User lookup failed for authentication', callback);
-                        return null;
+                        return errorCallback('User lookup failed for authentication', callback);
                     }
                     
                     if (rows.length !== 1){
-                        errorCallback('More than one user matches the userName/device');
-                        return null;
+                        return errorCallback('More than one user matches the userName/device');
                     }
+                    
                     var user = rows[0];
                     var password = helpers.generatePassword(params.pass, user.salt);
                     if (password !== user.password){
-                        errorCallback('Authentication failure', callback);
-                        return null;
+                        return errorCallback('Authentication failure', callback);
                     }
                     
 		            callback(null, user.userId);    
@@ -49,15 +46,12 @@ var UserManager = function(store){
     };
     
     self.addUser = function(params, callback){
-        if (!params.userName || !params.deviceId ||
-            !params.pass || !params.passConf){
-            errorCallback('Request missing basic parameters', callback);
-            return null;
+        if (!params.userName ||!params.pass || !params.passConf){
+            return errorCallback('Request missing basic parameters', callback);
         }
         
         if (params.pass !== params.passConf){
-            errorCallback("Passwords don't match", callback);
-            return null;
+            return errorCallback("Passwords don't match", callback);
         }
         
         /* Set Default values */
@@ -71,43 +65,28 @@ var UserManager = function(store){
         
         self.store.sqlConn(function(err, conn){
             if (err){
-                callback(err);
-                return null;
+                return callback(err);
             }
             var sql = queries.insertUser;
             var sqlParams = [params.userName, password, salt, params.about,
-                              params.email, params.fbId, params.twitterId];
-
+                             params.email, params.fbId, params.twitterId];
             conn.query(sql, sqlParams).execute(function (err, result){
                 if (err){
-                    errorCallback('Insert User Failed, check duplicate', callback);
-                    return null;
+                    return errorCallback('Insert User Failed, check duplicate', callback);
                 }
-                sql = queries.insertDevice;
-                sqlParams = [result.id, params.deviceId];
-                conn.query(sql, sqlParams).execute(
-                    function  (err, result){
-                        if (err){
-                            errorCallback('Insert Device ID failed', callback);
-                            return null;
-                        }
-                        callback(null, result.id);
-                    }
-                );
+                callback(null, result.id);
             });
         });
     };
 
     self.getUser = function(params, callback){
         if (!params.userName && !params.userId && !params.deviceId){
-            errorCallback('Required Field Missing From User Request', callback);
-            return null;
+            return errorCallback('Required Field Missing From User Request', callback);
         }
         self.store.sqlConn(function(err, conn){
             if (err){
-                callback(err);
-                return null;
-            }
+                return callback(err);
+                            }
             var sql = null;
             var sqlParams = [];
             
@@ -127,18 +106,16 @@ var UserManager = function(store){
             
             conn.query(sql, sqlParams).execute(function (err, rows, cols){
                 if (err){
-                    errorCallback(err, callback);
-                    return null;
+                    return errorCallback(err, callback);
+                    
                 }
                 if (rows.length === 0){
                     logger.warn('No Users Found For query');
                     logger.warn([sql, params]);
-                    callback([]);
-                    return null;
+                    return callback([]);
                 }
                 if (rows.length === 1){
-                    callback(rows[0]);
-                    return null;
+                    return callback(rows[0]);
                 }
                 callback(rows);
             });

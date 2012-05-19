@@ -46,15 +46,6 @@ create table users (
 	unique(userName)
 ) ENGINE InnoDB character set utf8 collate utf8_general_ci;
 
-create table userDevices(
-    userId integer unsigned not null,
-    deviceId varchar(255) not null,
-    primary key (userId, deviceId),
-
-    foreign key (userId) references users(userId)
-    on delete cascade
-) ENGINE InnoDB character set utf8 collate utf8_general_ci;
-
 create table tours (
 	tourId integer unsigned not null auto_increment,
     userId integer unsigned not null, 

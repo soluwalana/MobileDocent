@@ -78,7 +78,6 @@ def test_user_create():
     #success test
     success_test('user', 'User Created Successfully',
                  {'userName' : 'samo',
-                  'deviceId' : 'e01ae16e97c13c77',
                   'pass' : 'samo',
                   'passConf' : 'samo',
                   'about' : 'I like CS',
@@ -88,7 +87,6 @@ def test_user_create():
     #success multi user one phone
     success_test('user', 'User Created Successfully',
                  {'userName' : 'samo1',
-                  'deviceId' : 'e01ae16e97c13c77',
                   'pass' : 'samo',
                   'passConf' : 'samo',
                   'about' : 'I like CS'}
@@ -97,29 +95,20 @@ def test_user_create():
     #duplicate user test
     err_test('user', None,
              {'userName' : 'samo',
-              'deviceId' : 'e01ae16e97c13c77',
               'pass' : 'samo',
               'passConf' : 'samo',
               'about' : 'I like CS'})
     
+
     #missing param test
     err_test('user', 'Request missing basic parameters',
              {'userName' : 'samo',
-              'pass' : 'samo',
-              'passConf' : 'samo',
-              'about' : 'I like CS'})
-    
-    #missing param test
-    err_test('user', 'Request missing basic parameters',
-             {'userName' : 'samo',
-              'deviceId' : 'e01ae16e97c13c77',
               'pass' : 'samo',
               'about' : 'I like CS'})
         
     #missing param test
     err_test('user', 'Request missing basic parameters',
-             {'deviceId' : 'e01ae16e97c13c77',
-              'pass' : 'samo',
+             {'pass' : 'samo',
               'passConf' : 'samo',
               'about' : 'I like CS'})
     
@@ -127,14 +116,12 @@ def test_user_create():
     #missing param test
     err_test('user', 'Request missing basic parameters',
              {'userName' : 'samo',
-              'deviceId' : 'e01ae16e97c13c77',
               'passConf' : 'samo',
               'about' : 'I like CS'})
 
     #pass mismatch test
     err_test('user', "Passwords don't match",
              {'userName' : 'samo',
-              'deviceId' : 'e01ae16e97c13c77',
               'pass' : 'samo1',
               'passConf' : 'samo',
               'about' : 'I like CS'})
@@ -170,22 +157,19 @@ def test_user_auth():
               'locId' : 11382,
               'walkingDistance' : '1.5'
               })
-
+    
     err_test('login', 'Authentication failure',
              {'userName' : 'samo',
-              'deviceId' : 'e01ae16e97c13c77',
               'pass' : 'wrongPass'
               })
 
     err_test('login', 'User lookup failed for authentication',
              {'userName' : 'bob',
-              'deviceId' : 'e01ae16e97c13c77',
               'pass' : 'wrongPass'
               })
 
     cookie = success_test('login', 'Successfully authenticated',
                           {'userName' : 'samo',
-                           'deviceId' : 'e01ae16e97c13c77',
                            'pass' : 'samo'
                            })
 
@@ -195,6 +179,15 @@ def test_user_auth():
     success_test('logout', 'Logged Out', None, cookie)
 
     err_test('echo', 'Session is not authenticated', data, cookie)
+
+    cookie = success_test('login', 'Successfully authenticated',
+                          {'userId' : 1,
+                           'pass' : 'samo'
+                           })
+    
+    
+    success_test('echo', data, data, cookie)
+
         
     print 'Successful user_auth test complete'
 
@@ -205,17 +198,14 @@ def compare_users (res, data):
     
 def test_user_get():
     user = {'userName' : 'samo',
-             'deviceId' : 'e01ae16e97c13c77',
-             'about' : 'I like CS',
+            'about' : 'I like CS',
              'email' : 'soluwalana@gmail.com'}
     user1 = {'userName' : 'samo1',
-             'deviceId' : 'e01ae16e97c13c77',
              'about' : 'I like CS',
              'email' : None}
     
     cookie = success_test('login', 'Successfully authenticated',
                           {'userName' : 'samo',
-                           'deviceId' : 'e01ae16e97c13c77',
                            'pass' : 'samo'
                            })
     
@@ -231,9 +221,6 @@ def test_user_get():
     res = send_request('user?userName=samo1', None, cookie)[0]
     compare_users(res, user1)
 
-    res = send_request('user?deviceId=e01ae16e97c13c77', None, cookie)[0]
-    assert len(res) == 2
-
     res = send_request('user?userName=e01ae16e97c13c77', None, cookie)[0]
     assert len(res) == 0
     
@@ -242,7 +229,6 @@ def test_user_get():
 def test_create_tour():
     cookie = success_test('login', 'Successfully authenticated',
                           {'userName' : 'samo',
-                           'deviceId' : 'e01ae16e97c13c77',
                            'pass' : 'samo'
                            })
 
@@ -260,24 +246,31 @@ def test_create_tour():
         up when users are within a 1/4 mile radius from the latitude
         and longitude it is optional
 
-        prevNode is optional if specified this node will be placed
-            preceeding the node in the tour. Setting the old nodes next
-            to the current node and the prev of the following node to the
-            current node
+        prevNode is optional if specified this node will be inserted
+            after the node specified by prevNode if prevNode is specified
+            and set to null this node will be prepended 
             If missing it will be placed as the last node in the tour
            
         content is optional it is in the format
            [ Page, Page, Page]
            Page = [{section}, {section}, {section}]
-           section = { /* Tentative definition */
-                       xpos, ypos, contentType, contentId||content
+           section = {
+               /* Required fields */
+               xpos, ypos, contentType, contentId||content
+
+               /* Any other key can be defined without affecting
+                  server and will be stored to mongo */
                      }
 
           contentId is the key to the file that is also being uploaded
           content is for raw text content (may also be html)
           contentType is the mime data type for the content
-
+          
           One of content/contentId is required for each section
+
+          ANY ADDITIONAL KEY VALUE PAIR CAN BE INCLUDED
+          this makes it convienent to store section specific
+          information for rendering or what have you
 
     """
     node_data = {
@@ -292,7 +285,8 @@ def test_create_tour():
             [{'xpos' : 0, 'ypos' : 0,
               'width' : 20, 'height': 20,
               'contentType' : 'image/jpg',
-              'contentId' : 'image1'},
+              'contentId' : 'image1',
+              'title' : 'A picture'},
              {'xpos' : 20, 'ypos' : 0,
               'width' : 40, 'height': 20,
               'contentType' : 'text/plain',
@@ -301,18 +295,21 @@ def test_create_tour():
              {'xpos' : 60, 'ypos': 0,
               'width': 20, 'height': 20,
               'contentType' : 'image/jpg',
-              'contentId' : 'image2'
+              'contentId' : 'image2',
+              'title' : 'Something Else'
               }
              ],
             [{'xpos' : 0, 'ypos' : 0,
               'width': 60, 'height' : 60,
               'contentType' : 'image/jpg',
-              'contentId' : 'image3'
+              'contentId' : 'image3',
+              'random' : 'A random key which should have no effect on anything'
               },
              {'xpos' : 0, 'ypos' : 60,
               'width':60, 'height':60,
               'contentType' : 'text/html',
-              'content' : '<h1>Hello</h1><p>Html World</p><p>For pretty formating perhaps</p>'
+              'content' : '<h1>Hello</h1><p>Html World</p><p>For pretty formating perhaps</p>',
+              'htmlHelpParam': 'something additional that is not used'
               }
              ]
             ]
@@ -324,14 +321,13 @@ def test_create_tour():
             'nodeData' : json.dumps(node_data)
             }
 
+    #Node 1
     res = send_files('node', data, cookie)
     assert_result(res)
 
-    node_data['latitude'] = 37.618
-    node_data['longitude'] = -122.28;
-    data['nodeData'] = json.dumps(node_data)
-
+    
     #Tests missing file and missing content, only brief available
+    #Node 2
     brief_node = {
         'nodeData' : json.dumps({
                 'tourId' : 1,
@@ -346,6 +342,8 @@ def test_create_tour():
     res = send_request('node', brief_node, cookie)[0];
     assert_result(res)
 
+
+    #Node 3
     pseudo_node = {
         'nodeData' : json.dumps({
                 'tourId' : 1,
@@ -356,10 +354,16 @@ def test_create_tour():
 
     res = send_request('node', pseudo_node, cookie)[0];
     assert_result(res)
-    
+
+    # Node 4
+    node_data['latitude'] = 37.618
+    node_data['longitude'] = -122.28;
+    data['nodeData'] = json.dumps(node_data)
+
     res = send_files('node', data, cookie)
     assert_result(res)
 
+    #Node 5
     node_data['latitude'] = 36.618
     node_data['longitude'] = -122.91;
     data['nodeData'] = json.dumps(node_data)
@@ -368,38 +372,147 @@ def test_create_tour():
     assert_result(res)
     print 'Successfully created tour with 5 nodes'
 
+def test_create_tour2 ():
+    """ This test ensures that the extra options for prevNode work correctly
+        ensuring that ordering is correct when things are prepended, inserted and
+        appended """
+    
+    cookie = success_test('login', 'Successfully authenticated',
+                          {'userName' : 'samo',
+                           'pass' : 'samo'
+                           })
+
+    
+    success_test('tour', 'Tour Created', {'tourName' : 'Stanford2',
+                                          'description' : 'Tour of Memorable Stanford Locations',
+                                          }, cookie)
+    
+
+    pseudo_node = {
+        'nodeData' : json.dumps({
+                'tourId' : 2,
+                'latitude' : 999,
+                'longitude' : 999,
+                'brief' : {
+                    'title' : 'Test Regular Node',
+                    'description' : 'This is a test node that has three repetive pics'
+                    }
+                })
+        }
+
+    
+    # create 5 nodes 
+    res = send_request('node', pseudo_node, cookie)[0];
+    assert_result(res)
+    first_node = res['result']['nodeId']
+    res = send_request('node', pseudo_node, cookie)[0];
+    assert_result(res)
+    res = send_request('node', pseudo_node, cookie)[0];
+    assert_result(res)
+    res = send_request('node', pseudo_node, cookie)[0];
+    assert_result(res)
+    res = send_request('node', pseudo_node, cookie)[0];
+    assert_result(res)
+    
+    #prepend 2 nodes
+    pseudo_node = {
+        'nodeData' : json.dumps({
+                'tourId' : 2,
+                'prevNode' : None,
+                'latitude' : 111,
+                'longitude' : 111,
+                'brief' : {
+                    'title' : 'Test Prepend Node',
+                    'description' : 'This is a test node that has three repetive pics'
+                    }
+                })
+        }
+    res = send_request('node', pseudo_node, cookie)[0];
+    assert_result(res)
+    res = send_request('node', pseudo_node, cookie)[0];
+    assert_result(res)
+
+    #insert 1 node after the first original node
+    pseudo_node = {
+        'nodeData' : json.dumps({
+                'tourId' : 2,
+                'prevNode' : first_node,
+                'latitude' : 200,
+                'longitude' : 200,
+                'brief' : {
+                    'title' : 'Test INsert Node',
+                    'description' : 'This is a test node that has three repetive pics'
+                    }
+                })
+        }
+    res = send_request('node', pseudo_node, cookie)[0];
+    
+
+    res = send_request('tour?tourId=2', None, cookie)[0]
+    assert_tour(res, 'Stanford2', 8)
+    
+    expected_order = [111, 111, 999, 200, 999, 999, 999, 999]
+
+    for idx, val in enumerate(res['tour']['nodes']):
+        assert 'latitude' in val
+        assert 'longitude' in val
+        assert 'mongoId' in val
+        assert val['mongoId'] != None
+        assert val['latitude'] == expected_order[idx]
+        assert val['longitude'] == expected_order[idx]
+        
+def assert_tour(res, name, nodes):
+    assert 'success' in res
+    assert 'tour' in res
+    assert 'tourId' in res['tour']
+    assert 'tourName' in res['tour']
+    assert res['tour']['tourName'] == name
+    assert 'nodes' in res['tour']
+    assert len(res['tour']['nodes']) == nodes
+
+def assert_normal_node(res):
+    pass
+
+def assert_brief_only_node(res):
+    pass
+
+def assert_pseudo_node(res):
+    pass
+
 def test_get_tour():
     cookie = success_test('login', 'Successfully authenticated',
                           {'userName' : 'samo',
-                           'deviceId' : 'e01ae16e97c13c77',
                            'pass' : 'samo'
                            })
 
     res = send_request('tour?tourId=1', None, cookie)[0]
-    assert 'success' in res
-    assert 'tour' in res
-    assert 'tourId' in res['tour']
-    assert 'tourName' in res['tour']
-    assert res['tour']['tourName'] == 'Stanford'
-    assert 'nodes' in res['tour']
-    assert len(res['tour']['nodes']) == 5
+    assert_tour(res, 'Stanford', 5)
     
     res = send_request('tour?tourName=Stanford', None, cookie)[0]
-    assert 'success' in res
-    assert 'tour' in res
-    assert 'tourId' in res['tour']
-    assert 'tourName' in res['tour']
-    assert res['tour']['tourName'] == 'Stanford'
-    assert 'nodes' in res['tour']
-    assert len(res['tour']['nodes']) == 5
+    assert_tour(res, 'Stanford', 5)
 
     print 'Successfully Retrieved tour with 5 nodes'
+
+def test_get_nodes():
+    cookie = success_test('login', 'Successfully authenticated',
+                          {'userName' : 'samo',
+                           'pass' : 'samo'
+                           })
+
+    res = send_request('tour?tourId=1', None, cookie)[0]
+    assert_tour(res, 'Stanford', 5)
+    for idx, node in enumerate(res['tour']['nodes']):
+        #res = send_request(
+        pass
         
 test_user_create()
 test_user_auth()
 test_user_get()
 test_create_tour()
+test_create_tour2()
 test_get_tour()
+test_get_nodes()
+
 """
 res, cookie = send_request('echo', {'data' : 'same'})
 res, cookie = send_request('user/1')

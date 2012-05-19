@@ -133,7 +133,7 @@ function DataStore (initCallback){
 
     /* Functions that must be authenticated */
     
-    /* Returns a query object to be executed on to the callback,
+    /* Returns the conn object to be executed as a parameter to callback,
        will return an error on unauthenticated access
        @param {function} callback - A function that should be expecting
            two parameters err, and query
@@ -144,16 +144,29 @@ function DataStore (initCallback){
         }
     };
 
+    /* Gets the 12 byte mongo db _id type from the given hex
+       string */
+    self.getMongoIdFromHex = function(hexStr){
+        return mongodb.ObjectID.createFromHexString(hexStr);
+    };
+    
     /* Returns a mongo collection to be operated on if authenticated
        access to database has been granted. should expect the err and
        collection */
     self.mongoCollection = function(collectionName, callback){
         if (self.authenticatedAccess(callback, 'MongoDB')){
+            
             mongoConn.collection(collectionName, callback);
         }        
     };
 
-    
+
+    /* Returns a GridStore object that can be used for storing
+       files up to 2GB in size and streamed in and out of the
+       mongo database
+       @param {string} type: mimetype of file to be opened
+       @param {function} callback: should expect err and the gridstore
+           as parameters*/
     self.mongoGrid = function(type, callback){
         if (self.authenticatedAccess(callback)){
             var fileName = uuid.v4();
