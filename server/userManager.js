@@ -19,6 +19,7 @@ var UserManager = function(store){
             errorCallback('Request to authenticate had wrong pramaters', callback);
             return null;
         }
+        logger.warn(params);
         self.store.sqlConn(function(err, conn){
             var sql = queries.selectUserAuth;
             var sqlParams = [params.userName, params.deviceId];

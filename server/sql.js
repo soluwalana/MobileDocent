@@ -24,14 +24,16 @@ exports.queries= {
     updateTourDesc : 'update tours set description = ? where tourId = ? and userId = ?', 
     updateTourLocation : 'update tours set locId = ? where tourId = ? and userId = ?',
     updateTourDist : 'update tours set walkingDistance = ? where tourId = ? and userId = ?',
-
     activateTour : 'update tours set active = 1 where tourId = ? and userId = ?',
 
+    getTourById : 'select * from tours as T inner join nodes as N where T.tourId = ? and T.tourId = N.tourId',
+    getTourByName: 'select * from tours as T inner join nodes as N where tourName = ? and T.tourId = N.tourId',
+    
     /* Node Queries */
     checkTourOwnership : 'select 1 from tours where userId = ? and tourId = ?',
     checkNodeOwnership : 'select 1 from tours, nodes where tours.tourId = nodes.tourId and tours.userId = ? and tours.tourId = ?',
 
-    // Needs lat, long, pseudo, tourId
+    //Use MQ: Expects lat, long, pseudo, tourId
     appendNode: 'insert into nodes (latitude, longitude, prevNode, nextNode, pseudo, tourId) '+
         'select ?, ?, X.nodeId, null, ?, ? from ('+
         'select nodeId from nodes as N1 where N1.nextNode is null and N1.tourId = 1 '+
@@ -42,20 +44,20 @@ exports.queries= {
         'update nodes set nextNode=LAST_INSERT_ID() where nodeId != LAST_INSERT_ID() and nextNode is null;'+
         'select * from nodes where nodeId=LAST_INSERT_ID();',
 
-    //Needs latitude, longitude, prevNode, nextNode, pseudo, tourId, prevNode, nextNode
+    //Use MQ: Needs latitude, longitude, prevNode, nextNode, pseudo, tourId, prevNode, nextNode
     insertNode: 'insert into nodes (latitude, longitude, prevNode, nextNode, pseudo, tourId) values'+
         '(?, ?, ?, ?, ?, ?);'+
         'update nodes set nextNode=LAST_INSERT_ID() where nodeId = ?;'+
         'update nodes set prevNode=LAST_INSERT_ID() where nodeId = ?;',
 
-    // Needs nodeId, nodeId, nodeId
+    //Use MQ: Needs nodeId, nodeId, nodeId
     removeNode : 'update nodes as N1, (select nodeId, nextNode from nodes where nodeId = ?) as N2 '+
         'set N1.nextNode=N2.nextNode where N1.nextNode = N2.nodeId;'+
         'update nodes as N1, (select nodeId, prevNode from nodes where nodeId = ?) as N2 '+
         'set N1.prevNode=N2.prevNode where N1.prevNode = N2.nodeId;'+
         'delete from nodes where nodeId = ?;',
 
-    // mongoId, nodeId
+    // Needs mongoId, nodeId
     bindMongoToSql: 'update nodes set mongoId = ? where nodeId = ?',
     
     /* Geo Queries */

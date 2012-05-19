@@ -34,12 +34,12 @@ app.get('/user', function(req, res){
 
 /* Get the tour item*/
 app.get('/tour', function(req, res){
-    rest.getTour(req.ds, req.params, function(data){ res.send(data);});
+    rest.getTour(req.ds, req.query, function(data){ res.send(data);});
 });
 
 /* Get the Node Details */
 app.get('/node', function(req, res){
-    rest.getNode(req.ds, req.params, function(data){ res.send(data);});
+    rest.getNode(req.ds, req.query, function(data){ res.send(data);});
 });
 
 app.post('/location', function(req, res){
@@ -59,7 +59,7 @@ app.post('/tour', function(req, res){
 
 /* Add a node to the tour given by the tourId and userId */
 app.post('/node', function(req, res){
-    rest.createNode(req.ds, req.body, function(data){ res.send(data);});
+    rest.createNode(req.ds, req.body, req.files, function(data){ res.send(data);});
 });
 
 
@@ -72,17 +72,6 @@ app.post('/echo', function (req, res){
     res.send({'success' : req.body});
 });
 
-app.all('/uploadTest', function(req, res){
-    rest.createNode(req.ds, req.body, req.files, function(data){ res.send(data);});
-});
-
-app.all('/test', function(req, res){
-	logger.info('Got Request for test');
-    req.ds.test(function(err, data){
-		res.send({'success' : 'Ran',
-				  'data' : data});
-	});
-});
 
 app.all(/.*/, function (req, res){
     var msg = {'error' : 'This request fell through', 'url' : req.url} ;

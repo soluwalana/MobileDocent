@@ -78,7 +78,7 @@ def test_user_create():
     #success test
     success_test('user', 'User Created Successfully',
                  {'userName' : 'samo',
-                  'deviceId' : 'X28934',
+                  'deviceId' : 'e01ae16e97c13c77',
                   'pass' : 'samo',
                   'passConf' : 'samo',
                   'about' : 'I like CS',
@@ -88,7 +88,7 @@ def test_user_create():
     #success multi user one phone
     success_test('user', 'User Created Successfully',
                  {'userName' : 'samo1',
-                  'deviceId' : 'X28934',
+                  'deviceId' : 'e01ae16e97c13c77',
                   'pass' : 'samo',
                   'passConf' : 'samo',
                   'about' : 'I like CS'}
@@ -97,7 +97,7 @@ def test_user_create():
     #duplicate user test
     err_test('user', None,
              {'userName' : 'samo',
-              'deviceId' : 'X28934',
+              'deviceId' : 'e01ae16e97c13c77',
               'pass' : 'samo',
               'passConf' : 'samo',
               'about' : 'I like CS'})
@@ -112,13 +112,13 @@ def test_user_create():
     #missing param test
     err_test('user', 'Request missing basic parameters',
              {'userName' : 'samo',
-              'deviceId' : 'X28934',
+              'deviceId' : 'e01ae16e97c13c77',
               'pass' : 'samo',
               'about' : 'I like CS'})
         
     #missing param test
     err_test('user', 'Request missing basic parameters',
-             {'deviceId' : 'X28934',
+             {'deviceId' : 'e01ae16e97c13c77',
               'pass' : 'samo',
               'passConf' : 'samo',
               'about' : 'I like CS'})
@@ -127,14 +127,14 @@ def test_user_create():
     #missing param test
     err_test('user', 'Request missing basic parameters',
              {'userName' : 'samo',
-              'deviceId' : 'X28934',
+              'deviceId' : 'e01ae16e97c13c77',
               'passConf' : 'samo',
               'about' : 'I like CS'})
 
     #pass mismatch test
     err_test('user', "Passwords don't match",
              {'userName' : 'samo',
-              'deviceId' : 'X28934',
+              'deviceId' : 'e01ae16e97c13c77',
               'pass' : 'samo1',
               'passConf' : 'samo',
               'about' : 'I like CS'})
@@ -173,19 +173,19 @@ def test_user_auth():
 
     err_test('login', 'Authentication failure',
              {'userName' : 'samo',
-              'deviceId' : 'X28934',
+              'deviceId' : 'e01ae16e97c13c77',
               'pass' : 'wrongPass'
               })
 
     err_test('login', 'User lookup failed for authentication',
              {'userName' : 'bob',
-              'deviceId' : 'X28934',
+              'deviceId' : 'e01ae16e97c13c77',
               'pass' : 'wrongPass'
               })
 
     cookie = success_test('login', 'Successfully authenticated',
                           {'userName' : 'samo',
-                           'deviceId' : 'X28934',
+                           'deviceId' : 'e01ae16e97c13c77',
                            'pass' : 'samo'
                            })
 
@@ -205,17 +205,17 @@ def compare_users (res, data):
     
 def test_user_get():
     user = {'userName' : 'samo',
-             'deviceId' : 'X28934',
+             'deviceId' : 'e01ae16e97c13c77',
              'about' : 'I like CS',
              'email' : 'soluwalana@gmail.com'}
     user1 = {'userName' : 'samo1',
-             'deviceId' : 'X28934',
+             'deviceId' : 'e01ae16e97c13c77',
              'about' : 'I like CS',
              'email' : None}
     
     cookie = success_test('login', 'Successfully authenticated',
                           {'userName' : 'samo',
-                           'deviceId' : 'X28934',
+                           'deviceId' : 'e01ae16e97c13c77',
                            'pass' : 'samo'
                            })
     
@@ -231,10 +231,10 @@ def test_user_get():
     res = send_request('user?userName=samo1', None, cookie)[0]
     compare_users(res, user1)
 
-    res = send_request('user?deviceId=X28934', None, cookie)[0]
+    res = send_request('user?deviceId=e01ae16e97c13c77', None, cookie)[0]
     assert len(res) == 2
 
-    res = send_request('user?userName=X28934', None, cookie)[0]
+    res = send_request('user?userName=e01ae16e97c13c77', None, cookie)[0]
     assert len(res) == 0
     
     print 'Successful test user get'
@@ -242,7 +242,7 @@ def test_user_get():
 def test_create_tour():
     cookie = success_test('login', 'Successfully authenticated',
                           {'userName' : 'samo',
-                           'deviceId' : 'X28934',
+                           'deviceId' : 'e01ae16e97c13c77',
                            'pass' : 'samo'
                            })
 
@@ -324,21 +324,82 @@ def test_create_tour():
             'nodeData' : json.dumps(node_data)
             }
 
-    res = send_files('uploadTest', data, cookie)
+    res = send_files('node', data, cookie)
     assert_result(res)
 
-    res = send_files('uploadTest', data, cookie)
+    node_data['latitude'] = 37.618
+    node_data['longitude'] = -122.28;
+    data['nodeData'] = json.dumps(node_data)
+
+    #Tests missing file and missing content, only brief available
+    brief_node = {
+        'nodeData' : json.dumps({
+                'tourId' : 1,
+                'latitude': 37.418,
+                'longitude': -122.172,
+                'brief' : {
+                    'title' : 'Test Node',
+                    'description' : 'This is a test node that has three repetive pics',
+                    'thumbId' : 'thumb1'
+                    }
+                })}
+    res = send_request('node', brief_node, cookie)[0];
+    assert_result(res)
+
+    pseudo_node = {
+        'nodeData' : json.dumps({
+                'tourId' : 1,
+                'latitude' : 38.23,
+                'longitude' : -121.18,
+                })
+        }
+
+    res = send_request('node', pseudo_node, cookie)[0];
     assert_result(res)
     
-    res = send_files('uploadTest', data, cookie)
+    res = send_files('node', data, cookie)
     assert_result(res)
-    print 'Successfully created tour with three nodes'
+
+    node_data['latitude'] = 36.618
+    node_data['longitude'] = -122.91;
+    data['nodeData'] = json.dumps(node_data)
+    
+    res = send_files('node', data, cookie)
+    assert_result(res)
+    print 'Successfully created tour with 5 nodes'
+
+def test_get_tour():
+    cookie = success_test('login', 'Successfully authenticated',
+                          {'userName' : 'samo',
+                           'deviceId' : 'e01ae16e97c13c77',
+                           'pass' : 'samo'
+                           })
+
+    res = send_request('tour?tourId=1', None, cookie)[0]
+    assert 'success' in res
+    assert 'tour' in res
+    assert 'tourId' in res['tour']
+    assert 'tourName' in res['tour']
+    assert res['tour']['tourName'] == 'Stanford'
+    assert 'nodes' in res['tour']
+    assert len(res['tour']['nodes']) == 5
+    
+    res = send_request('tour?tourName=Stanford', None, cookie)[0]
+    assert 'success' in res
+    assert 'tour' in res
+    assert 'tourId' in res['tour']
+    assert 'tourName' in res['tour']
+    assert res['tour']['tourName'] == 'Stanford'
+    assert 'nodes' in res['tour']
+    assert len(res['tour']['nodes']) == 5
+
+    print 'Successfully Retrieved tour with 5 nodes'
         
 test_user_create()
 test_user_auth()
 test_user_get()
 test_create_tour()
-
+test_get_tour()
 """
 res, cookie = send_request('echo', {'data' : 'same'})
 res, cookie = send_request('user/1')

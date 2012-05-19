@@ -60,11 +60,12 @@ create table tours (
     userId integer unsigned not null, 
 	tourName varchar(255) not null,
  	description text,
-	locId integer unsigned,
+  	locId integer unsigned,
   	walkingDistance double default null,
+    official tinyint(1) default 0,
     active tinyint(1) default 0,
 	primary key(tourId),
-    unique (tourName),
+    unique (tourName, official),
     foreign key (userId) references users(userId) on delete cascade,
     foreign key (locId) references locations(locId) on delete cascade
     

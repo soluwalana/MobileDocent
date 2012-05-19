@@ -13,9 +13,8 @@ rest.getUser = function (store, params, callback){
 };
 
 rest.getTour = function (store, params, callback){
-    logger.info('Tour Get Request Received');
-	callback({'success' : 'got tour request',
-			  'data' : params});
+    var tourManager = new TourManager(store);
+    tourManager.getTour(params, callback);
 };
 
 rest.getNode = function (store, params, callback){

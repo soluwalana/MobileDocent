@@ -14,7 +14,7 @@ var errorCallback = function (message, callback){
 
 var addWarning = function (result, err){
     result.status = constants.WARN_STATUS;
-    if (!result.message instanceof Array){
+    if (!(result.message instanceof Array)){
         result.message = [];
     }
     result.message.push(err);
@@ -78,9 +78,91 @@ var TourManager = function(store){
         });
     };
 
+    self.getTour = function (params, callback){
+        if (!params.tourId && !params.tourName){
+            errorCallback('Required Fields Missing From Get Tour', callback);
+            return null;
+        }
+        self.store.sqlConn(function (err, conn){
+            if (err){
+                errorCallback(err, callback);
+                return null;
+            }
+            var sql = params.tourId ? queries.getTourById: queries.getTourByName;
+            var sqlParams = [params.tourId ? params.tourId : params.tourName];
+            conn.query(sql, sqlParams).execute(function (err, rows, cols){
+                if (err){
+                    errorCallback(err, callback);
+                    return null;
+                }
+                if (rows.length === 0){
+                    errorCallback('Tour Doesnt exist or has no nodes', callback);
+                    return null;
+                }
+                var retObj = {};
+                retObj.tourId = rows[0].tourId;
+                retObj.userId = rows[0].userId;
+                retObj.tourName = rows[0].tourName;
+                retObj.description = rows[0].description;
+                retObj.locId = rows[0].locId;
+                retObj.nodes = [];
+
+                var nodes = {};
+                var curNode = null;
+                for (var i = 0; i < rows.length; i ++){
+                    nodes[rows[i].nodeId] = {
+                        nodeId : rows[i].nodeId,
+                        latitude : rows[i].latitude,
+                        longitude: rows[i].longitude,
+                        prevNode : rows[i].prevNode,
+                        nextNode : rows[i].nextNode,
+                        pseudo: rows[i].pseudo,
+                        mongoId: rows[i].mongoId
+                    };
+                    if (rows[i].prevNode == null) curNode = rows[i].nodeId;
+                }
+                retObj.nodes.push(nodes[curNode]);
+                while(nodes[curNode].nextNode){
+                    curNode = nodes[curNode].nextNode;
+                    retObj.nodes.push(nodes[curNode]);
+                }
+                                
+                callback({'success' : 'Tour Retrieved',
+                          'tour' : retObj});
+            });
+            
+        });
+    };
+
+
+    self._modifyTour = function (params, conn, callback){
+
+    };
+    
+    self.modifyTour = function (params, callback){
+        if (!params.tourId || !params.authUserId){
+            errorCallback('Missing Required Parameters', callback);
+            return null;
+        }
+        self._verifyOwnership(
+            [params.authUserId, params.tourId],
+            queries.checkTourOwnership,
+            function(err, conn){
+                if(!err && conn){
+                    self._modifyTour(params, conn, callback);
+                }
+                errorCallback(err, callback);
+            }
+        );
+    };
+
+    
     self._createNode = function (nodeData, files, conn, callback){
         var numberCommitted = 0;
         var numberSubmitted = 0;
+        files = files || {};
+        var sections = {};
+                
         var result = {
             'status' : constants.GOOD_STATUS,
             'message' : ''
@@ -98,20 +180,20 @@ var TourManager = function(store){
             
             if (numberCommitted == numberSubmitted){
                 logger.debug('All Files Done');
-                self._finishNodeAppend(nodeData, result, conn, callback);
+                self._finishNodeAppend(nodeData, sections, result, conn, callback);
             }
         };
         
         nodeData.content = convertContent(nodeData.content);
         var nodeContent = nodeData.content;
-        var sections = nodeContent.sections || {};
+        sections = nodeContent ? nodeContent.sections : {};
         
         if (!nodeContent && !nodeData.brief){
-            // Pseudo Node 
-            self._finishNodeAppend(nodeData, result, conn, callback);
+            // Pseudo Node
+            self._finishNodeAppend(nodeData, sections, result, conn, callback);
             return null;
         }
-
+        
         var filesMetaData = [];
         for (var key in sections){
             if (sections[key].contentId){
@@ -138,7 +220,7 @@ var TourManager = function(store){
 
         // No Files uploaded all static text or html
         if (numberSubmitted === 0){
-            self._finishNodeAppend(nodeData, result, conn, callback);
+            self._finishNodeAppend(nodeData, sections, result, conn, callback);
             return null;
         }
 
@@ -186,10 +268,7 @@ var TourManager = function(store){
         );                    
     };
 
-    self._finishNodeAppend = function (nodeData, filesResult, conn, callback){
-        var commitToDB = function(){
-            
-        };
+    self._finishNodeAppend = function (nodeData, sections, filesResult, conn, callback){
         var nodeContent = nodeData.content;
         var latitude = nodeData.latitude;
         var longitude = nodeData.longitude;
@@ -200,8 +279,8 @@ var TourManager = function(store){
         var sqlParams = sqlParams = [latitude, longitude, pseudo, tourId];
         
         if (nodeData.brief && nodeData.brief.thumbId){
-            nodeData.brief.thumbId = nodeData.content.sections.thumb.contentId;
-            delete nodeData.content.sections.thumb;
+            nodeData.brief.thumbId = sections.thumb ? sections.thumb.contentId : null;
+            delete sections.thumb;
         }
         
         multiQuery(conn, sql, sqlParams, function (err, result){
@@ -239,7 +318,7 @@ var TourManager = function(store){
                         return null;
                     }
                     collection.insert(
-                        mongoObject, {'safe' : true },
+                        mongoObject, {safe : true },
                         function(err, records){
                             if (err || records.length === 0){
                                 var msg = 'Couldnt save to mongo, MySQL modified!';
@@ -268,27 +347,7 @@ var TourManager = function(store){
         });
     };
 
-    self._modifyTour = function (params, conn, callback){
-
-    };
     
-    self.modifyTour = function (params, callback){
-        if (!params.tourId || !params.authUserId){
-            errorCallback('Missing Required Parameters', callback);
-            return null;
-        }
-        self._verifyOwnership(
-            [params.authUserId, params.tourId],
-            queries.checkTourOwnership,
-            function(err, conn){
-                if(!err && conn){
-                    self._modifyTour(params, conn, callback);
-                }
-                errorCallback(err, callback);
-            }
-        );
-    };
-
     self._modifyNode = function (params, conn, callback){
         
     };
