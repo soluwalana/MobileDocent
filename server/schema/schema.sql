@@ -77,14 +77,19 @@ create table tags (
     tagId integer unsigned not null auto_increment,
 	tagName varchar(256) not null,
 	description text not null,
-	primary key(tagId)
+    userId integer unsigned not null,
+  	primary key(tagId),
+    foreign key (userId) references users(userId) on delete cascade
 ) ENGINE InnoDB character set utf8 collate utf8_general_ci;
 
 create table tourTags (
 	tagId integer unsigned not null,
 	tourId integer unsigned not null,
+    userId integer unsigned not null, 
+    primary key(tagId, tourId),
   	foreign key(tagId) references tags(tagId) on delete cascade,
-  	foreign key(tourId) references tours(tourId) on delete cascade
+  	foreign key(tourId) references tours(tourId) on delete cascade,
+    foreign key(userId) references users(userId) on delete cascade
 ) ENGINE InnoDB character set utf8 collate utf8_general_ci;
 
 create table nodes(

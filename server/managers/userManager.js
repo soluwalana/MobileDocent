@@ -1,22 +1,16 @@
-var queries = require('./sql.js').queries;
-var helpers = require('./helpers.js');
-var logger = require('./customLogger.js').getLogger();
-var getLineNum = require('./customLogger.js').getLineNumber;
+var SQL = require('../lib/sql.js').queries;
+var helpers = require('../lib/helpers.js');
+var logger = require('../lib/customLogger.js').getLogger();
+var getLineNum = require('../lib/customLogger.js').getLineNumber;
 
-var errorCallback = function (message, callback, lineInfo){
-    logger.error(message, lineInfo);
-    callback({'error' : message});
-};
-
+var errorHelper = require('../lib/helpers.js').errorHelper;
 var errorWrap = function (retCallback, callback){
-    var lineInfo = getLineNum();
-    return function (err, res, extra){
-        if (err){
-            return errorCallback(err, retCallback, lineInfo);
-        }
-        callback(res, extra);
-    };
+    return errorHelper(logger, getLineNum(), callback, retCallback);
 };
+var errorCallback = function (msg, callback){
+    logger.error(msg);
+    return callback({ error : msg });
+}
 
 var UserManager = function(store){
     var self = this;
@@ -27,11 +21,11 @@ var UserManager = function(store){
 
     self.authenticate = function(params, callback){
         if ((!params.userName && !params.userId) || !params.pass ){
-            return errorCallback('Request to authenticate had wrong pramaters', callback);
+            return errorCallback('Request Missing Paramaters', callback);
         }
         
         self.store.sqlConn(errorWrap(callback, function(conn){
-            var sql = params.userName ? queries.selectUserByName : queries.selectUserById;
+            var sql = params.userName ? SQL.getUserByName : SQL.getUserById;
             var sqlParams = [params.userName ? params.userName : params.userId];
             conn.query(sql, sqlParams).execute(
                 errorWrap(callback, function (rows, cols){
@@ -75,7 +69,7 @@ var UserManager = function(store){
         var password = helpers.generatePassword(params.pass, salt);
         
         self.store.sqlConn(errorWrap(callback, function(conn){
-            var sql = queries.insertUser;
+            var sql = SQL.addUser;
             var sqlParams = [params.userName, password, salt, params.about,
                              params.email, params.fbId, params.twitterId];
 
@@ -96,17 +90,17 @@ var UserManager = function(store){
             var sqlParams = [];
             
             if (params.userId){
-                sql = queries.selectUserById;
+                sql = SQL.getUserById;
                 sqlParams = [params.userId];
-                logger.debug('Select by ID');
+                logger.debug('Get by ID');
             } else if (params.userName){
-                sql = queries.selectUserByName;
+                sql = SQL.getUserByName;
                 sqlParams = [params.userName];
-                logger.debug('Select by Name');
+                logger.debug('Get by Name');
             } else if (params.deviceId){
-                sql = queries.selectUsersByDevice;
+                sql = SQL.getUsersByDevice;
                 sqlParams = [params.deviceId];
-                logger.debug('Select by Device');
+                logger.debug('Get by Device');
             }
             
             conn.query(sql, sqlParams).execute(errorWrap(

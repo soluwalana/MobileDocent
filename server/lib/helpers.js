@@ -28,3 +28,16 @@ exports.generatePassword = function(password, salt){
 	return hmac.digest(encoding = 'base64');
 };
 
+exports.errorHelper = function (moduleLogger, lineInfo, callback, errCallback){
+    return function (err, res, extra){
+        if (err){
+            moduleLogger.error(err, lineInfo);
+            return errCallback({'error' : err});
+        }
+        callback(res, extra);
+    };
+};
+
+exports.reEscape = function (str) {
+    return (str+'').replace(/([\\\.\+\*\?\[\^\]\$\(\)\{\}\=\!\<\>\|\:])/g, "\\$1");
+};

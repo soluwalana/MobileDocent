@@ -1,27 +1,22 @@
 var fs = require('fs');
 var uuid = require('node-uuid');
-var _ = require('./lib/underscore.js')._;
 
-var constants = require('./constants.js');
-var queries = require('./sql.js').queries;
-var multiQuery = require('./sql.js').multiQuery;
-var logger = require('./customLogger.js').getLogger();
-var getLineNum = require('./customLogger.js').getLineNumber;
+var likeWrap = require('./searchManager.js').likeWrap;
 
-var errorCallback = function (message, callback, lineInfo){
-    logger.error(message, lineInfo);
-    callback({'error' : message});
-};
-
+var _ = require('../lib/underscore.js')._;
+var constants = require('../lib/constants.js');
+var SQL = require('../lib/sql.js').queries;
+var multiQuery = require('../lib/sql.js').multiQuery;
+var logger = require('../lib/customLogger.js').getLogger();
+var getLineNum = require('../lib/customLogger.js').getLineNumber;
+var errorHelper = require('../lib/helpers.js').errorHelper;
 var errorWrap = function (retCallback, callback){
-    var lineInfo = getLineNum();
-    return function (err, res, extra){
-        if (err){
-            return errorCallback(err, retCallback, lineInfo);
-        }
-        callback(res, extra);
-    };
+    return errorHelper(logger, getLineNum(), callback, retCallback);
 };
+var errorCallback = function (msg, callback){
+    logger.error(msg, getLineNum());
+    return callback({ error : msg });
+}
 
 var addWarning = function (result, err){
     result.status = constants.WARN_STATUS;
@@ -86,6 +81,48 @@ var convertToMongo = function (nodeContent){
     return mongoObject;
 };
 
+var formatTourRows = function (rows, single){
+    var tourKeys = ['tourId', 'userId', 'tourName', 'description', 'locId',
+                    'walkingDistance', 'official', 'active']
+
+    var retObjs = [];
+    for (var i = 0; i < rows.length; i ++){
+        var row = rows[i];
+        var retObj = _.pick(row, tourKeys);
+        retObj.nodes = [];
+        
+        var nodes = {};
+        var curNode = null;
+        for (var i = 0; i < rows.length; i ++){
+            if (rows[i].nodeId){
+                nodes[rows[i].nodeId] = {
+                    nodeId : rows[i].nodeId,
+                    latitude : rows[i].latitude,
+                    longitude: rows[i].longitude,
+                    prevNode : rows[i].prevNode,
+                    nextNode : rows[i].nextNode,
+                    pseudo: rows[i].pseudo,
+                    mongoId: rows[i].mongoId
+                };
+                if (rows[i].prevNode === null) curNode = rows[i].nodeId;
+            }
+        }
+        if (curNode){
+            retObj.nodes.push(nodes[curNode]);
+            while(nodes[curNode].nextNode){
+                curNode = nodes[curNode].nextNode;
+                retObj.nodes.push(nodes[curNode]);
+            }
+        }
+        retObjs.push(retObj);
+    }
+
+    if (single){
+        return retObjs[0];
+    } 
+    return retObjs;
+}
+
 var TourManager = function(store){
     var self = this;
     
@@ -100,7 +137,7 @@ var TourManager = function(store){
         }
         
         self.store.sqlConn(errorWrap(callback, function (conn){
-            var sql = queries.insertTour;
+            var sql = SQL.addTour;
             var sqlParams = [params.authUserId, params.tourName, params.description, 0];
             conn.query(sql, sqlParams).execute(errorWrap(callback, function (result){
                 callback({'success' : 'Tour Created',
@@ -115,43 +152,25 @@ var TourManager = function(store){
         }
         
         self.store.sqlConn(errorWrap(callback, function (conn){
-            var sql = params.tourId ? queries.getTourById: queries.getTourByName;
-            var sqlParams = [params.tourId ? params.tourId : params.tourName];
+            var sql = params.tourId ? SQL.getTourById: SQL.getTourByName;
+            var sqlParams = params.tourId ? [params.tourId, params.tourId] :
+                [params.tourName, params.tourName];
+
             conn.query(sql, sqlParams).execute(errorWrap(
                 callback, function (rows, cols){
                     if (rows.length === 0){
-                        return errorCallback('Tour Doesnt exist or has no nodes', callback);
-                    }
-                    var retObj = {};
-                    retObj.tourId = rows[0].tourId;
-                    retObj.userId = rows[0].userId;
-                    retObj.tourName = rows[0].tourName;
-                    retObj.description = rows[0].description;
-                    retObj.locId = rows[0].locId;
-                    retObj.nodes = [];
-                    
-                    var nodes = {};
-                    var curNode = null;
-                    for (var i = 0; i < rows.length; i ++){
-                        nodes[rows[i].nodeId] = {
-                            nodeId : rows[i].nodeId,
-                            latitude : rows[i].latitude,
-                            longitude: rows[i].longitude,
-                            prevNode : rows[i].prevNode,
-                            nextNode : rows[i].nextNode,
-                            pseudo: rows[i].pseudo,
-                            mongoId: rows[i].mongoId
-                        };
-                        if (rows[i].prevNode === null) curNode = rows[i].nodeId;
-                    }
-                    retObj.nodes.push(nodes[curNode]);
-                    while(nodes[curNode].nextNode){
-                        curNode = nodes[curNode].nextNode;
-                        retObj.nodes.push(nodes[curNode]);
+                        return errorCallback('Tour Doesnt Exist', callback);
                     }
                     
-                    callback({'success' : 'Tour Retrieved',
-                              'tour' : retObj});
+                    var retObj = formatTourRows(rows, true);
+                    
+                    conn.query(SQL.getTourTags, [retObj.tourId])
+                        .execute(errorWrap(callback, function(rows){
+                            if (rows.length > 0){
+                                retObj.tags = rows;
+                            }
+                            callback(retObj);
+                        }));
                 }
             ));
         }));
@@ -159,7 +178,35 @@ var TourManager = function(store){
 
 
     self._modifyTour = function (params, conn, callback){
+        var tourId = params.tourId;
+        var userId = params.authUserId;
+        
+        var sql = '';
+        var sqlParams  = [];
+        
+        if (params.tourDesc !== undefined){
+            sql += SQL.updateTourDesc;
+            sqlParams.push.apply(sqlParams, [params.tourDesc, tourId, userId]);
+        }
+        
+        if (params.tourDist !== undefined){
+            sql += SQL.updateTourDist;
+            sqlParams.push.apply(sqlParams, [params.tourDist, tourId, userId]);
+        }
 
+        if (params.active !== undefined){
+            sql += SQL.activeTour;
+            sqlParams.push.apply(sqlParams, [params.active, tourId, userId]);
+        }
+
+        if (params.locId !== undefined){
+            sql += SQL.updateTourLocation;
+            sqlParams.push.apply(sqlParams, [params.locId, tourId, userId]);
+        }
+        multiQuery(conn, sql, sqlParams, errorWrap(callback, function (result){
+            return callback({'success' : 'Updates Successful'});
+        }));
+        
     };
     
     self.modifyTour = function (params, callback){
@@ -167,11 +214,10 @@ var TourManager = function(store){
             return errorCallback('Missing Required Parameters', callback);
         }
         self._verifyOwnership(
+            SQL.checkTourOwnership,
             [params.authUserId, params.tourId],
-            queries.checkTourOwnership,
             errorWrap(callback, function(conn){
                 self._modifyTour(params, conn, callback);
-                
             })
         );
     };
@@ -276,11 +322,11 @@ var TourManager = function(store){
             return errorCallback('Missing Required Parameters', callback);
         }
         self._verifyOwnership(
+            SQL.checkTourOwnership,
             [params.authUserId, nodeData.tourId],
-            queries.checkTourOwnership,
             errorWrap(callback, function(conn){
                 if (nodeData.prevNode){
-                    var sql = queries.selectNodeById;
+                    var sql = SQL.getNodeById;
                     var sqlParams = [nodeData.prevNode];
                     conn.query(sql, sqlParams).execute(errorWrap(
                         callback, function (rows, cols){
@@ -304,15 +350,15 @@ var TourManager = function(store){
         var longitude = nodeData.longitude;
         var tourId = nodeData.tourId;
         var pseudo = (!nodeContent && !nodeData.brief) ? 1 : 0;
-        var sql = queries.appendNode;
+        var sql = SQL.appendNode;
         var sqlParams = [latitude, longitude, pseudo, tourId, tourId, tourId, tourId];
         
         if (nodeData.prevNode !== undefined){
             var prevNode  = nodeData.prevNode;
             if (prevNode === null){
-                sql = queries.prependNode;
+                sql = SQL.prependNode;
             } else {
-                sql = queries.insertNode;
+                sql = SQL.insertNode;
                 sqlParams = [latitude, longitude, prevNode, pseudo, tourId,
                               prevNode, prevNode, prevNode];
             }
@@ -355,7 +401,7 @@ var TourManager = function(store){
                             var mongoId = records[0]._id.toHexString();
                             var nodeId = result.nodeId;
                             conn.query(
-                                queries.bindMongoToSql,
+                                SQL.bindMongoToSql,
                                 [mongoId, nodeId]).execute(errorWrap(
                                     callback, function (rows, cols){
                                         result.mongoId = mongoId;
@@ -396,7 +442,7 @@ var TourManager = function(store){
         
         if (params.nodeId){
             self.store.sqlConn(errorWrap(callback, function (conn){
-                var sql = queries.selectNodeById;
+                var sql = SQL.getNodeById;
                 var sqlParams = [params.nodeId];
                 conn.query(sql, sqlParams).execute(errorWrap(
                     callback, function (rows, cols){
@@ -413,7 +459,7 @@ var TourManager = function(store){
     };
     
     self._modifyNode = function (params, conn, callback){
-        
+        callback({'error' : 'Unimplemented'});
     };
     
     self.modifyNode = function (params, callback){
@@ -422,8 +468,8 @@ var TourManager = function(store){
         }
 
         self._verifyOwnership(
+            SQL.checkNodeOwnership,
             [params.authUserId, params.tourId, params.nodeId],
-            queries.checkNodeOwnership,
             errorWrap(callback, function(conn){
                 self._modifyTour(params, conn, callback);
             })
@@ -467,15 +513,24 @@ var TourManager = function(store){
         }));
     };
 
-    self._verifyOwnership = function (args, sql, callback){
-        self.store.sqlConn(function(err, conn){
+
+    self.deleteTour = function (params, callback){
+        callback({'error' : 'Unimplemented'});
+    };
+
+    self.deleteNode = function(params, callback){
+        callback({'error' : 'Unimplemented'});
+    };
+
+    self._verifyOwnership = function (sql, args, callback){
+        self.store.sqlConn(errorWrap(callback, function(conn){
             conn.query(sql, args).execute(errorWrap(callback, function (rows, cols){
                 if (rows.length === 0){
-                    return errorCallback('User Doesnt own this tour', callback);
+                    return callback('User Doesnt own this tour');
                 }
                 callback(null, conn);
             }));
-        });
+        }));
     };
 
     self.init();

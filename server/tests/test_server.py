@@ -78,13 +78,11 @@ def assert_result(res):
     assert 'nodeId' in res['result']
 
 def assert_tour(res, name, nodes):
-    assert 'success' in res
-    assert 'tour' in res
-    assert 'tourId' in res['tour']
-    assert 'tourName' in res['tour']
-    assert res['tour']['tourName'] == name
-    assert 'nodes' in res['tour']
-    assert len(res['tour']['nodes']) == nodes
+    assert 'tourId' in res
+    assert 'tourName' in res
+    assert res['tourName'] == name
+    assert 'nodes' in res
+    assert len(res['nodes']) == nodes
 
 def assert_normal_node(res):
     pass
@@ -391,6 +389,16 @@ def test_create_tour():
     
     res = send_files('node', data, cookie)
     assert_result(res)
+
+
+    #Assert that another user can not create nodes in this tour
+    cookie = success_test('login', 'Successfully authenticated',
+                          {'userName' : 'samo1',
+                           'pass' : 'samo'
+                           })
+    err_test('node', 'User Doesnt own this tour', brief_node, cookie)
+    
+    
     print 'Successfully created tour with 5 nodes'
 
 def test_create_tour2 ():
@@ -458,7 +466,7 @@ def test_create_tour2 ():
     
     expected_order = [111, 111, 999, 200, 999, 999]
 
-    for idx, val in enumerate(res['tour']['nodes']):
+    for idx, val in enumerate(res['nodes']):
         assert 'latitude' in val
         assert 'longitude' in val
         assert 'mongoId' in val
@@ -481,6 +489,8 @@ def test_get_tour():
     res = send_request('tour?tourName=Stanford', None, cookie)[0]
     assert_tour(res, 'Stanford', 5)
 
+    err_test('tour?tourName=NotExistent', 'Tour Doesnt Exist', None, cookie)
+    
     print 'Successfully Retrieved tour with 5 nodes'
 
 def assert_small_node(res, mongo_id, idx):
@@ -501,7 +511,7 @@ def test_get_nodes():
 
     tour = send_request('tour?tourId=2', None, cookie)[0]
     assert_tour(tour, 'Stanford2', 5)
-    for idx, node in enumerate(tour['tour']['nodes']):
+    for idx, node in enumerate(tour['nodes']):
         assert 'nodeId' in node
         assert 'mongoId' in node
         node_id = node['nodeId']
@@ -509,7 +519,7 @@ def test_get_nodes():
         res = send_request('nodeContent?nodeId='+str(node_id), None, cookie)[0]
         assert_small_node(res, mongo_id, idx)
 
-    for idx, node in enumerate(tour['tour']['nodes']):
+    for idx, node in enumerate(tour['nodes']):
         mongo_id = node['mongoId']
         res = send_request('nodeContent?mongoId='+str(mongo_id), None, cookie)[0]
         assert_small_node(res, mongo_id, idx)
@@ -524,8 +534,8 @@ def test_file_retreive():
     tour = send_request('tour?tourId=1', None, cookie)[0]
     assert_tour(tour, 'Stanford', 5);
     
-    node_id = tour['tour']['nodes'][0]['nodeId']
-    mongo_id = tour['tour']['nodes'][0]['mongoId']
+    node_id = tour['nodes'][0]['nodeId']
+    mongo_id = tour['nodes'][0]['mongoId']
     res = send_request('nodeContent?nodeId='+str(node_id), None, cookie)[0]
     content_id = res['content'][0]['page'][0]['contentId']
     res = send_request('mongoFile?mongoFile='+content_id, None, cookie, True)[0]
@@ -537,8 +547,109 @@ def test_file_retreive():
     assert res == compare
     print 'File Retrieval Test Successful'
     
+def test_modify_tour ():
+    """ This test ensures that the extra options for prevNode work correctly
+        ensuring that ordering is correct when things are prepended, inserted and
+        appended """
     
-        
+    cookie = success_test('login', 'Successfully authenticated',
+                          {'userName' : 'samo',
+                           'pass' : 'samo'
+                           })
+
+    
+    success_test('tour', 'Tour Created', {'tourName' : 'Stanford3',
+                                          'description' : 'Tour of Memorable Stanford Locations',
+                                          }, cookie)
+    
+
+    success_test('modifyTour', 'Updates Successful', {'tourId' : 3, 'tourDesc' : 'Third Tour'}, cookie)
+    success_test('modifyTour', 'Updates Successful', {'tourId' : 3, 'tourDist' : 2.2}, cookie)
+    success_test('modifyTour', 'Updates Successful', {'tourId' : 3, 'active' : True}, cookie)
+
+    #Only works if the Geo DB has been loaded
+    #success_test('modifyTour', '1 Updates Successful', {'tourId' : 3, 'locId' : 11382}, cookie)
+
+    tour = send_request('tour?tourId=3', None, cookie)[0]
+    assert tour['description'] == 'Third Tour'
+    assert tour['walkingDistance'] - 2.2 < 0.0001
+    assert tour['active'] == True
+
+    success_test('modifyTour', 'Updates Successful', {'tourId' : 3,
+                                                        'tourDesc' : 'Third Tour Second Update',
+                                                        'tourDist' : 34.23,
+                                                        'active' : 0}, cookie)
+    
+    tour = send_request('tour?tourId=3', None, cookie)[0]
+    assert tour['description'] == 'Third Tour Second Update'
+    assert tour['walkingDistance'] - 34.23 < 0.0001
+    assert tour['active'] == False
+
+
+    cookie = success_test('login', 'Successfully authenticated',
+                          {'userName' : 'samo1',
+                           'pass' : 'samo'
+                           })
+    err_test('modifyTour', 'User Doesnt own this tour', {'tourId' : 3, 'active' : True}, cookie)
+
+    print 'Modify Tour Tests Successful'
+
+def test_tags():
+    cookie = success_test('login', 'Successfully authenticated',
+                          {'userName' : 'samo', 'pass' : 'samo'})
+                           
+    success_test('tags', 'Tag Inserted', {'tagName' : 'Tag1', 'description' : 'Tag1'}, cookie)
+    success_test('tags', 'Tag Inserted', {'tagName' : 'Tag2', 'description' : 'Tag2 extra'}, cookie)
+    success_test('tags', 'Tag Inserted', {'tagName' : 'Tag3 extra', 'description' : 'Tag3'}, cookie)
+    success_test('tags', 'Tag Inserted', {'tagName' : 'Tag4', 'description' : 'Tag4'}, cookie)
+
+    res = send_request('tags?tagId=1', None, cookie)[0]
+    assert len(res) == 1
+
+    res = send_request('tags?tagId=5', None, cookie)[0]
+    assert len(res) == 0
+
+    res = send_request('tags?tagName=Tag', None, cookie)[0]
+    assert len(res) == 4
+
+    res = send_request('tags?description=Tag', None, cookie)[0]
+    assert len(res) == 4
+
+    res = send_request('tags?tagName=extra', None, cookie)[0]
+    assert len(res) == 1
+
+    res = send_request('tags?description=extra', None, cookie)[0]
+    assert len(res) == 1
+    
+    res = send_request('tags?description=extra&tagName=extra', None, cookie)[0]
+    assert len(res) == 2
+    
+    success_test('tagTour', 'Tour Tagged', {'tagId' : 1, 'tourId' : 1}, cookie)
+    res = send_request('tagTour', {'tagId' : 1, 'tourId' : 1}, cookie)[0]
+    assert 'error' in res
+    assert res['error'].find('Duplicate entry') != -1
+    
+    success_test('tagTour', 'Tour Tagged', {'tagId' : 2, 'tourId' : 1}, cookie)
+
+    tour = send_request('tour?tourId=1', None, cookie)[0]
+    assert 'tags' in tour
+    assert len(tour['tags']) == 2
+
+    success_test('deleteTag', 'Tag Deleted', {'tagId' : 1, 'tourId' : 1}, cookie)
+    tour = send_request('tour?tourId=1', None, cookie)[0]
+    assert 'tags' in tour
+    assert len(tour['tags']) == 1
+
+    cookie = success_test('login', 'Successfully authenticated',
+                          {'userName' : 'samo1', 'pass' : 'samo'})
+    err_test('deleteTag', 'User Doesnt own this tour', {'tagId' : 1, 'tourId' : 1}, cookie)
+    tour = send_request('tour?tourId=1', None, cookie)[0]
+    assert 'tags' in tour
+    assert len(tour['tags']) == 1
+
+    print 'Tag Test Successful'
+    
+
 test_user_create()
 test_user_auth()
 test_user_get()
@@ -547,20 +658,8 @@ test_create_tour2()
 test_get_tour()
 test_get_nodes()
 test_file_retreive()
-
-"""
-res, cookie = send_request('echo', {'data' : 'same'})
-res, cookie = send_request('user/1')
-res, cookie = send_request('tour/1')
-res, cookie = send_request('node/1')
-
-res, cookie = send_request('ipLocation')
-
-res, cookie = send_request('location', {'city' : 'Stanford',
-                                'region' : 'CA',
-                                'country' : 'USA'})
-
-"""
+test_modify_tour()
+test_tags()
 
 
 

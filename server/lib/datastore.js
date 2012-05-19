@@ -6,7 +6,8 @@ var helpers = require('./helpers.js');
 var logger = require('./customLogger.js').getLogger();
 var queries = require('./sql.js').queries;
 var constants = require('./constants.js');
-var UserManager = require('./userManager.js').UserManager;
+
+var UserManager = require('../managers/userManager.js').UserManager;
 
 var errorCallback = function (message, callback){
     logger.error(message);

@@ -3,29 +3,38 @@ var logger = require('./customLogger.js').getLogger();
 exports.queries= {
 
     /* USER SQL */
-    selectUserById : 'select * from users as U where userId = ?',
+    getUserById : 'select * from users as U where userId = ?;',
 
-    selectUserByName : 'select * from users as U where userName = ?',
+    getUserByName : 'select * from users as U where userName = ?;',
 
-    insertUser : 'insert into users (userName, password, salt, about, email, fbId, twitterId) VALUES (?, ?, ?, ?, ?, ?, ?)',
+    addUser : 'insert into users (userName, password, salt, about, email, fbId, twitterId) VALUES (?, ?, ?, ?, ?, ?, ?);',
     
-    updateUserAbout : 'update users set about = ? where userId = ?', 
+    updateUserAbout : 'update users set about = ? where userId = ?;', 
     
     /* Tour Queries */
-    insertTour : 'insert into tours (userId, tourName, description, active) values (?, ?, ?, ?)',
+    addTour : 'insert into tours (userId, tourName, description, active) values (?, ?, ?, ?);',
 
-    updateTourDesc : 'update tours set description = ? where tourId = ? and userId = ?', 
-    updateTourLocation : 'update tours set locId = ? where tourId = ? and userId = ?',
-    updateTourDist : 'update tours set walkingDistance = ? where tourId = ? and userId = ?',
-    activateTour : 'update tours set active = 1 where tourId = ? and userId = ?',
-    makeTourOfficial : 'update tours set official = 1 where tourId = ? and userId = ?',
-
-    getTourById : 'select * from tours as T inner join nodes as N where T.tourId = ? and T.tourId = N.tourId',
-    getTourByName: 'select * from tours as T inner join nodes as N where tourName = ? and T.tourId = N.tourId',
+    updateTourDesc : 'update tours set description = ? where tourId = ? and userId = ?;', 
+    updateTourLocation : 'update tours set locId = ? where tourId = ? and userId = ?;',
+    updateTourDist : 'update tours set walkingDistance = ? where tourId = ? and userId = ?;',
+    activeTour : 'update tours set active = ? where tourId = ? and userId = ?;',
+    makeTourOfficial : 'update tours set official = 1 where tourId = ? and userId = ?;',
     
+    getTourById : 'select * from tours as T inner join nodes as N where N.tourId = T.tourId and T.tourId = ? '+
+        'union '+
+        'select * from tours T left join (select * from nodes N1 ) as X on T.tourId = X.tourId where T.tourId = ?;',
+
+    getTourByName: 'select * from tours as T inner join nodes as N where N.tourId = T.tourId and T.tourName = ? '+
+        'union '+
+        'select * from tours T left join (select * from nodes N1 ) as X on T.tourId = X.tourId where T.tourName = ?;',
+    getToursByName: 'select * from tours as T inner join nodes as N where N.tourId = T.tourId and T.tourName like ? '+
+        'union '+
+        'select * from tours T left join (select * from nodes N1 ) as X on T.tourId = X.tourId where T.tourName like ?;',
+    
+            
     /* Node Queries */
-    checkTourOwnership : 'select 1 from tours where userId = ? and tourId = ?',
-    checkNodeOwnership : 'select 1 from tours, nodes where tours.tourId = nodes.tourId and tours.userId = ? and tours.tourId = ?',
+    checkTourOwnership : 'select 1 from tours where userId = ? and tourId = ?;',
+    checkNodeOwnership : 'select 1 from tours, nodes where tours.tourId = nodes.tourId and tours.userId = ? and tours.tourId = ?;',
 
     //Use MQ: Expects lat, long, pseudo, tourId, tourId, tourId, tourId
     prependNode: 'insert into nodes (latitude, longitude, prevNode, nextNode, pseudo, tourId) '+
@@ -63,14 +72,33 @@ exports.queries= {
         'delete from nodes where nodeId = ?;',
 
     // Needs mongoId, nodeId
-    bindMongoToSql: 'update nodes set mongoId = ? where nodeId = ?',
+    bindMongoToSql: 'update nodes set mongoId = ? where nodeId = ?;',
 
-    selectNodeById : 'select * from nodes where nodeId = ?',
-    /* Geo Queries */
-    selectLocIdByIP : 'select * from ipBlocks where endIpNum >= ? order by endIpNum asc limit 1',
-    selectLocByLocId: 'select * from locations where locId = ?',
-    selectLocByKeys: "select * from locations where city like '%?%' and region = ?"
+    getNodeById : 'select * from nodes where nodeId = ?;',
+
+    /* Tag Related Queries */
+
+    addTag : 'insert into tags (tagName, description, userId) values (?, ?, ?);',
+    tagTour: 'insert into tourTags (tagId, tourId, userId) values (?, ?, ?);',
+
+    getTagById : 'select * from tags where tagId = ?;',
+    getTagByName : "select * from tags where tagName like ?",
+    getTagByDescription : "select * from tags where  description like ?;",
+    getTagByData : "select * from tags where tagName like ? or description like ?;",
+    
+    getTourTags: 'select * from tags T1, tourTags T2 where T1.tagId = T2.tagId and tourId = ?',
+
+    getToursByTagName: 'select * from tours where tourId = '+
+        '(select T0.tourId from tours T0, tags T1, tourTags T2 where'+
+        ' T1.tagId = T2.tagId and T0.tourId = T2.tourId and T1.tagName like ? );',
+                
+    deleteTourTag: 'delete from tourTags where tagId = ?',
+    
         
+    /* Geo Queries */
+    getLocIdByIP : 'select * from ipBlocks where endIpNum >= ? order by endIpNum asc limit 1;',
+    getLocByLocId: 'select * from locations where locId = ?;',
+    getLocByKeys: "select * from locations where city like ? and region = ?;"
 };
 
 var recursiveQuery = function (conn, queries, argsArray, callback, result){
