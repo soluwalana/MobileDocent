@@ -8,6 +8,7 @@ import java.util.List;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -15,8 +16,7 @@ import org.apache.http.message.BasicHeader;
 import org.apache.http.cookie.Cookie;
 import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.protocol.HTTP;
-import org.json.JSONException;
-import org.json.JSONObject;
+import com.google.gson.*;
 
 import android.provider.Settings.Secure;
 import android.util.Log;
@@ -28,8 +28,7 @@ public class DBInteract {
 	private static final String TAG = "DBInteract";
 	//private static String cookie = "";
 
-	private static JSONObject postData(JSONObject jo, String urlEnd){
-
+	private static JsonObject postData(JsonObject jo, String urlEnd){
 		DefaultHttpClient httpclient = new DefaultHttpClient();
 		HttpConnectionParams.setConnectionTimeout(httpclient.getParams(), 10000);
 		HttpResponse response;
@@ -43,23 +42,52 @@ public class DBInteract {
 
 			if(response!=null){
 				String str = inputStreamToString(response.getEntity().getContent()).toString();
-				JSONObject recvObj = new JSONObject(str);
+				Gson gson = new Gson();
+				JsonObject recvObj = gson.fromJson(str, JsonObject.class);
 				return recvObj;
 			}
 
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		Log.v(TAG, "Http post failed. Posted: " + jo.toString() + " to url: "+ urlEnd);
 		return null;
 	}
+	
+	private static JsonArray getData(String urlEnd){
+		DefaultHttpClient httpclient = new DefaultHttpClient();
+		HttpConnectionParams.setConnectionTimeout(httpclient.getParams(), 10000);
+		HttpResponse response;
+		try {
+			HttpGet get = new HttpGet(serverURL + urlEnd); 
+			response = httpclient.execute(get);
+
+			if(response!=null){
+				String str = inputStreamToString(response.getEntity().getContent()).toString();
+				Gson gson = new Gson();
+				JsonElement recvElem = gson.fromJson(str, JsonElement.class);
+				if (recvElem.isJsonObject()) {
+					Log.v(TAG, "Error in HttpGet. Received: " + recvElem.toString() + " url: "+ urlEnd);
+					return null;
+				}
+				return recvElem.getAsJsonArray();
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		Log.v(TAG, "Http get failed. Get url: "+ urlEnd);
+		return null;
+	}
+	
 
 	public static boolean postLoginData(String username, String password) { 
 		
-		JSONObject sndObject = new JSONObject();
+		JsonObject sndObject = new JsonObject();
 		try {
-			sndObject.put("userName", username);
-			sndObject.put("pass", password);
-			JSONObject rcvObj = postData(sndObject, "/login");
+			sndObject.addProperty("userName", username);
+			sndObject.addProperty("pass", password);
+			JsonObject rcvObj = postData(sndObject, "/login");
 			if(rcvObj != null) {
 				Log.v(TAG, rcvObj.toString());
 				if(rcvObj.get("success")!=null){
@@ -69,21 +97,22 @@ public class DBInteract {
 				else return false;
 			}
 		}
-		catch (JSONException e1) {
+		catch (Exception e1) {
 			e1.printStackTrace();
 		}
 		return false;
 	} 
+	
 	public static boolean postSignupData(String username, String password, String confirm) { 
 		if(!password.equals(confirm)){
 			return false;
 		}
-		JSONObject sndObject = new JSONObject();
+		JsonObject sndObject = new JsonObject();
 		try {
-			sndObject.put("userName", username);
-			sndObject.put("pass", password);
-			sndObject.put("passConf", confirm);
-			JSONObject rcvObj = postData(sndObject, "/user");
+			sndObject.addProperty("userName", username);
+			sndObject.addProperty("pass", password);
+			sndObject.addProperty("passConf", confirm);
+			JsonObject rcvObj = postData(sndObject, "/user");
 			if(rcvObj != null) {
 				Log.v(TAG, rcvObj.toString());
 				if(rcvObj.get("success")!=null){
@@ -92,11 +121,31 @@ public class DBInteract {
 				}
 				else return false;
 			}
-		} catch (JSONException e1) {
+		} catch (Exception e1) {
 			e1.printStackTrace();
 		}
 		return false;
 	}
+	
+	//For now only returns true if json array is present. eventually needs to return elements of array
+	public static boolean tourKeywordSearch(String searchStr) { 	
+		QueryString qs = new QueryString("tourName", searchStr);
+		try {
+			JsonArray rcvArray = getData("/tours/?" + qs);
+			if(rcvArray != null) {
+				Log.v(TAG, rcvArray.toString());
+				if(rcvArray.isJsonArray()){
+					Log.v(TAG, "Authenticated " + rcvArray.toString());
+					return true;
+				}
+				else return false;
+			}
+		}
+		catch (Exception e1) {
+			e1.printStackTrace();
+		}
+		return false;
+	} 
 
 	private static StringBuilder inputStreamToString(InputStream is) {
 		String line = "";
