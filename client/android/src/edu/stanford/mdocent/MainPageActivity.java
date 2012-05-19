@@ -55,7 +55,7 @@ public class MainPageActivity extends Activity {
 	}
 
 	public void startSearchTour (){
-		Intent intent = new Intent(this, TourActivity.class );
+		Intent intent = new Intent(this, TourSearchActivity.class );
 		startActivity(intent);
 	}
 	
