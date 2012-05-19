@@ -4,18 +4,18 @@ var logger = require('./customLogger.js').getLogger();
 var getLineNum = require('./customLogger.js').getLineNumber;
 
 var errorCallback = function (message, callback, lineInfo){
-	logger.error(message, lineInfo);
+    logger.error(message, lineInfo);
     callback({'error' : message});
-}
+};
 
 var errorWrap = function (retCallback, callback){
-	var lineInfo = getLineNum();
-	return function (err, res, extra){
-		if (err){
-			return errorCallback(err, retCallback, lineInfo);
-		}
-		callback(res, extra);
-	};
+    var lineInfo = getLineNum();
+    return function (err, res, extra){
+        if (err){
+            return errorCallback(err, retCallback, lineInfo);
+        }
+        callback(res, extra);
+    };
 };
 
 var UserManager = function(store){
@@ -49,7 +49,7 @@ var UserManager = function(store){
                         return errorCallback('Authentication failure', callback);
                     }
                     
-		            callback(null, user.userId);    
+                    callback(null, user.userId);    
                     
                 })
             );
@@ -79,11 +79,11 @@ var UserManager = function(store){
             var sqlParams = [params.userName, password, salt, params.about,
                              params.email, params.fbId, params.twitterId];
 
-			conn.query(sql, sqlParams).execute(errorWrap(
-				callback, function (result){
-					callback(null, result.id);
-				}
-			));
+            conn.query(sql, sqlParams).execute(errorWrap(
+                callback, function (result){
+                    callback(null, result.id);
+                }
+            ));
         }));
     };
 
@@ -110,23 +110,23 @@ var UserManager = function(store){
             }
             
             conn.query(sql, sqlParams).execute(errorWrap(
-				callback, function (rows, cols){
-					if (rows.length === 0){
-						logger.warn('No Users Found For query');
-						logger.warn([sql, params]);
-						return callback([]);
-					}
-					if (rows.length === 1){
-						return callback(rows[0]);
-					}
-					callback(rows);
-				}
-			));
+                callback, function (rows, cols){
+                    if (rows.length === 0){
+                        logger.warn('No Users Found For query');
+                        logger.warn([sql, params]);
+                        return callback([]);
+                    }
+                    if (rows.length === 1){
+                        return callback(rows[0]);
+                    }
+                    callback(rows);
+                }
+            ));
         }));
     };
 
     self.init();
     return self;
-}
+};
 
 exports.UserManager = UserManager;

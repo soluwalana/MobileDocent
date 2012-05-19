@@ -8,8 +8,8 @@ var SALT_LENGTH = 8;
 exports.ipToLong = function(addr){
     addr = addr.split('.');
     
-    var ipNumber = 16777216 * parseInt(addr[0]) + 65536 * parseInt(addr[1]) +
-        256 * parseInt(addr[2]) + parseInt(addr[3]);
+    var ipNumber = 16777216 * parseInt(addr[0], 10) + 65536 * parseInt(addr[1], 10) +
+        256 * parseInt(addr[2], 10) + parseInt(addr[3], 10);
     console.log(ipNumber);
     return ipNumber;
 };

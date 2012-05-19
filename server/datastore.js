@@ -11,46 +11,46 @@ var UserManager = require('./userManager.js').UserManager;
 var errorCallback = function (message, callback){
     logger.error(message);
     callback({'error' : message}, null);
-}
+};
 
 function DataStore (initCallback){
-	
-	var self = this;
-	var mysqlDb = new mysql.Database(constants.MYSQL_CONF);
-	var mongoserver = new mongodb.Server(constants.MONGO_HOST,
-                                         mongodb.Connection.DEFAULT_PORT)
     
-	var mongoDb = new mongodb.Db(constants.MONGO_DB_NAME, mongoserver);
-	
-	var mysqlConn = null
-	var mongoConn = null;
-	var authenticated = false;
+    var self = this;
+    var mysqlDb = new mysql.Database(constants.MYSQL_CONF);
+    var mongoserver = new mongodb.Server(constants.MONGO_HOST,
+                                         mongodb.Connection.DEFAULT_PORT);
+    
+    var mongoDb = new mongodb.Db(constants.MONGO_DB_NAME, mongoserver);
+    
+    var mysqlConn = null;
+    var mongoConn = null;
+    var authenticated = false;
 
     /* Initialize mysql and mongo db, call the initCallback when finished*/
-	self.init = function(initCallback){
-		mysqlDb.connect(function(err){
+    self.init = function(initCallback){
+        mysqlDb.connect(function(err){
             if (err){
                 logger.error(err);
                 return initCallback(false);
             }
             mysqlConn = this;
             mongoDb.open(function(err, openMongo){
-				mongoConn = openMongo;
-                logger.info('DataStore Initialized')
-				initCallback(true);
-			});
-		});
-	};
+                mongoConn = openMongo;
+                logger.info('DataStore Initialized');
+                initCallback(true);
+            });
+        });
+    };
 
     /* A function that will print that there is unauthenticated access
        to the data store and return an error to the caller */
-	self.authenticatedAccess = function(callback, msg){
-		if (!authenticated){
-			errorCallback('Unauthenticated access to '+msg, callback);
-			return false;
-		}
-		return true;
-	};
+    self.authenticatedAccess = function(callback, msg){
+        if (!authenticated){
+            errorCallback('Unauthenticated access to '+msg, callback);
+            return false;
+        }
+        return true;
+    };
 
     self.unauthenticatedStore = function(){
         var store = {};
@@ -69,22 +69,22 @@ function DataStore (initCallback){
     /* Functions that do not need authentication */
 
     self.test = function (callback){
-		var testData = {};
-		mysqlConn.query('show tables').execute(function(err, rows, cols){
-			testData['rows'] = rows;
-			mongoConn.collection(constants.MONGO_COLLECTION, function(err, collection){
-				testData['collection'] = collection.collectionName;
-				callback(null, testData);
-			});
-		});
-	};
+        var testData = {};
+        mysqlConn.query('show tables').execute(function(err, rows, cols){
+            testData.rows = rows;
+            mongoConn.collection(constants.MONGO_COLLECTION, function(err, collection){
+                testData.collection = collection.collectionName;
+                callback(null, testData);
+            });
+        });
+    };
 
     /* Creates a new user and authenticates that user's access to the data store
        @param {object} userData - Expected fields: userName, deviceId, pass, passConf
            optional fields: about, email, fbId, twitterId
        @param {function} callback - A function that should expect two parameters
            err and the resulting user id from the call */
-	self.addUser = function(userData, callback){
+    self.addUser = function(userData, callback){
         var userManager = new UserManager(self.unauthenticatedStore());
         userManager.addUser(userData, function(err, userId){
             if (err){
@@ -102,7 +102,7 @@ function DataStore (initCallback){
        @param {function} callback - A function that should expect two parameters
            err and the resulting user id from the call
        */
-	self.authenticate = function(userData, callback){
+    self.authenticate = function(userData, callback){
         var userManager = new UserManager(self.unauthenticatedStore());        
         userManager.authenticate(userData, function(err, userId){
             if (err){
@@ -111,7 +111,7 @@ function DataStore (initCallback){
             authenticated = true;
             callback(null, userId);
         });
-	};
+    };
 
     /* Verified that the session is authenticated and then sets authenticated
        access to the data store to true
@@ -144,11 +144,11 @@ function DataStore (initCallback){
     /* Gets the 12 byte mongo db _id type from the given hex
        string */
     self.getMongoIdFromHex = function(hexStr){
-		try{
-			return mongodb.ObjectID.createFromHexString(hexStr);
-		} catch (e){
-			return null;
-		}
+        try{
+            return mongodb.ObjectID.createFromHexString(hexStr);
+        } catch (e){
+            return null;
+        }
     };
     
     /* Returns a mongo collection to be operated on if authenticated
@@ -185,24 +185,24 @@ function DataStore (initCallback){
         }
     };
 
-	/* Return a stored GridStore object for reading
-	   @param {string} mongoId: the mongo Id for the stored file
-	   @param {function} callback: should expect err and the gs as parameters*/
-	self.mongoGrid = function(mongoId, callback){
-		if (self.authenticatedAccess(callback)){
-			var gs = new mongodb.GridStore(
-				mongoDb, mongoId, 'r', {chunk_size : constants.FILE_BUF_SIZE});
-			gs.open(function(err, gs){
-				if (err){
-					return errorCallback('Error Opening Grid Store', callack);
-				}
-				if (gs.length === 0){
-					return errorCallback('This File Does Not Have Data', callback);
-				}
-				callback(null, gs);
-			});
-		}
-	};
+    /* Return a stored GridStore object for reading
+       @param {string} mongoId: the mongo Id for the stored file
+       @param {function} callback: should expect err and the gs as parameters*/
+    self.mongoGrid = function(mongoId, callback){
+        if (self.authenticatedAccess(callback)){
+            var gs = new mongodb.GridStore(
+                mongoDb, mongoId, 'r', {chunk_size : constants.FILE_BUF_SIZE});
+            gs.open(function(err, gs){
+                if (err){
+                    return errorCallback('Error Opening Grid Store', callack);
+                }
+                if (gs.length === 0){
+                    return errorCallback('This File Does Not Have Data', callback);
+                }
+                callback(null, gs);
+            });
+        }
+    };
     
     /* Do clean up here for data store*/
     self.close = function(){
@@ -210,37 +210,37 @@ function DataStore (initCallback){
         mysqlConn.disconnect();
     };
     
-	/* Define data store services here */
-	self.init(initCallback)
-	return self;
+    /* Define data store services here */
+    self.init(initCallback);
+    return self;
 }
 /* Going to set up the necessary MySQL and MongoDB services */
 var buildDataStore = function (req, res, callback){
-	var ds = new DataStore(function(inited){
+    var ds = new DataStore(function(inited){
         if (!inited){
             return res.send('There was an error initializing the DB', 500);
         }
         
-		var send = res.send;
-		var end = res.end;
+        var send = res.send;
+        var end = res.end;
         
-	    res.send = function(message){
+        res.send = function(message){
             ds.close();
             res.send = send;
             res.send(message);
-			
-		};
+            
+        };
 
-		res.end = function(message){
+        res.end = function(message){
             ds.close();
             res.end = end;
-        	res.end(message);
-		};
-		
-		req.ds = ds;
-		res.ds = ds;
-		callback();
-	});
+            res.end(message);
+        };
+        
+        req.ds = ds;
+        res.ds = ds;
+        callback();
+    });
 };
 
 exports.buildDataStore = buildDataStore;

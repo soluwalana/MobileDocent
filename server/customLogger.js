@@ -2,7 +2,7 @@ var log4js = require('log4js');
 
 var getLineNumber = function (up){
 	var idx = up ? up : 0;
-	try {(0)()} catch (e){
+	try {(0)();} catch (e){
 		// Remove the error message
 		var stack = e.stack.replace(/^(?:.*?\n){4}/, '');
 		// Remove garbage
@@ -29,7 +29,7 @@ var getFileLineColumn = function (message, lineInfo){
 
 exports.getLineNumber = function (up){
 	up = up ? up : 1;
-	return getLineNumber(up)
+	return getLineNumber(up);
 };
 
 exports.getLogger = function(){

@@ -90,12 +90,12 @@ var recursiveQuery = function (conn, queries, argsArray, callback, result){
             logger.error(sql);
             logger.error(sqlParams);
             return callback({'error' : 'One of the queries failed',
-                             'messsage' : err, });
+                             'messsage' : err });
         } else {
             recursiveQuery(conn, queries, argsArray, callback, res);
         }
     });
-}
+};
 
 exports.multiQuery = function (conn, query, args, callback){
     var queries = query.split(';');
