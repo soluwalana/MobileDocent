@@ -35,7 +35,7 @@ def insert_blocks(cursor, blocks):
             columns[idx] = columns[idx].decode('utf_8')
         
         cursor.execute(query, columns)
-
+        
 def main():
     db = MySQLdb.connect(host="localhost",
                          user="docent",
@@ -70,6 +70,8 @@ def main():
         location.readline()
         
     insert_locations(cursor, location)
-    insert_blocks(cursor, blocks)
+    db.commit()
+    #insert_blocks(cursor, blocks)
+    #db.commit()
     
 main()

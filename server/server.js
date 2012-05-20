@@ -73,7 +73,8 @@ app.get('/user', function(req, res){
     userManager.getUser(req.query, res.send);
 });
 
-/* Get a single tour item*/
+/* Get a single tour item with all of the nodes and tags associated with it
+   returns a single element array*/
 app.get('/tour', function(req, res){
     var tourManager = new TourManager(req.ds);
     tourManager.getTour(req.query, res.send);

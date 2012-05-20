@@ -84,15 +84,6 @@ def assert_tour(res, name, nodes):
     assert 'nodes' in res
     assert len(res['nodes']) == nodes
 
-def assert_normal_node(res):
-    pass
-
-def assert_brief_only_node(res):
-    pass
-
-def assert_pseudo_node(res):
-    pass
-
 def test_user_create():
     #success test
     success_test('user', 'User Created Successfully',
@@ -229,16 +220,16 @@ def test_user_get():
                            })
     
     res = send_request('user?userId=1', None, cookie)[0]
-    compare_users(res, user)
+    compare_users(res[0], user)
     
     res = send_request('user?userId=2', None, cookie)[0]
-    compare_users(res, user1)
+    compare_users(res[0], user1)
 
     res = send_request('user?userName=samo', None, cookie)[0]
-    compare_users(res, user)
+    compare_users(res[0], user)
 
     res = send_request('user?userName=samo1', None, cookie)[0]
-    compare_users(res, user1)
+    compare_users(res[0], user1)
 
     res = send_request('user?userName=e01ae16e97c13c77', None, cookie)[0]
     assert len(res) == 0
@@ -462,11 +453,11 @@ def test_create_tour2 ():
     assert_result(res)
 
     res = send_request('tour?tourId=2', None, cookie)[0]
-    assert_tour(res, 'Stanford2', 5)
+    assert_tour(res[0], 'Stanford2', 5)
     
     expected_order = [111, 111, 999, 200, 999, 999]
 
-    for idx, val in enumerate(res['nodes']):
+    for idx, val in enumerate(res[0]['nodes']):
         assert 'latitude' in val
         assert 'longitude' in val
         assert 'mongoId' in val
@@ -484,10 +475,10 @@ def test_get_tour():
                            })
 
     res = send_request('tour?tourId=1', None, cookie)[0]
-    assert_tour(res, 'Stanford', 5)
+    assert_tour(res[0], 'Stanford', 5)
     
     res = send_request('tour?tourName=Stanford', None, cookie)[0]
-    assert_tour(res, 'Stanford', 5)
+    assert_tour(res[0], 'Stanford', 5)
 
     err_test('tour?tourName=NotExistent', 'Tour Doesnt Exist', None, cookie)
     
@@ -495,6 +486,8 @@ def test_get_tour():
 
 def assert_small_node(res, mongo_id, idx):
     assert '_id' in res
+    assert 'tourId' in res
+    assert 'nodeId' in res
     assert res['_id'] == unicode(mongo_id)
     assert 'content' in res
     assert len(res['content']) == 1
@@ -510,19 +503,19 @@ def test_get_nodes():
                            })
 
     tour = send_request('tour?tourId=2', None, cookie)[0]
-    assert_tour(tour, 'Stanford2', 5)
-    for idx, node in enumerate(tour['nodes']):
+    assert_tour(tour[0], 'Stanford2', 5)
+    for idx, node in enumerate(tour[0]['nodes']):
         assert 'nodeId' in node
         assert 'mongoId' in node
         node_id = node['nodeId']
         mongo_id = node['mongoId']
         res = send_request('nodeContent?nodeId='+str(node_id), None, cookie)[0]
-        assert_small_node(res, mongo_id, idx)
-
-    for idx, node in enumerate(tour['nodes']):
+        assert_small_node(res[0], mongo_id, idx)
+        
+    for idx, node in enumerate(tour[0]['nodes']):
         mongo_id = node['mongoId']
         res = send_request('nodeContent?mongoId='+str(mongo_id), None, cookie)[0]
-        assert_small_node(res, mongo_id, idx)
+        assert_small_node(res[0], mongo_id, idx)
 
     print 'Node Retrieval Tests Successful'
 
@@ -532,12 +525,12 @@ def test_file_retreive():
                            'pass' : 'samo'
                            })
     tour = send_request('tour?tourId=1', None, cookie)[0]
-    assert_tour(tour, 'Stanford', 5);
+    assert_tour(tour[0], 'Stanford', 5);
     
-    node_id = tour['nodes'][0]['nodeId']
-    mongo_id = tour['nodes'][0]['mongoId']
+    node_id = tour[0]['nodes'][0]['nodeId']
+    mongo_id = tour[0]['nodes'][0]['mongoId']
     res = send_request('nodeContent?nodeId='+str(node_id), None, cookie)[0]
-    content_id = res['content'][0]['page'][0]['contentId']
+    content_id = res[0]['content'][0]['page'][0]['contentId']
     res = send_request('mongoFile?mongoFile='+content_id, None, cookie, True)[0]
     
     compare = open('IMG_0137.JPG').read()
@@ -571,6 +564,7 @@ def test_modify_tour ():
     #success_test('modifyTour', '1 Updates Successful', {'tourId' : 3, 'locId' : 11382}, cookie)
 
     tour = send_request('tour?tourId=3', None, cookie)[0]
+    tour = tour[0]
     assert tour['description'] == 'Third Tour'
     assert tour['walkingDistance'] - 2.2 < 0.0001
     assert tour['active'] == True
@@ -581,6 +575,7 @@ def test_modify_tour ():
                                                         'active' : 0}, cookie)
     
     tour = send_request('tour?tourId=3', None, cookie)[0]
+    tour = tour[0]
     assert tour['description'] == 'Third Tour Second Update'
     assert tour['walkingDistance'] - 34.23 < 0.0001
     assert tour['active'] == False
@@ -625,6 +620,7 @@ def test_tags():
     assert len(res) == 2
     
     success_test('tagTour', 'Tour Tagged', {'tagId' : 1, 'tourId' : 1}, cookie)
+
     res = send_request('tagTour', {'tagId' : 1, 'tourId' : 1}, cookie)[0]
     assert 'error' in res
     assert res['error'].find('Duplicate entry') != -1
@@ -632,11 +628,13 @@ def test_tags():
     success_test('tagTour', 'Tour Tagged', {'tagId' : 2, 'tourId' : 1}, cookie)
 
     tour = send_request('tour?tourId=1', None, cookie)[0]
+    tour = tour[0]
     assert 'tags' in tour
     assert len(tour['tags']) == 2
 
     success_test('deleteTag', 'Tag Deleted', {'tagId' : 1, 'tourId' : 1}, cookie)
     tour = send_request('tour?tourId=1', None, cookie)[0]
+    tour = tour[0]
     assert 'tags' in tour
     assert len(tour['tags']) == 1
 
@@ -644,12 +642,166 @@ def test_tags():
                           {'userName' : 'samo1', 'pass' : 'samo'})
     err_test('deleteTag', 'User Doesnt own this tour', {'tagId' : 1, 'tourId' : 1}, cookie)
     tour = send_request('tour?tourId=1', None, cookie)[0]
+    tour = tour[0]
     assert 'tags' in tour
     assert len(tour['tags']) == 1
 
     print 'Tag Test Successful'
+
+def get_tour_map(tours):
+    tour_map = dict()
+    for tour in tours:
+        assert 'tourId' in tour
+        assert 'latitude' in tour
+        assert 'longitude' in tour
+        tour_map[tour['tourId']] = tour
+    return tour_map
+    
+def test_search():
+    cookie = success_test('login', 'Successfully authenticated',
+                          {'userName' : 'samo', 'pass' : 'samo'})
+
     
 
+    #Tour 4
+    success_test('tour', 'Tour Created', {'tourName' : 'SearchTour1-4', 'description' : 'Tour4'}, cookie)
+                                              
+    node_data = {
+        'nodeData' : json.dumps({
+            'tourId' : 4,
+            'latitude': 37.418,
+            'longitude': -122.172,
+            'brief' : {
+                'title' : 'Only4',
+                'description' : '4AND5'
+                },
+            'content' : [[{'content' : 'withAll'}]]
+            })
+        }
+    
+    res = send_files('node', node_data, cookie)
+    assert_result(res)
+
+    #Tour 5
+    success_test('tour', 'Tour Created', {'tourName' : 'SearchTour2-5', 'description' : 'Tour5'}, cookie)
+        
+    node_data = {
+        'nodeData' : json.dumps({
+            'tourId' : 5,
+            'latitude': 37.418,
+            'longitude': -122.172,
+            'brief' : {
+                'title' : '5AND6',
+                'description' : '4AND5'
+                },
+            'content' : [[{'content' : 'withAll'}]]
+            })
+        }
+    
+    res = send_files('node', node_data, cookie)
+    assert_result(res)
+
+    #Tour 6
+    success_test('tour', 'Tour Created', {'tourName' : 'SearchTour2-6', 'description' : 'Tour6'}, cookie)
+                                              
+    node_data = {
+        'nodeData' : json.dumps({
+            'tourId' : 6,
+            'latitude': 37.418,
+            'longitude': -122.172,
+            'brief' : {
+                'title' : '5AND6',
+                'description' : 'ONLY6'
+                },
+            'content' : [[{'content' : 'withAll'}]]
+            })
+        }
+    
+    res = send_files('node', node_data, cookie)
+    assert_result(res)
+
+    #Tour 7
+    success_test('tour', 'Tour Created', {'tourName' : 'SearchTour1-7', 'description' : 'Tour7'}, cookie)
+                                              
+    node_data = {
+        'nodeData' : json.dumps({
+            'tourId' : 7,
+            'latitude': 37.418,
+            'longitude': -122.172,
+            'brief' : {
+                'title' : 'Only7',
+                'description' : 'Only7'
+                },
+            'content' : [[{'content' : 'withAll'}]]
+            })
+        }
+    
+    res = send_files('node', node_data, cookie)
+    assert_result(res)
+
+
+    success_test('tagTour', 'Tour Tagged', {'tagId' : 1, 'tourId' : 4}, cookie)
+
+    #1 and 4
+    tours = send_request('tours?tagName=tag', None, cookie)[0]
+    assert len(tours) == 2
+    tour_map = get_tour_map(tours)
+    assert 1 in tour_map
+    assert 4 in tour_map
+
+    #4 and 7
+    tours = send_request('tours?tourName=searchtour1', None, cookie)[0]
+    assert len(tours) == 2
+    tour_map = get_tour_map(tours)
+    assert 4 in tour_map
+    assert 7 in tour_map
+
+    #5 and 6
+    tours = send_request('tours?tourName=searchtour2', None, cookie)[0]
+    assert len(tours) == 2
+    tour_map = get_tour_map(tours)
+    assert 5 in tour_map
+    assert 6 in tour_map
+    
+
+    #Only4
+    tours = send_request('tours?q=Only4', None, cookie)[0]
+    assert len(tours) == 1
+    tour_map = get_tour_map(tours)
+    assert 4 in tour_map
+    
+    
+    #4AND5
+    tours = send_request('tours?q=4AND5', None, cookie)[0]
+    assert len(tours) == 2
+    tour_map = get_tour_map(tours)
+    assert 4 in tour_map
+    assert 5 in tour_map
+    
+    #5AND6
+    tours = send_request('tours?q=5AND6', None, cookie)[0]
+    assert len(tours) == 2
+    tour_map = get_tour_map(tours)
+    assert 5 in tour_map
+    assert 6 in tour_map
+    
+    #Only7
+    tours = send_request('tours?q=Only7', None, cookie)[0]
+    assert len(tours) == 1
+    tour_map = get_tour_map(tours)
+    assert 7 in tour_map
+
+    tours = send_request('tours?q=withAll', None, cookie)[0]
+    assert len(tours) == 4
+    tour_map = get_tour_map(tours)
+    assert 4 in tour_map
+    assert 5 in tour_map
+    assert 6 in tour_map
+    assert 7 in tour_map
+
+    
+    print 'Search Test Successful'
+    
 test_user_create()
 test_user_auth()
 test_user_get()
@@ -660,6 +812,6 @@ test_get_nodes()
 test_file_retreive()
 test_modify_tour()
 test_tags()
-
+test_search()
 
 

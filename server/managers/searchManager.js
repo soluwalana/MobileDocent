@@ -1,5 +1,10 @@
+var _ = require('../lib/underscore.js')._;
+
 var SQL = require('../lib/sql.js').queries;
+var selectMany = require('../lib/sql.js').selectMany;
 var multiQuery = require('../lib/sql.js').multiQuery;
+
+var constants = require('../lib/constants.js');
 var logger = require('../lib/customLogger.js').getLogger();
 var getLineNum = require('../lib/customLogger.js').getLineNumber;
 var reEscape = require('../lib/helpers.js').reEscape;
@@ -8,10 +13,12 @@ var errorHelper = require('../lib/helpers.js').errorHelper;
 var errorWrap = function (retCallback, callback){
     return errorHelper(logger, getLineNum(), callback, retCallback);
 };
+
 var errorCallback = function (msg, callback){
     logger.error(msg, getLineNum());
     return callback({ error : msg });
-}
+};
+
 var likeWrap = function(string){
     if (typeof(string) === 'string'){
         return '%'+string+'%';
@@ -19,6 +26,7 @@ var likeWrap = function(string){
     return string;
 };
 exports.likeWrap = likeWrap;
+
 
 var SearchManager = function(store){
     var self = this;
@@ -43,12 +51,14 @@ var SearchManager = function(store){
         return self._simpleQuery(SQL.tagTour, sqlParams, callback, 'Tour Tagged');
     };
 
+    
+    
     self.getToursByTag = function (params, callback){
         if (!params.tagName){
             return errorCallback('Missing Required Parameters', callback);
         }
         var sql = SQL.getToursByTagName;
-        var sqlParams = [likeWrap(params.tagName), likeWrap(params.tagName)]
+        var sqlParams = [likeWrap(params.tagName)];
             
         return self._simpleQuery(sql, sqlParams, callback);
     };
@@ -58,7 +68,7 @@ var SearchManager = function(store){
             return errorCallback('Missing Required Parameters', callback);
         }
         var sql = SQL.getToursByName;
-        var sqlParams = [likeWrap(params.tourName), likeWrap(params.tourName)];
+        var sqlParams = [likeWrap(params.tourName)];
         return self._simpleQuery(sql, sqlParams, callback);
     };
     
@@ -112,8 +122,58 @@ var SearchManager = function(store){
         if (!params.q){
             return errorCallback('Missing Required Parameters', callback);
         }
-        
+        var queryStr = params.q;
+        if (typeof (queryStr) !== 'string'){
+            queryStr = queryStr.toString();
+        }
+        var queryRe = new RegExp('.*?'+reEscape(queryStr), 'i');
+
+        var sql = SQL.getToursByAny;
+        var sqlParams = [likeWrap(queryStr), likeWrap(queryStr), likeWrap(queryStr)];
+
+        self.store.sqlConn(errorWrap(callback, function(conn){
+            conn.query(sql, sqlParams).execute(errorWrap(callback, function(anyRows){
+                
+                store.mongoCollection(
+                    constants.NODE_COLLECTION,
+                    errorWrap(callback, function (collection){
+                        var query = {
+                            $or : [
+                                { 'brief.description' : queryRe },
+                                { 'brief.title' : queryRe },
+                                { 'content.page.content' : queryRe }
+                            ]
+                        };
+                        var fields = {
+                            tourId: true
+                            /*'nodeId' : true,
+                            'brief.description' : true,
+                            'brief.title' : true,
+                            'content.page.content' : true*/
+                        };
+
+                        var opts = {
+                            limits: constants.MAX_RESULT_LENGTH
+                        };
+                        
+                        var cursor = collection.find(query, fields, opts);
+                        cursor.toArray(errorWrap(callback, function(records){
+                            var values = _.uniq(_.pluck(records, 'tourId'));
+                            selectMany(
+                                conn, 'tour', values,
+                                errorWrap(callback, function(rows){
+                                    //logger.warn(anyRows);
+                                    //logger.warn(rows);
+                                    callback(anyRows.concat(rows));
+                                })
+                            );
+                        }));
+                    })
+                );
+            }));
+        }));
     };
+
         
     self._simpleQuery = function (sql, sqlParams, callback, message){
         self.store.sqlConn(errorWrap(callback, function(conn){

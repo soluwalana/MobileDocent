@@ -10,7 +10,12 @@ apt-get install apache2 -y
 apt-get install python2.6 -y
 
 # mongodb
-apt-get install mongodb 
+apt-key adv --keyserver keyserver.ubuntu.com --recv 7F0CEB10
+echo 'deb http://downloads-distro.mongodb.org/repo/ubuntu-upstart dist 10gen' /etc/apt/sources.list
+
+apt-get update
+apt-get remove mongo*
+apt-get install mongodb-10gen
 
 #Install Node.JS
 wget 'http://nodejs.org/dist/v0.6.15/node-v0.6.15.tar.gz' -O node.tar.gz

@@ -4,7 +4,7 @@ __MobileDocent__ A full Server Stack and IOS/Android interaction project
 
     MySQL v5.1 (Persistance/MetaData store)
     Python 2.6 +
-    MongoDB+GridFS (Storing of Video/Audio/Node Data)
+    MongoDB+GridFS (Storing of Video/Audio/Node Data) v1.9.1+
    	Node v0.6.15
 	jsdoc (http://code.google.com/p/jsdoc-toolkit/)
 	

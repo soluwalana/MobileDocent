@@ -39,3 +39,39 @@ once
 removeListener
 removeAllListeners
 listeners
+
+NOTE:
+This module will segmentation fault if you try to run two queries in parallel with each other.
+   var tempQuery = this.query('insert into newTable (field1, field2) values ');
+    for (var i = 10; i < 10000; i ++){
+        var add = null;
+        if (i > 10){
+            add =  ',('+i+', 100)'
+        } else {
+            add =  '('+i+', 100)'
+        }
+        tempQuery.add(add);
+    }
+    tempQuery.execute(function(err, rows, cols){
+        console.log(err);
+        console.log(rows);
+		console.log(cols);
+    });
+
+    var tempQuery1 = this.query('insert into newTable (field1, field2) values ');
+    for (var i = 10; i < 10000; i ++){
+        var add = null;
+        if (i > 10){
+            add =  ',('+i+', 100)'
+        } else {
+            add =  '('+i+', 100)'
+        }
+        tempQuery1.add(add);
+    }
+    tempQuery1.execute(function(err, rows, cols){
+        console.log(err);
+        console.log(rows);
+		console.log(cols);
+    });
+    
+Seg Faults almost every time. Make sure the queries are nested

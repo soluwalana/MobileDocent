@@ -15,3 +15,6 @@ exports.ERR_STATUS = 'Fatal Errors Occurred';
 exports.INVALID_FILE = 'INVALID';
 
 exports.FILE_BUF_SIZE = 4*1024;
+
+exports.MAX_RESULT_LENGTH = 10000;
+exports.MAX_RETURN_LENGTH = 1000;

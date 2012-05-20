@@ -10,7 +10,7 @@ var errorWrap = function (retCallback, callback){
 var errorCallback = function (msg, callback){
     logger.error(msg);
     return callback({ error : msg });
-}
+};
 
 var UserManager = function(store){
     var self = this;
@@ -109,9 +109,6 @@ var UserManager = function(store){
                         logger.warn('No Users Found For query');
                         logger.warn([sql, params]);
                         return callback([]);
-                    }
-                    if (rows.length === 1){
-                        return callback(rows[0]);
                     }
                     callback(rows);
                 }

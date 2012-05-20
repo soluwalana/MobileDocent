@@ -1,4 +1,25 @@
 var logger = require('./customLogger.js').getLogger();
+var constants = require('./constants.js');
+
+var getLineNum = require('../lib/customLogger.js').getLineNumber;
+var errorHelper = require('../lib/helpers.js').errorHelper;
+var errorWrap = function (retCallback, callback){
+    return errorHelper(logger, getLineNum(), callback, retCallback);
+};
+
+
+exports.keys = {
+    locationKeys : ['locId', 'country', 'region', 'city', 'postalCode', 'latitude',
+                    'longitude', 'metroCode', 'areaCode'],
+    ipBlockKeys : ['locId', 'startipnum', 'endipnum'],
+    userKeys : ['userId', 'userName', 'password', 'salt', 'about', 'email', 'fbId', 'twitterId'],
+    tourKeys : ['tourId', 'userId', 'tourName', 'description', 'locId',
+                'walkingDistance', 'official', 'active'],
+    tourHistoryKeys : ['userId', 'tourId', 'timeStarted', 'finished', 'timeFinished', 'rating'],
+    tagKeys : ['tagId', 'tagName', 'description', 'userId'],
+    tourTagKeys : ['tagId', 'tourId', 'userId'],
+    nodeKeys : ['nodeId', 'latitude', 'longitude', 'prevNode', 'nextNode', 'pseudo', 'tourId', 'mongoId']
+};
 
 exports.queries= {
 
@@ -27,11 +48,8 @@ exports.queries= {
     getTourByName: 'select * from tours as T inner join nodes as N where N.tourId = T.tourId and T.tourName = ? '+
         'union '+
         'select * from tours T left join (select * from nodes N1 ) as X on T.tourId = X.tourId where T.tourName = ?;',
-    getToursByName: 'select * from tours as T inner join nodes as N where N.tourId = T.tourId and T.tourName like ? '+
-        'union '+
-        'select * from tours T left join (select * from nodes N1 ) as X on T.tourId = X.tourId where T.tourName like ?;',
     
-            
+              
     /* Node Queries */
     checkTourOwnership : 'select 1 from tours where userId = ? and tourId = ?;',
     checkNodeOwnership : 'select 1 from tours, nodes where tours.tourId = nodes.tourId and tours.userId = ? and tours.tourId = ?;',
@@ -88,18 +106,68 @@ exports.queries= {
     
     getTourTags: 'select * from tags T1, tourTags T2 where T1.tagId = T2.tagId and tourId = ?',
 
-    getToursByTagName: 'select * from tours where tourId = '+
-        '(select T0.tourId from tours T0, tags T1, tourTags T2 where'+
-        ' T1.tagId = T2.tagId and T0.tourId = T2.tourId and T1.tagName like ? );',
-                
     deleteTourTag: 'delete from tourTags where tagId = ?',
+
     
-        
+    /* Search Queries */
+    getToursByTagName: 'select T.*, latitude, longitude from tours T left join locations L on T.locId = L.locId '+
+        'where tourId in (select T0.tourId from tours T0, tags T1, tourTags T2 where '+
+        'T1.tagId = T2.tagId and T0.tourId = T2.tourId and T1.tagName like ? )',
+    
+    getToursByName: 'select T.*, latitude, longitude from tours T left join locations L on T.locId = L.locId '+
+        'where (T.locId = L.locId or T.locId is null) and  T.tourName like ?',
+
+    getToursByAny: 'select T.*, latitude, longitude from tours T left join locations L on T.locId = L.locId '+
+        'where tourId in (select T0.tourId from tours T0, tags T1, tourTags T2 where '+
+        'T1.tagId = T2.tagId and T0.tourId = T2.tourId and T1.tagName like ? ) '+
+        'or T.tourName like ? or T.description like ?',
+
     /* Geo Queries */
     getLocIdByIP : 'select * from ipBlocks where endIpNum >= ? order by endIpNum asc limit 1;',
     getLocByLocId: 'select * from locations where locId = ?;',
     getLocByKeys: "select * from locations where city like ? and region = ?;"
 };
+
+var joinQueries = {
+    'tour' : {
+        'create' : 'create temporary table tourJoin (tourId integer unsigned primary key)',
+        'insert' : 'insert into tourJoin values ',
+        'select' : 'select T.*, latitude, longitude from tours T left join locations L on T.locId = L.locId '+
+            'where tourId in (select tourId from tourJoin)'
+    },
+    'node' : {
+        'create' : 'create temporary table nodeJoin (nodeId integer unsigned primary key)',
+        'insert' : 'insert into nodeJoin values ',
+        'select' : 'select * from nodes where nodeId in (select nodeId from nodeJoin)'
+    }
+};
+    
+
+var selectMany = function(conn, table, values, callback){
+    var queries = joinQueries[table];
+    conn.query(queries.create).execute(errorWrap(callback, function(res){
+        
+        var insert = queries.insert;
+        var tQuery = conn.query(insert);
+        
+        for (var i = 0; i < values.length; i ++){
+            var add = '('+conn.escape(values[i].toString())+')';
+            if (i > 0) add = ', '+add;
+            tQuery.add(add);
+        }
+        
+        tQuery.execute(errorWrap(callback, function(rows){
+            var select = queries.select;
+            var tQuery1 = conn.query(select);
+            tQuery1.limit(constants.MAX_RESULT_LENGTH);
+            tQuery1.execute(errorWrap(callback, function(rows){
+                return callback(null, rows);
+            }));
+        }));
+    }));    
+};
+
+exports.selectMany = selectMany;
 
 var recursiveQuery = function (conn, queries, argsArray, callback, result){
     if (queries.length === 0){
