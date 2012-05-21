@@ -159,7 +159,7 @@ var selectMany = function(conn, table, values, callback){
         tQuery.execute(errorWrap(callback, function(rows){
             var select = queries.select;
             var tQuery1 = conn.query(select);
-            tQuery1.limit(constants.MAX_RESULT_LENGTH);
+            tQuery1.limit(constants.MAX_RESULT);
             tQuery1.execute(errorWrap(callback, function(rows){
                 return callback(null, rows);
             }));

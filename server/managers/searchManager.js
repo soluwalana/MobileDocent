@@ -9,6 +9,7 @@ var logger = require('../lib/customLogger.js').getLogger();
 var getLineNum = require('../lib/customLogger.js').getLineNumber;
 var reEscape = require('../lib/helpers.js').reEscape;
 var errorHelper = require('../lib/helpers.js').errorHelper;
+var geo = require('../lib/geo.js');
 
 var errorWrap = function (retCallback, callback){
     return errorHelper(logger, getLineNum(), callback, retCallback);
@@ -59,8 +60,11 @@ var SearchManager = function(store){
         }
         var sql = SQL.getToursByTagName;
         var sqlParams = [likeWrap(params.tagName)];
-            
-        return self._simpleQuery(sql, sqlParams, callback);
+        var sortFn = null;
+        if (_.isNumber(params.latitude) && _.isNumber(params.longitude)){
+            sortFn = geo.sortGenerator(params.latitude, params.longitude);
+        }
+        return self._simpleQuery(sql, sqlParams, callback, sortFn);
     };
 
     self.getToursByName = function(params, callback){
@@ -69,7 +73,13 @@ var SearchManager = function(store){
         }
         var sql = SQL.getToursByName;
         var sqlParams = [likeWrap(params.tourName)];
-        return self._simpleQuery(sql, sqlParams, callback);
+
+        var sortFn = null;
+        if (_.isNumber(params.latitude) && _.isNumber(params.longitude)){
+            sortFn = geo.sortGenerator(params.latitude, params.longitude);
+        }
+        
+        return self._simpleQuery(sql, sqlParams, callback, sortFn);
     };
     
     
@@ -96,6 +106,7 @@ var SearchManager = function(store){
             sql = SQL.getTagByDescription;
             sqlParams = [likeWrap(params.description)];
         }
+
         return self._simpleQuery(sql, sqlParams, callback);
     };
     
@@ -122,6 +133,12 @@ var SearchManager = function(store){
         if (!params.q){
             return errorCallback('Missing Required Parameters', callback);
         }
+
+        var sortFn = null;
+        if (_.isNumber(params.latitude) && _.isNumber(params.longitude)){
+            sortFn = geo.sortGenerator(params.latitude, params.longitude);
+        }
+                        
         var queryStr = params.q;
         if (typeof (queryStr) !== 'string'){
             queryStr = queryStr.toString();
@@ -132,7 +149,7 @@ var SearchManager = function(store){
         var sqlParams = [likeWrap(queryStr), likeWrap(queryStr), likeWrap(queryStr)];
 
         self.store.sqlConn(errorWrap(callback, function(conn){
-            conn.query(sql, sqlParams).execute(errorWrap(callback, function(anyRows){
+            conn.query(sql, sqlParams).execute(errorWrap(callback, function(basicRows){
                 
                 store.mongoCollection(
                     constants.NODE_COLLECTION,
@@ -153,7 +170,7 @@ var SearchManager = function(store){
                         };
 
                         var opts = {
-                            limits: constants.MAX_RESULT_LENGTH
+                            limits: constants.MAX_RESULT
                         };
                         
                         var cursor = collection.find(query, fields, opts);
@@ -162,9 +179,9 @@ var SearchManager = function(store){
                             selectMany(
                                 conn, 'tour', values,
                                 errorWrap(callback, function(rows){
-                                    //logger.warn(anyRows);
-                                    //logger.warn(rows);
-                                    callback(anyRows.concat(rows));
+                                    var allRows = _.uniq(basicRows.concat(rows));
+                                    if (sortFn) allRows.sort(sortFn);
+                                    callback(allRows.slice(0, constants.MAX_RETURN));
                                 })
                             );
                         }));
@@ -175,13 +192,16 @@ var SearchManager = function(store){
     };
 
         
-    self._simpleQuery = function (sql, sqlParams, callback, message){
+    self._simpleQuery = function (sql, sqlParams, callback, extra){
         self.store.sqlConn(errorWrap(callback, function(conn){
             conn.query(sql, sqlParams).execute(errorWrap(callback, function(rows){
-                if (message){
-                    return callback({'success' : message, 'result' : rows});
+                if (_.isString(extra)){
+                    return callback({'success' : extra, 'result' : rows});
+                } else if (_.isFunction(extra)){
+                    return callback(rows.sort(extra));
+                } else {
+                    return callback(rows);
                 }
-                return callback(rows);
             }));
         }));
     };
