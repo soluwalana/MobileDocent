@@ -60,7 +60,7 @@ public class MainPageActivity extends Activity {
 	}
 	
 	public void createTour (){
-		Intent intent = new Intent(this, CreateTourActivity.class );
+		Intent intent = new Intent(this, TourActivity.class/*CreateTourActivity.class*/ );
 		startActivity(intent);
 	}
 	

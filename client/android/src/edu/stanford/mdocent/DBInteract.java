@@ -16,7 +16,12 @@ import org.apache.http.message.BasicHeader;
 import org.apache.http.cookie.Cookie;
 import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.protocol.HTTP;
-import com.google.gson.*;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import android.provider.Settings.Secure;
 import android.util.Log;
@@ -42,8 +47,9 @@ public class DBInteract {
 
 			if(response!=null){
 				String str = inputStreamToString(response.getEntity().getContent()).toString();
-				Gson gson = new Gson();
-				JsonObject recvObj = gson.fromJson(str, JsonObject.class);
+				JsonParser parser = new JsonParser();
+				JsonObject recvObj = (JsonObject) parser.parse(str);
+				Log.v(TAG, "Httpget returned: " + recvObj.toString());
 				return recvObj;
 			}
 
@@ -64,8 +70,8 @@ public class DBInteract {
 
 			if(response!=null){
 				String str = inputStreamToString(response.getEntity().getContent()).toString();
-				Gson gson = new Gson();
-				JsonElement recvElem = gson.fromJson(str, JsonElement.class);
+				JsonParser parser = new JsonParser();
+				JsonElement recvElem =parser.parse(str);
 				if (recvElem.isJsonObject()) {
 					Log.v(TAG, "Error in HttpGet. Received: " + recvElem.toString() + " url: "+ urlEnd);
 					return null;
