@@ -5,12 +5,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.List;
+import java.util.Vector;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.CookieStore;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.cookie.Cookie;
@@ -23,6 +26,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import data.TourData;
+
 import edu.stanford.mdocent.QueryString;
 
 import android.provider.Settings.Secure;
@@ -34,6 +39,7 @@ public class DBInteract {
 	private static String serverURL = "http://samo.stanford.edu:8787";
 	private static final String TAG = "DBInteract";
 	//private static String cookie = "";
+	private static CookieStore cookieStore;
 
 	private static JsonObject postData(JsonObject jo, String urlEnd){
 		DefaultHttpClient httpclient = new DefaultHttpClient();
@@ -52,6 +58,7 @@ public class DBInteract {
 				JsonParser parser = new JsonParser();
 				JsonObject recvObj = (JsonObject) parser.parse(str);
 				Log.v(TAG, "Httpget returned: " + recvObj.toString());
+				cookieStore = httpclient.getCookieStore();
 				return recvObj;
 			}
 
@@ -66,6 +73,7 @@ public class DBInteract {
 		DefaultHttpClient httpclient = new DefaultHttpClient();
 		HttpConnectionParams.setConnectionTimeout(httpclient.getParams(), 10000);
 		HttpResponse response;
+	    httpclient.setCookieStore(cookieStore);
 		try {
 			HttpGet get = new HttpGet(serverURL + urlEnd); 
 			response = httpclient.execute(get);
@@ -136,23 +144,27 @@ public class DBInteract {
 	}
 	
 	//For now only returns true if json array is present. eventually needs to return elements of array
-	public static boolean tourKeywordSearch(String searchStr) { 	
+	public static Vector<TourData> tourKeywordSearch(String searchStr) { 	
 		QueryString qs = new QueryString("q", searchStr);
 		try {
 			JsonArray rcvArray = getData("/tours/?" + qs);
 			if(rcvArray != null) {
 				Log.v(TAG, rcvArray.toString());
-				if(rcvArray.isJsonArray()){
-					Log.v(TAG, "Tour Search successful " + rcvArray.toString());
-					return true;
+				if(rcvArray.isJsonArray() && rcvArray.size() > 0){
+					Log.v(TAG, "Tour Search successful "+ rcvArray.toString());
+					Vector<TourData> tourVector = new Vector<TourData>();
+					for(int i = 0; i < rcvArray.size(); i++){
+						tourVector.add(new TourData(rcvArray.get(i).getAsJsonObject()));
+					}
+					return tourVector;
 				}
-				else return false;
+				else return null;
 			}
 		}
 		catch (Exception e1) {
 			e1.printStackTrace();
 		}
-		return false;
+		return null;
 	} 
 
 	private static StringBuilder inputStreamToString(InputStream is) {

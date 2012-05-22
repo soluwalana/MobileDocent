@@ -1,11 +1,16 @@
 package data;
 
+import com.google.gson.JsonObject;
 
 public class TourData {	
 	
 	public int tourId;
 	
 	public int userId;
+	
+	public double latitude;
+	
+	public double longitude;
 
 	public String tourName;
 	
@@ -28,5 +33,10 @@ public class TourData {
 		this.tourName = name;
 		this.description = desc;
 		this.tourNodes = nodeVec;
+	}
+
+	public TourData(JsonObject jsonObj) {
+		this.tourName = jsonObj.get("tourName").toString();
+		// TODO Auto-generated constructor stub
 	}
 }
