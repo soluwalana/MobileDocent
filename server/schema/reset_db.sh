@@ -1,0 +1,1 @@
+../tests/reset_db.sh

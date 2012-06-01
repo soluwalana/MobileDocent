@@ -106,6 +106,7 @@ exports.queries= {
     
     getTourTags: 'select * from tags T1, tourTags T2 where T1.tagId = T2.tagId and tourId = ?',
 
+    
     deleteTourTag: 'delete from tourTags where tagId = ?',
 
     
@@ -113,7 +114,13 @@ exports.queries= {
     getToursByTagName: 'select T.*, latitude, longitude from tours T left join locations L on T.locId = L.locId '+
         'where tourId in (select T0.tourId from tours T0, tags T1, tourTags T2 where '+
         'T1.tagId = T2.tagId and T0.tourId = T2.tourId and T1.tagName like ? )',
-    
+
+    getToursByUserId: 'select T.*, latitude, longitude from tours T left join locations L on T.locId = L.locId '+
+        'where userId = ?',
+
+    getToursByUserName: 'select T.*, latitude, longitude from tours T left join locations L on T.locId = L.locId '+
+        'inner join users U on U.userId = T.userId and  userName = ?',
+            
     getToursByName: 'select T.*, latitude, longitude from tours T left join locations L on T.locId = L.locId '+
         'where (T.locId = L.locId or T.locId is null) and  T.tourName like ?',
 
@@ -144,18 +151,18 @@ var joinQueries = {
     
 
 var selectMany = function(conn, table, values, callback){
+    if (values.length === 0){
+        return callback(null, []);
+    }
     var queries = joinQueries[table];
     conn.query(queries.create).execute(errorWrap(callback, function(res){
-        
         var insert = queries.insert;
         var tQuery = conn.query(insert);
-        
         for (var i = 0; i < values.length; i ++){
             var add = '('+conn.escape(values[i].toString())+')';
             if (i > 0) add = ', '+add;
             tQuery.add(add);
         }
-        
         tQuery.execute(errorWrap(callback, function(rows){
             var select = queries.select;
             var tQuery1 = conn.query(select);

@@ -12,14 +12,14 @@ drop table if exists locations;
     
 create table locations (
   locId integer unsigned not null,
-  country varchar(2)  character set utf8 collate utf8_general_ci not null,
-  region varchar(2)  character set utf8 collate utf8_general_ci not null,
-  city varchar(255)  character set utf8 collate utf8_general_ci not null,
+  country varchar(2)  character set utf8 collate utf8_general_ci,
+  region varchar(2)  character set utf8 collate utf8_general_ci,
+  city varchar(255)  character set utf8 collate utf8_general_ci,
   postalCode varchar(8),
   latitude double,
   longitude double,
-  metroCode integer,
-  areaCode integer,
+  metroCode varchar(8),
+  areaCode varchar(8),
   primary key (locId),
   unique(country, region, city, postalCode)
 ) ENGINE InnoDB character set utf8 collate utf8_general_ci;

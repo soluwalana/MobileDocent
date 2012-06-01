@@ -52,33 +52,38 @@ var SearchManager = function(store){
         return self._simpleQuery(SQL.tagTour, sqlParams, callback, 'Tour Tagged');
     };
 
-    
-    
-    self.getToursByTag = function (params, callback){
+     
+    self.getToursByTag = function (params, sortFn, callback){
         if (!params.tagName){
             return errorCallback('Missing Required Parameters', callback);
         }
         var sql = SQL.getToursByTagName;
         var sqlParams = [likeWrap(params.tagName)];
-        var sortFn = null;
-        if (_.isNumber(params.latitude) && _.isNumber(params.longitude)){
-            sortFn = geo.sortGenerator(params.latitude, params.longitude);
-        }
         return self._simpleQuery(sql, sqlParams, callback, sortFn);
     };
 
-    self.getToursByName = function(params, callback){
+    self.getToursByName = function(params, sortFn, callback){
         if (!params.tourName){
             return errorCallback('Missing Required Parameters', callback);
         }
         var sql = SQL.getToursByName;
         var sqlParams = [likeWrap(params.tourName)];
+        return self._simpleQuery(sql, sqlParams, callback, sortFn);
+    };
 
-        var sortFn = null;
-        if (_.isNumber(params.latitude) && _.isNumber(params.longitude)){
-            sortFn = geo.sortGenerator(params.latitude, params.longitude);
+    self.getToursByUser = function(params, sortFn, callback){
+        if ((!params.userId && !params.userName) || !params.authUserId){
+            return errorCallback('Missing Required Parameters', callback);
         }
-        
+        var sql = SQL.getToursByUserId;
+        var sqlParams = [params.authUserId];
+
+        if (params.userId !== 'true'){
+            sqlParams = [params.userId];
+        } else if (params.userName){
+            sql = SQL.getToursByUserName;
+            sqlParams = [params.userName];
+        }
         return self._simpleQuery(sql, sqlParams, callback, sortFn);
     };
     
@@ -128,15 +133,21 @@ var SearchManager = function(store){
 
 
     self.search = function(params, callback){
-        if (params.tagName) return self.getToursByTag(params, callback);
-        if (params.tourName) return self.getToursByName(params, callback);
-        if (!params.q){
-            return errorCallback('Missing Required Parameters', callback);
-        }
-
         var sortFn = null;
         if (_.isNumber(params.latitude) && _.isNumber(params.longitude)){
             sortFn = geo.sortGenerator(params.latitude, params.longitude);
+        }
+        if (params.tagName) {
+            return self.getToursByTag(params, sortFn, callback);
+        }
+        if (params.tourName) {
+            return self.getToursByName(params, sortFn, callback);
+        }
+        if (params.userName || params.userId){
+            return self.getToursByUser(params, sortFn, callback);
+        }
+        if (!params.q){
+            return errorCallback('Missing Required Parameters', callback);
         }
                         
         var queryStr = params.q;

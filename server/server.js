@@ -84,7 +84,7 @@ app.get('/tour', function(req, res){
    q for full text query search,
    tourName for fuzzy name search 
    tagName for tag Only Search for tours
-
+   user=true for tours created by authenticated user
    Will not return the nodes or the tags for these
    tours, use /tour and /tags to get them if you need
    them
