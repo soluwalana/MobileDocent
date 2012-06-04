@@ -37,7 +37,6 @@ function DataStore (initCallback){
             mysqlConn = this;
             mongoDb.open(function(err, openMongo){
                 mongoConn = openMongo;
-                logger.info('DataStore Initialized');
                 initCallback(true);
             });
         });
