@@ -570,9 +570,9 @@ def test_modify_tour ():
     assert tour['active'] == True
 
     success_test('modifyTour', 'Updates Successful', {'tourId' : 3,
-                                                        'tourDesc' : 'Third Tour Second Update',
-                                                        'tourDist' : 34.23,
-                                                        'active' : 0}, cookie)
+                                                      'tourDesc' : 'Third Tour Second Update',
+                                                      'tourDist' : 34.23,
+                                                      'active' : 0}, cookie)
     
     tour = send_request('tour?tourId=3', None, cookie)[0]
     tour = tour[0]
@@ -580,7 +580,15 @@ def test_modify_tour ():
     assert tour['walkingDistance'] - 34.23 < 0.0001
     assert tour['active'] == False
 
+    success_test('modifyTour', 'Updates Successful', {'tourId' : 3,
+                                                      'latitude' : 37.4178,
+                                                      'longitude' : -122.172
+                                                      }, cookie)
 
+    tour = send_request('tour?tourId=3', None, cookie)[0]
+    tour = tour[0]
+    assert tour['locId'] == 11382
+    
     cookie = success_test('login', 'Successfully authenticated',
                           {'userName' : 'samo1',
                            'pass' : 'samo'
@@ -665,12 +673,13 @@ def test_search():
 
     #Tour 4
     success_test('tour', 'Tour Created', {'tourName' : 'SearchTour1-4', 'description' : 'Tour4'}, cookie)
-                                              
+
+    #Fresno
     node_data = {
         'nodeData' : json.dumps({
             'tourId' : 4,
-            'latitude': 37.418,
-            'longitude': -122.172,
+            'latitude': 36.562,
+            'longitude': -119.92,
             'brief' : {
                 'title' : 'Only4',
                 'description' : '4AND5'
@@ -684,12 +693,13 @@ def test_search():
 
     #Tour 5
     success_test('tour', 'Tour Created', {'tourName' : 'SearchTour2-5', 'description' : 'Tour5'}, cookie)
-        
+
+    #France
     node_data = {
         'nodeData' : json.dumps({
             'tourId' : 5,
-            'latitude': 37.418,
-            'longitude': -122.172,
+            'latitude': 45.706,
+            'longitude': 2.498,
             'brief' : {
                 'title' : '5AND6',
                 'description' : '4AND5'
@@ -703,12 +713,13 @@ def test_search():
 
     #Tour 6
     success_test('tour', 'Tour Created', {'tourName' : 'SearchTour2-6', 'description' : 'Tour6'}, cookie)
-                                              
+
+    #San Jose
     node_data = {
         'nodeData' : json.dumps({
             'tourId' : 6,
-            'latitude': 37.418,
-            'longitude': -122.172,
+            'latitude': 37.23,
+            'longitude': -121.92,
             'brief' : {
                 'title' : '5AND6',
                 'description' : 'ONLY6'
@@ -722,12 +733,13 @@ def test_search():
 
     #Tour 7
     success_test('tour', 'Tour Created', {'tourName' : 'SearchTour1-7', 'description' : 'Tour7'}, cookie)
-                                              
+
+    #Tokyo
     node_data = {
         'nodeData' : json.dumps({
             'tourId' : 7,
-            'latitude': 37.418,
-            'longitude': -122.172,
+            'latitude': 35.4606,
+            'longitude': 139.74,
             'brief' : {
                 'title' : 'Only7',
                 'description' : 'Only7'
@@ -799,6 +811,27 @@ def test_search():
     assert 6 in tour_map
     assert 7 in tour_map
 
+    #Test the Geo Sort (Should Return all locations from closest to farthest from this point)
+    tours = send_request('tours?latitude=60.12.21&longitude=122.23', None, cookie)[0]
+    assert len(tours) == 7
+
+    #San Diego
+    tours = send_request('tours?q=withAll&latitude=32.324&longitude=-117.07', None, cookie)[0]
+    assert len(tours) == 4
+    
+    assert tours[0]['tourId'] == 4
+    assert tours[1]['tourId'] == 6
+    assert tours[2]['tourId'] == 7
+    assert tours[3]['tourId'] == 5
+    
+
+    #italy
+    tours = send_request('tours?q=withAll&latitude=40.714&longitude=10.89', None, cookie)[0]
+    assert len(tours) == 4
+    assert tours[0]['tourId'] == 5
+    assert tours[1]['tourId'] == 7
+    assert tours[2]['tourId'] == 4
+    assert tours[3]['tourId'] == 6
     
     print 'Search Test Successful'
     

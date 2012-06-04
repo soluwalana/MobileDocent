@@ -7,7 +7,7 @@ drop table if exists tourHistory;
 drop table if exists tours;
 drop table if exists userDevices;
 drop table if exists users;
-drop table if exists ipBlocks;
+/*drop table if exists ipBlocks;
 drop table if exists locations;
     
 create table locations (
@@ -32,7 +32,7 @@ create table ipBlocks (
     index (endipnum),
     foreign key (locId) references locations(locId) on delete cascade
 ) ENGINE InnoDB character set utf8 collate utf8_general_ci;
-    
+*/  
 create table users (
     userId integer unsigned not null auto_increment,
 	userName varchar(255) not null,

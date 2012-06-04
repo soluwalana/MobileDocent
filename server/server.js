@@ -32,6 +32,10 @@ app.configure(function(){
                             }));
     app.use(buildDataStore);
     app.use(authentication);
+    app.use(function(req, res, callback){
+        logger.info('Request for '+req.url);
+        callback();
+    });
     app.use(app.router);
 });
 

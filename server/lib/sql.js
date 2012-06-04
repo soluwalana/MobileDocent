@@ -38,6 +38,11 @@ exports.queries= {
     updateTourDesc : 'update tours set description = ? where tourId = ? and userId = ?;', 
     updateTourLocation : 'update tours set locId = ? where tourId = ? and userId = ?;',
     updateTourDist : 'update tours set walkingDistance = ? where tourId = ? and userId = ?;',
+    updateTourLocByCoords: 'update tours set locId = '+
+        '(select locId from locations '+
+        'where latitude is not null and longitude is not null '+
+        'order by ((abs(? - latitude) + abs(? - longitude))/2) asc limit 1 '+
+        ') where tourId = ? and userId = ?',
     activeTour : 'update tours set active = ? where tourId = ? and userId = ?;',
     makeTourOfficial : 'update tours set official = 1 where tourId = ? and userId = ?;',
     
@@ -51,8 +56,8 @@ exports.queries= {
     
               
     /* Node Queries */
-    checkTourOwnership : 'select 1 from tours where userId = ? and tourId = ?;',
-    checkNodeOwnership : 'select 1 from tours, nodes where tours.tourId = nodes.tourId and tours.userId = ? and tours.tourId = ?;',
+    checkTourOwnership : 'select T.* from tours as T where userId = ? and tourId = ?;',
+    checkNodeOwnership : 'select T.* from tours as T, nodes as N where T.tourId = N.tourId and T.userId = ? and T.tourId = ?;',
 
     //Use MQ: Expects lat, long, pseudo, tourId, tourId, tourId, tourId
     prependNode: 'insert into nodes (latitude, longitude, prevNode, nextNode, pseudo, tourId) '+
@@ -88,7 +93,7 @@ exports.queries= {
         'update nodes as N1, (select nodeId, prevNode from nodes where nodeId = ?) as N2 '+
         'set N1.prevNode=N2.prevNode where N1.prevNode = N2.nodeId;'+
         'delete from nodes where nodeId = ?;',
-
+    
     // Needs mongoId, nodeId
     bindMongoToSql: 'update nodes set mongoId = ? where nodeId = ?;',
 
@@ -129,10 +134,14 @@ exports.queries= {
         'T1.tagId = T2.tagId and T0.tourId = T2.tourId and T1.tagName like ? ) '+
         'or T.tourName like ? or T.description like ?',
 
+    getAllTours: 'select T.*, latitude, longitude from tours T left join locations L on T.locId = L.locId',
+    
     /* Geo Queries */
     getLocIdByIP : 'select * from ipBlocks where endIpNum >= ? order by endIpNum asc limit 1;',
     getLocByLocId: 'select * from locations where locId = ?;',
-    getLocByKeys: "select * from locations where city like ? and region = ?;"
+    getLocByKeys: "select * from locations where city like ? and region = ?;",
+    getLocByLatLong: "select * from locations where latitude is not null and longitude is not null order by ((abs(? - latitude) + abs(? - longitude))/2) asc  limit 1;"
+    
 };
 
 var joinQueries = {

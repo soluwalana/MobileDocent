@@ -132,35 +132,16 @@ var SearchManager = function(store){
     };
 
 
-    self.search = function(params, callback){
-        var sortFn = null;
-        if (_.isNumber(params.latitude) && _.isNumber(params.longitude)){
-            sortFn = geo.sortGenerator(params.latitude, params.longitude);
-        }
-        if (params.tagName) {
-            return self.getToursByTag(params, sortFn, callback);
-        }
-        if (params.tourName) {
-            return self.getToursByName(params, sortFn, callback);
-        }
-        if (params.userName || params.userId){
-            return self.getToursByUser(params, sortFn, callback);
-        }
-        if (!params.q){
-            return errorCallback('Missing Required Parameters', callback);
-        }
-                        
-        var queryStr = params.q;
+    self.querySearch = function(queryStr, sortFn, callback){
         if (typeof (queryStr) !== 'string'){
             queryStr = queryStr.toString();
         }
         var queryRe = new RegExp('.*?'+reEscape(queryStr), 'i');
-
         var sql = SQL.getToursByAny;
         var sqlParams = [likeWrap(queryStr), likeWrap(queryStr), likeWrap(queryStr)];
-
         self.store.sqlConn(errorWrap(callback, function(conn){
             conn.query(sql, sqlParams).execute(errorWrap(callback, function(basicRows){
+                
                 
                 store.mongoCollection(
                     constants.NODE_COLLECTION,
@@ -200,6 +181,41 @@ var SearchManager = function(store){
                 );
             }));
         }));
+    };
+
+    self.starSearch = function (sortFn, callback){
+        var sql = SQL.getAllTours + ' limit '+constants.MAX_RESULT;
+        var sqlParams = [];
+        self.store.sqlConn(errorWrap(callback, function(conn){
+            conn.query(sql, sqlParams).execute(errorWrap(callback, function(allRows){
+                if (sortFn) allRows.sort(sortFn);
+                callback(allRows.slice(0, constants.MAX_RETURN));
+            }));
+        }));
+    };
+
+    self.search = function(params, callback){
+        var sortFn = null;
+
+        if (params.latitude !== undefined && params.longitude !== undefined){
+            sortFn = geo.sortGenerator(params.latitude, params.longitude);
+        }
+        
+        if (params.tagName) {
+            return self.getToursByTag(params, sortFn, callback);
+        }
+        if (params.tourName) {
+            return self.getToursByName(params, sortFn, callback);
+        }
+        if (params.userName || params.userId){
+            return self.getToursByUser(params, sortFn, callback);
+        }
+                
+        if (params.q){                       
+            self.querySearch(params.q, sortFn, callback);
+        } else {
+            self.starSearch(sortFn, callback);
+        }
     };
 
         

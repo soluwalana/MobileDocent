@@ -11,9 +11,11 @@ var multiQuery = require('../lib/sql.js').multiQuery;
 var logger = require('../lib/customLogger.js').getLogger();
 var getLineNum = require('../lib/customLogger.js').getLineNumber;
 var errorHelper = require('../lib/helpers.js').errorHelper;
+
 var errorWrap = function (retCallback, callback){
     return errorHelper(logger, getLineNum(), callback, retCallback);
 };
+
 var errorCallback = function (msg, callback){
     logger.error(msg, getLineNum());
     return callback({ error : msg });
@@ -179,7 +181,7 @@ var TourManager = function(store){
             sqlParams.push.apply(sqlParams, [params.tourDesc, tourId, userId]);
         }
         
-        if (params.tourDist !== undefined){
+        if (params.tourDist  !== undefined){
             sql += SQL.updateTourDist;
             sqlParams.push.apply(sqlParams, [params.tourDist, tourId, userId]);
         }
@@ -193,6 +195,13 @@ var TourManager = function(store){
             sql += SQL.updateTourLocation;
             sqlParams.push.apply(sqlParams, [params.locId, tourId, userId]);
         }
+
+        if (params.latitude !== undefined && params.longitude !== undefined){
+            sql += SQL.updateTourLocByCoords;
+            sqlParams.push.apply(sqlParams, [params.latitude, params.longitude,
+                                             tourId, userId]);
+        }
+        
         multiQuery(conn, sql, sqlParams, errorWrap(callback, function (result){
             return callback({'success' : 'Updates Successful'});
         }));
@@ -314,7 +323,8 @@ var TourManager = function(store){
         self._verifyOwnership(
             SQL.checkTourOwnership,
             [params.authUserId, nodeData.tourId],
-            errorWrap(callback, function(conn){
+            errorWrap(callback, function(conn, tour){
+                nodeData._tour = tour[0];
                 if (nodeData.prevNode){
                     var sql = SQL.getNodeById;
                     var sqlParams = [nodeData.prevNode];
@@ -339,6 +349,7 @@ var TourManager = function(store){
         var latitude = nodeData.latitude;
         var longitude = nodeData.longitude;
         var tourId = nodeData.tourId;
+        var tour = nodeData._tour;
         var pseudo = (!nodeContent && !nodeData.brief) ? 1 : 0;
 
         var sql = SQL.appendNode;
@@ -359,7 +370,19 @@ var TourManager = function(store){
             nodeData.brief.thumbId = sections.thumb ? sections.thumb.contentId : null;
             delete sections.thumb;
         }
-        
+
+        if (tour.locId === null){
+            /* Set up the tour location on first node append */
+            var updateQuery = SQL.updateTourLocByCoords;
+            var updateParams = [latitude, longitude, tourId, tour.userId];
+            conn.query(updateQuery, updateParams).execute(function(err, rows, cols){
+                if (err || rows.length === 0){
+                    var msg = 'Automatic Location Update failed tourId: '+tourId;
+                    logger.error(msg);
+                }
+            });
+        }
+                
         multiQuery(conn, sql, sqlParams, errorWrap(callback, function (result){
             if (result.length === 0){
                 return errorCallback('SQL Query Failed', callback);
@@ -522,7 +545,7 @@ var TourManager = function(store){
                 if (rows.length === 0){
                     return callback('User Doesnt own this tour');
                 }
-                callback(null, conn);
+                callback(null, conn, rows);
             }));
         }));
     };
