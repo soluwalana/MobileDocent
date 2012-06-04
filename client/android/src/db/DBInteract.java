@@ -146,6 +146,7 @@ public class DBInteract {
 	//For now only returns true if json array is present. eventually needs to return elements of array
 	public static Vector<TourData> tourKeywordSearch(String searchStr) { 	
 		QueryString qs = new QueryString("q", searchStr);
+		//qs = new QueryString("userId", "true");
 		try {
 			JsonArray rcvArray = getData("/tours/?" + qs);
 			if(rcvArray != null) {
@@ -183,6 +184,30 @@ public class DBInteract {
 		// Return full string
 		return total;
 	}
-
+	//For now only returns true if json array is present. eventually needs to return elements of array
+	public static Vector<TourData> tourUserSearch() { 	
+		QueryString qs = new QueryString("userId", "true");
+		try {
+			JsonArray rcvArray = getData("/tours/?" + qs);
+			if(rcvArray != null) {
+				Log.v(TAG, rcvArray.toString());
+				if(rcvArray.isJsonArray() && rcvArray.size() > 0){
+					Log.v(TAG, "Tour Search successful "+ rcvArray.toString());
+					Vector<TourData> tourVector = new Vector<TourData>();
+					for(int i = 0; i < rcvArray.size(); i++){
+						tourVector.add(new TourData(rcvArray.get(i).getAsJsonObject()));
+					}
+					return tourVector;
+				}
+				else return null;
+			}
+		}
+		catch (Exception e1) {
+			e1.printStackTrace();
+		}
+		return null;
+	} 
+	//tours?user=true   user=userName user=userID
+	// To activate geo location s put latitude=value&longitude=value in the query string as well
 
 }

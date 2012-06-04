@@ -19,18 +19,18 @@ public final class R {
         public static final int red=0x7f020003;
     }
     public static final class id {
-        public static final int Button00=0x7f050002;
-        public static final int Button01=0x7f050003;
-        public static final int Button02=0x7f050004;
-        public static final int Button03=0x7f050005;
+        public static final int Button00=0x7f050003;
+        public static final int Button01=0x7f050004;
+        public static final int Button02=0x7f050005;
+        public static final int Button03=0x7f050006;
         public static final int ButtonPopup=0x7f050008;
         public static final int MyLinearLayout=0x7f050007;
+        public static final int description=0x7f050000;
         public static final int editText1=0x7f050011;
-        public static final int listView1=0x7f050006;
         public static final int login_button=0x7f05000d;
-        public static final int map_view=0x7f050000;
+        public static final int map_view=0x7f050001;
         public static final int signup_button=0x7f05000f;
-        public static final int textView1=0x7f050001;
+        public static final int textView1=0x7f050002;
         public static final int textView2=0x7f050009;
         public static final int textView3=0x7f05000b;
         public static final int textView4=0x7f05000e;
