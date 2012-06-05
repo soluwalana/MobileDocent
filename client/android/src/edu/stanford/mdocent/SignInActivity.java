@@ -1,6 +1,8 @@
 package edu.stanford.mdocent;
 
-import db.DBInteract;
+import edu.stanford.mdocent.db.Administration;
+import edu.stanford.mdocent.db.DBInteract;
+import edu.stanford.mdocent.tests.SimpleTest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -35,10 +37,9 @@ public class SignInActivity extends Activity {
 				EditText pword = (EditText)findViewById(R.id.txt_password);
 				String password = pword.getText().toString();
 
-				if(true || DBInteract.postLoginData(username, password)){
+				if (Administration.login(username, password)){
 					startMainPage();
-				}
-				else {
+				} else {
 					popUpNotification();
 				}
 			}
@@ -51,6 +52,13 @@ public class SignInActivity extends Activity {
 					startSignup();		
 			}
 
+		});
+		
+		Button testButton = (Button) findViewById(R.id.test_button);
+		testButton.setOnClickListener(new OnClickListener(){
+			public void onClick(View v){
+				SimpleTest.testTourCreation();
+			}
 		});
 
 	}

@@ -124,16 +124,17 @@ var TourManager = function(store){
 
     
     self.createTour = function (params, callback){
-        if (!params.tourName || !params.description || !params.authUserId){
+        if (!params.tourName || !params.tourDesc || !params.authUserId){
             return errorCallback('Required Fields Missing From Tour Creation', callback);
         }
         
         self.store.sqlConn(errorWrap(callback, function (conn){
             var sql = SQL.addTour;
-            var sqlParams = [params.authUserId, params.tourName, params.description, 0];
+            var sqlParams = [params.authUserId, params.tourName, params.tourDesc, 0];
             conn.query(sql, sqlParams).execute(errorWrap(callback, function (result){
                 callback({'success' : 'Tour Created',
-                          'tourId' : result.id});
+                          'tourId' : result.id,
+                          'userId' : params.authUserId});
             }));
         }));
     };
@@ -145,15 +146,14 @@ var TourManager = function(store){
         
         self.store.sqlConn(errorWrap(callback, function (conn){
             var sql = params.tourId ? SQL.getTourById: SQL.getTourByName;
-            var sqlParams = params.tourId ? [params.tourId, params.tourId] :
-                [params.tourName, params.tourName];
+            var sqlParams = params.tourId ? [params.tourId] :
+                [params.tourName];
 
             conn.query(sql, sqlParams).execute(errorWrap(
                 callback, function (rows, cols){
                     if (rows.length === 0){
                         return errorCallback('Tour Doesnt Exist', callback);
                     }
-                    
                     var retObj = formatTourRows(rows, true);
                     
                     conn.query(SQL.getTourTags, [retObj.tourId])
@@ -161,7 +161,7 @@ var TourManager = function(store){
                             if (rows.length > 0){
                                 retObj.tags = rows;
                             }
-                            callback([retObj]);
+                            callback(retObj);
                         }));
                 }
             ));
@@ -169,36 +169,47 @@ var TourManager = function(store){
     };
 
 
-    self._modifyTour = function (params, conn, callback){
-        var tourId = params.tourId;
-        var userId = params.authUserId;
+    self._modifyTour = function (p, tour, conn, callback){
+        var tourId = p.tourId;
+        var userId = p.authUserId;
         
         var sql = '';
         var sqlParams  = [];
         
-        if (params.tourDesc !== undefined){
+        if (p.tourDesc !== undefined && 
+            !_.isEqual(p.tourDesc, tour.tourDesc)){
+
             sql += SQL.updateTourDesc;
-            sqlParams.push.apply(sqlParams, [params.tourDesc, tourId, userId]);
+            sqlParams.push.apply(sqlParams, [p.tourDesc, tourId, userId]);
         }
         
-        if (params.tourDist  !== undefined){
+        if (p.tourDist  !== undefined &&
+            !_.isEqual(p.tourDist, tour.tourDist)){
+
             sql += SQL.updateTourDist;
-            sqlParams.push.apply(sqlParams, [params.tourDist, tourId, userId]);
+            sqlParams.push.apply(sqlParams, [p.tourDist, tourId, userId]);
         }
 
-        if (params.active !== undefined){
+        if (p.active !== undefined &&
+            !_.isEqual(p.active, tour.active)){
+
             sql += SQL.activeTour;
-            sqlParams.push.apply(sqlParams, [params.active, tourId, userId]);
+            sqlParams.push.apply(sqlParams, [p.active, tourId, userId]);
         }
 
-        if (params.locId !== undefined){
+        if (p.locId !== undefined &&
+            !_.isEqual(p.locId, tour.locId)){
+
             sql += SQL.updateTourLocation;
-            sqlParams.push.apply(sqlParams, [params.locId, tourId, userId]);
+            sqlParams.push.apply(sqlParams, [p.locId, tourId, userId]);
         }
 
-        if (params.latitude !== undefined && params.longitude !== undefined){
+        if (p.latitude !== undefined && p.longitude !== undefined &&
+            !_.isEqual(p.latitude, tour.latitude) &&
+            !_.isEqual(p.longitude, tour.longitude)){
+
             sql += SQL.updateTourLocByCoords;
-            sqlParams.push.apply(sqlParams, [params.latitude, params.longitude,
+            sqlParams.push.apply(sqlParams, [p.latitude, p.longitude,
                                              tourId, userId]);
         }
         
@@ -215,8 +226,9 @@ var TourManager = function(store){
         self._verifyOwnership(
             SQL.checkTourOwnership,
             [params.authUserId, params.tourId],
-            errorWrap(callback, function(conn){
-                self._modifyTour(params, conn, callback);
+            errorWrap(callback, function(conn, rows){
+                
+                self._modifyTour(params, rows[0], conn, callback);
             })
         );
     };
@@ -488,7 +500,7 @@ var TourManager = function(store){
             SQL.checkNodeOwnership,
             [params.authUserId, params.tourId, params.nodeId],
             errorWrap(callback, function(conn){
-                self._modifyTour(params, conn, callback);
+                self._modifyNode(params, conn, callback);
             })
         );
     };

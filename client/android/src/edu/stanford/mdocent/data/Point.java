@@ -1,4 +1,4 @@
-package data;
+package edu.stanford.mdocent.data;
 
 public class Point {
 	public String mName;

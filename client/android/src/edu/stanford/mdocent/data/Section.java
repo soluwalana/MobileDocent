@@ -1,6 +1,6 @@
-package data;
+package edu.stanford.mdocent.data;
 
-public class SectionData {
+public class Section {
 
 	public int xpos;
 	

@@ -1,4 +1,4 @@
-package data;
+package edu.stanford.mdocent.data;
 
 import java.util.Timer;
 import java.util.TimerTask;

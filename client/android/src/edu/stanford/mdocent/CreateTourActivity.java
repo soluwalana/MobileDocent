@@ -9,10 +9,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 
-import data.CreateMapView;
-import data.NodeData;
-import data.Road;
 import edu.stanford.mdocent.RoadProvider;
+import edu.stanford.mdocent.data.CreateMapView;
+import edu.stanford.mdocent.data.Road;
 
 import android.content.Context;
 import android.content.Intent;

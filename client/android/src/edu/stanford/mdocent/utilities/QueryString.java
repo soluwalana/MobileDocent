@@ -1,4 +1,4 @@
-package edu.stanford.mdocent;
+package edu.stanford.mdocent.utilities;
 //http://www.java2s.com/Tutorial/Java/0320__Network/BuildquerystringforURL.htm
 
 import java.io.UnsupportedEncodingException;

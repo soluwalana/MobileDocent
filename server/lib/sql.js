@@ -13,10 +13,10 @@ exports.keys = {
                     'longitude', 'metroCode', 'areaCode'],
     ipBlockKeys : ['locId', 'startipnum', 'endipnum'],
     userKeys : ['userId', 'userName', 'password', 'salt', 'about', 'email', 'fbId', 'twitterId'],
-    tourKeys : ['tourId', 'userId', 'tourName', 'description', 'locId',
-                'walkingDistance', 'official', 'active'],
+    tourKeys : ['tourId', 'userId', 'tourName', 'tourDesc', 'locId',
+                'tourDist', 'official', 'active'],
     tourHistoryKeys : ['userId', 'tourId', 'timeStarted', 'finished', 'timeFinished', 'rating'],
-    tagKeys : ['tagId', 'tagName', 'description', 'userId'],
+    tagKeys : ['tagId', 'tagName', 'tagDesc', 'userId'],
     tourTagKeys : ['tagId', 'tourId', 'userId'],
     nodeKeys : ['nodeId', 'latitude', 'longitude', 'prevNode', 'nextNode', 'pseudo', 'tourId', 'mongoId']
 };
@@ -33,11 +33,11 @@ exports.queries= {
     updateUserAbout : 'update users set about = ? where userId = ?;', 
     
     /* Tour Queries */
-    addTour : 'insert into tours (userId, tourName, description, active) values (?, ?, ?, ?);',
+    addTour : 'insert into tours (userId, tourName, tourDesc, active) values (?, ?, ?, ?);',
 
-    updateTourDesc : 'update tours set description = ? where tourId = ? and userId = ?;', 
+    updateTourDesc : 'update tours set tourDesc = ? where tourId = ? and userId = ?;', 
     updateTourLocation : 'update tours set locId = ? where tourId = ? and userId = ?;',
-    updateTourDist : 'update tours set walkingDistance = ? where tourId = ? and userId = ?;',
+    updateTourDist : 'update tours set tourDist = ? where tourId = ? and userId = ?;',
     updateTourLocByCoords: 'update tours set locId = '+
         '(select locId from locations '+
         'where latitude is not null and longitude is not null '+
@@ -46,18 +46,13 @@ exports.queries= {
     activeTour : 'update tours set active = ? where tourId = ? and userId = ?;',
     makeTourOfficial : 'update tours set official = 1 where tourId = ? and userId = ?;',
     
-    getTourById : 'select * from tours as T inner join nodes as N where N.tourId = T.tourId and T.tourId = ? '+
-        'union '+
-        'select * from tours T left join (select * from nodes N1 ) as X on T.tourId = X.tourId where T.tourId = ?;',
-
-    getTourByName: 'select * from tours as T inner join nodes as N where N.tourId = T.tourId and T.tourName = ? '+
-        'union '+
-        'select * from tours T left join (select * from nodes N1 ) as X on T.tourId = X.tourId where T.tourName = ?;',
-    
-              
+    getTourById : 'select * from tours as T left join nodes as N on N.tourId = T.tourId where T.tourId = ? ;',
+        
+    getTourByName: 'select * from tours as T left join nodes as N on N.tourId = T.tourId where T.tourName = ? ;',
+        
     /* Node Queries */
-    checkTourOwnership : 'select T.* from tours as T where userId = ? and tourId = ?;',
-    checkNodeOwnership : 'select T.* from tours as T, nodes as N where T.tourId = N.tourId and T.userId = ? and T.tourId = ?;',
+    checkTourOwnership : 'select T.*, L.latitude, L.longitude from tours as T left join locations as L on T.locId = L.locId  where userId = ? and tourId = ?;',
+    checkNodeOwnership : 'select T.*, L.latitude, L.longitude from tours as T left join nodes as N on T.tourId = N.tourId  left join locations as L on T.locId = L.locId where T.userId = ? and T.tourId = ? ;',
 
     //Use MQ: Expects lat, long, pseudo, tourId, tourId, tourId, tourId
     prependNode: 'insert into nodes (latitude, longitude, prevNode, nextNode, pseudo, tourId) '+
@@ -101,13 +96,13 @@ exports.queries= {
 
     /* Tag Related Queries */
 
-    addTag : 'insert into tags (tagName, description, userId) values (?, ?, ?);',
+    addTag : 'insert into tags (tagName, tagDesc, userId) values (?, ?, ?);',
     tagTour: 'insert into tourTags (tagId, tourId, userId) values (?, ?, ?);',
 
     getTagById : 'select * from tags where tagId = ?;',
     getTagByName : "select * from tags where tagName like ?",
-    getTagByDescription : "select * from tags where  description like ?;",
-    getTagByData : "select * from tags where tagName like ? or description like ?;",
+    getTagByDesc : "select * from tags where  tagDesc like ?;",
+    getTagByData : "select * from tags where tagName like ? or tagDesc like ?;",
     
     getTourTags: 'select * from tags T1, tourTags T2 where T1.tagId = T2.tagId and tourId = ?',
 
@@ -132,7 +127,7 @@ exports.queries= {
     getToursByAny: 'select T.*, latitude, longitude from tours T left join locations L on T.locId = L.locId '+
         'where tourId in (select T0.tourId from tours T0, tags T1, tourTags T2 where '+
         'T1.tagId = T2.tagId and T0.tourId = T2.tourId and T1.tagName like ? ) '+
-        'or T.tourName like ? or T.description like ?',
+        'or T.tourName like ? or T.tourDesc like ?',
 
     getAllTours: 'select T.*, latitude, longitude from tours T left join locations L on T.locId = L.locId',
     

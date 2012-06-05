@@ -1,6 +1,7 @@
 package edu.stanford.mdocent;
 
-import db.DBInteract;
+import edu.stanford.mdocent.db.Administration;
+import edu.stanford.mdocent.db.DBInteract;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -31,10 +32,9 @@ public class SignupActivity extends Activity {
 				EditText conf = (EditText)findViewById(R.id.text_confirm);
 				String confirm = conf.getText().toString();
 				
-				if(DBInteract.postSignupData(username, password, confirm)){
+				if(Administration.createUser(username, password, confirm)){
 					startMainPage();
-				}
-				else {
+				} else {
 
 				}
 				

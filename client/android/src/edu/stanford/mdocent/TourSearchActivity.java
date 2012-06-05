@@ -2,8 +2,8 @@ package edu.stanford.mdocent;
 
 import java.util.Vector;
 
-import data.TourData;
-import db.DBInteract;
+import edu.stanford.mdocent.data.Tour;
+import edu.stanford.mdocent.db.DBInteract;
 import android.app.Activity;
 import android.app.ListActivity;
 import android.content.Intent;
@@ -37,15 +37,15 @@ public class TourSearchActivity extends ListActivity {
 				EditText searchText = (EditText)findViewById(R.id.editText1);
 				String searchStr = searchText.getText().toString();
 				
-				Vector<TourData> tourVector = DBInteract.tourKeywordSearch(searchStr);
+				Vector<Tour> tourVector = Tour.tourKeywordSearch(searchStr);
 				if(tourVector!=null){
-					TourData[] tourArr = new TourData[tourVector.size()];
+					Tour[] tourArr = new Tour[tourVector.size()];
 					tourVector.toArray(tourArr);
 					String[] tourNames = new String[tourVector.size()];
 					for(int i = 0; i <tourVector.size();i++){
-						tourNames[i] = tourArr[i].tourName;
+						tourNames[i] = tourArr[i].getTourName();
 					}
-					Log.v(TAG, "Tour search returned: " + tourArr[0].tourName);
+					Log.v(TAG, "Tour search returned: " + tourArr[0].getTourName());
 					setListAdapter(new ArrayAdapter<String>(TourSearchActivity.this, R.layout.listitem, tourNames)); 
 					
 					ListView listView = getListView();

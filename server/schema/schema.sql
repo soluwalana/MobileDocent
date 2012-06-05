@@ -50,9 +50,9 @@ create table tours (
 	tourId integer unsigned not null auto_increment,
     userId integer unsigned not null, 
 	tourName varchar(255) not null,
- 	description text,
+ 	tourDesc text,
   	locId integer unsigned,
-  	walkingDistance double default null,
+  	tourDist double default null,
     official tinyint(1) default 0,
     active tinyint(1) default 0,
 	primary key(tourId),
@@ -76,7 +76,7 @@ create table tourHistory (
 create table tags (
     tagId integer unsigned not null auto_increment,
 	tagName varchar(256) not null,
-	description text not null,
+	tagDesc text not null,
     userId integer unsigned not null,
   	primary key(tagId),
     foreign key (userId) references users(userId) on delete cascade

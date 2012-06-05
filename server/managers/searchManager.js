@@ -37,10 +37,10 @@ var SearchManager = function(store){
     };
 
     self.addTag = function (params, callback){
-        if (!params.authUserId || !params.tagName || !params.description){
+        if (!params.authUserId || !params.tagName || !params.tagDesc){
             return errorCallback('Missing Required Parameters', callback);
         }
-        var sqlParams = [params.tagName, params.description, params.authUserId];
+        var sqlParams = [params.tagName, params.tagDesc, params.authUserId];
         self._simpleQuery(SQL.addTag, sqlParams, callback, 'Tag Inserted');
     };
         
@@ -96,20 +96,20 @@ var SearchManager = function(store){
     };
     
     self.getTags = function (params, callback){
-        if (!params.tagId && !params.tagName && !params.description){
+        if (!params.tagId && !params.tagName && !params.tagDesc){
             return errorCallback('Missing Required Parameters', callback);
         }
         var sql = SQL.getTagById;
         var sqlParams = [params.tagId];
-        if ( params.tagName && params.description ){
+        if ( params.tagName && params.tagDesc ){
             sql = SQL.getTagByData;
-            sqlParams = [likeWrap(params.tagName), likeWrap(params.description)];
+            sqlParams = [likeWrap(params.tagName), likeWrap(params.tagDesc)];
         } else if (params.tagName){
             sql = SQL.getTagByName;
             sqlParams = [likeWrap(params.tagName)];
-        } else if (params.description){
-            sql = SQL.getTagByDescription;
-            sqlParams = [likeWrap(params.description)];
+        } else if (params.tagDesc){
+            sql = SQL.getTagByDesc;
+            sqlParams = [likeWrap(params.tagDesc)];
         }
 
         return self._simpleQuery(sql, sqlParams, callback);
@@ -148,7 +148,7 @@ var SearchManager = function(store){
                     errorWrap(callback, function (collection){
                         var query = {
                             $or : [
-                                { 'brief.description' : queryRe },
+                                { 'brief.desc' : queryRe },
                                 { 'brief.title' : queryRe },
                                 { 'content.page.content' : queryRe }
                             ]
@@ -156,7 +156,7 @@ var SearchManager = function(store){
                         var fields = {
                             tourId: true
                             /*'nodeId' : true,
-                            'brief.description' : true,
+                            'brief.desc' : true,
                             'brief.title' : true,
                             'content.page.content' : true*/
                         };

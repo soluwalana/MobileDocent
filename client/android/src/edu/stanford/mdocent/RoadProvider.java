@@ -13,8 +13,8 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-import data.Road;
-import data.Point;
+import edu.stanford.mdocent.data.Point;
+import edu.stanford.mdocent.data.Road;
 
 public class RoadProvider {
 
