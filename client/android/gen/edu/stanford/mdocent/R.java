@@ -36,12 +36,13 @@ public final class R {
         public static final int login_button=0x7f050014;
         public static final int map_view=0x7f050001;
         public static final int signup_button=0x7f050016;
+        public static final int test_button=0x7f050017;
         public static final int textName2=0x7f050007;
         public static final int textView1=0x7f050003;
         public static final int textView2=0x7f050010;
         public static final int textView3=0x7f050012;
         public static final int textView4=0x7f050015;
-        public static final int text_confirm=0x7f050017;
+        public static final int text_confirm=0x7f050018;
         public static final int txt_password=0x7f050013;
         public static final int txt_username=0x7f050011;
     }

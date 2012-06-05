@@ -49,7 +49,7 @@ public class CreateTourActivity extends MapActivity {
 	CreateMapView mapView;
 	private Road mRoad; 
 	private MapController mapController;
-	Vector<NodeData> nodeVector = new Vector<NodeData>();
+	//Vector<NodeData> nodeVector = new Vector<NodeData>();
 	private ArrayList _displayedMarkers; 
 	private LinearLayout _bubbleLayout; 
  
@@ -76,12 +76,12 @@ public class CreateTourActivity extends MapActivity {
 			double prevLong = -900.0;
 			private static final String TAG = "setOnLongpressListener";
 			
-			private void addNewNode(double newLat, double newLong){
+			/*private void addNewNode(double newLat, double newLong){
 				NodeData newNode = new NodeData();
 				newNode.latitude = newLat;
 				newNode.longitude = newLong;
 				nodeVector.add(newNode);
-			}
+			}*/
 			
 			private void renderPoint(double newLat, double newLong){
 				GeoPoint point = new GeoPoint(  //LatLng 
@@ -92,7 +92,7 @@ public class CreateTourActivity extends MapActivity {
 				mapView.getOverlays().add(mapOverlay);
 				mapController.setZoom(16);
 				mapView.invalidate();
-				addNewNode(newLat, newLong);
+				//addNewNode(newLat, newLong);
 
 			}
 			public void onLongpress(final MapView view, final GeoPoint longpressLocation) {

@@ -21,7 +21,7 @@ public class SimpleTest{
 		
 		Tour z = new Tour();
 		z.setTourName("New Tour");
-		z.setDescription("New Description");
+		z.setTourDesc("New Description");
 		z.setLatitude(new Double(122));
 		z.setLongitude(new Double(-122));
 	}
@@ -30,11 +30,11 @@ public class SimpleTest{
 		Administration.login("samo", "samo");
 		Tour tour = new Tour();
 		tour.setTourName("SamO's Tour");
-		tour.setDescription("A tour of the ability to save tours");
+		tour.setTourDesc("A tour of the ability to save tours");
 		tour.setLatitude(37.814);
 		tour.setLongitude(-122.423);
 		tour.setActive(true);
-		tour.setWalkingDistance(1.5);
+		tour.setTourDist(1.5);
 		System.out.println(tour.toString());
 		tour.save();
 		

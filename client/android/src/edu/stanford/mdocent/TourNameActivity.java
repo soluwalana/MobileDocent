@@ -2,8 +2,8 @@ package edu.stanford.mdocent;
 
 import java.util.Vector;
 
-import data.TourData;
-import db.DBInteract;
+import edu.stanford.mdocent.data.Tour;
+import edu.stanford.mdocent.db.DBInteract;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;

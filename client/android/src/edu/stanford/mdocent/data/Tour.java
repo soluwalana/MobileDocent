@@ -99,11 +99,11 @@ public class Tour {
 		this.tourName = tourName;
 	}
 
-	public String getDescription() {
+	public String getDesc() {
 		return tourDesc;
 	}
 
-	public void setDescription(String description) {
+	public void setTourDesc(String description) {
 		this.tourDesc = description;
 	}
 
@@ -115,11 +115,11 @@ public class Tour {
 		this.locId = locId;
 	}
 
-	public Double getWalkingDistance() {
+	public Double getTourDist() {
 		return tourDist;
 	}
 
-	public void setWalkingDistance(Double walkingDistance) {
+	public void setTourDist(Double walkingDistance) {
 		this.tourDist = walkingDistance;
 	}
 
