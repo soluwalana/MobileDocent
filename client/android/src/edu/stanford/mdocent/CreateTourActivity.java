@@ -1,5 +1,4 @@
 package edu.stanford.mdocent;
-//influenced by Tutorial by Max Gontar
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -8,12 +7,15 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Vector;
 
 import data.CreateMapView;
+import data.NodeData;
 import data.Road;
 import edu.stanford.mdocent.RoadProvider;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -25,8 +27,14 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.view.ViewGroup.LayoutParams;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.maps.GeoPoint;
 import com.google.android.maps.MapActivity;
@@ -36,24 +44,58 @@ import com.google.android.maps.Overlay;
 
 public class CreateTourActivity extends MapActivity {
 
+	private static final String TAG = "CreateTourActivity";
+	
 	LinearLayout linearLayout;
 	CreateMapView mapView;
 	private Road mRoad; 
 	private MapController mapController;
-
+	Vector<NodeData> nodeVector = new Vector<NodeData>();
+	private ArrayList _displayedMarkers; 
+	private LinearLayout _bubbleLayout; 
+ 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.createtour);
+		
+		Intent sender=getIntent();
+        String tourName=sender.getExtras().getString("tourName");
+        String tourDescription=sender.getExtras().getString("tourDescription");
+        Log.v(TAG, "name: " + tourName + " desc: "+ tourDescription);
+		
 		mapView = (CreateMapView) findViewById(R.id.map_view);
 		mapView.setBuiltInZoomControls(true);
 		mapController = mapView.getController();
-		mapController.setZoom(16); 
+		mapController.setZoom(18); 
+		
+		Toast.makeText(getApplicationContext(), 
+                "Press and Hold to make a new Node", Toast.LENGTH_LONG).show();
 
 		mapView.setOnLongpressListener(new CreateMapView.OnLongpressListener() {
 			double prevLat = -900.0;
 			double prevLong = -900.0;
 			private static final String TAG = "setOnLongpressListener";
+			
+			private void addNewNode(double newLat, double newLong){
+				NodeData newNode = new NodeData();
+				newNode.latitude = newLat;
+				newNode.longitude = newLong;
+				nodeVector.add(newNode);
+			}
+			
+			private void renderPoint(double newLat, double newLong){
+				GeoPoint point = new GeoPoint(  //LatLng 
+						(int) (newLat * 1E6),
+						(int) (newLong * 1E6));
+				MapOverlayPoint mapOverlay = new MapOverlayPoint();
+				mapOverlay.setPointToDraw(point);
+				mapView.getOverlays().add(mapOverlay);
+				mapController.setZoom(16);
+				mapView.invalidate();
+				addNewNode(newLat, newLong);
+
+			}
 			public void onLongpress(final MapView view, final GeoPoint longpressLocation) {
 				runOnUiThread(new Runnable() {
 					public void run() {
@@ -66,32 +108,56 @@ public class CreateTourActivity extends MapActivity {
 							mHandler.sendEmptyMessage(0);
 							prevLat = toLat;
 							prevLong = toLon;
-							
-							GeoPoint point = new GeoPoint(  //LatLng 
-									(int) (toLat * 1E6),
-									(int) (toLon * 1E6));
-							List<Overlay> listOfOverlays = mapView.getOverlays();
-							MapOverlayPoint mapOverlay = new MapOverlayPoint();
-							mapOverlay.setPointToDraw(point);
-							listOfOverlays.add(mapOverlay);
-							mapController.setZoom(16);
-							mapView.invalidate();
+							renderPoint(toLat, toLon);
 						}
 						else {
 							prevLat = (double)longpressLocation.getLatitudeE6()  / (double)1E6;
 							prevLong = (double)longpressLocation.getLongitudeE6()/ (double)1E6;
 							Log.v(TAG, "lat: " + prevLat + " long: "+ prevLong);
-
-							GeoPoint point = new GeoPoint(
-									(int) (prevLat * 1E6), 
-									(int) (prevLong * 1E6));
-							List<Overlay> listOfOverlays = mapView.getOverlays();
-							MapOverlayPoint mapOverlay = new MapOverlayPoint();
-							mapOverlay.setPointToDraw(point);
-							listOfOverlays.add(mapOverlay);
-							mapController.setZoom(16);
-							mapView.invalidate();
+							renderPoint(prevLat, prevLong);
 						}
+						
+
+				        // Get instance of the Bubble Layout ...
+				        LayoutInflater inflater = (LayoutInflater) mapView.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+				        _bubbleLayout = (LinearLayout) inflater.inflate(R.layout.createtourbubble, mapView, false);
+				 
+				        // .. configure its layout parameters
+				        MapView.LayoutParams params = new MapView.LayoutParams(300, 500, longpressLocation,
+				                MapView.LayoutParams.BOTTOM_CENTER);
+				 
+				       _bubbleLayout.setLayoutParams(params);
+				 
+				        // Locate the TextView
+				        TextView locationNameText = (TextView) _bubbleLayout.findViewById(R.id.locationName);
+				         
+				        // Set the Text
+				        //locationNameText.setText(getSampleText());
+				 
+				        // Add the view to the Map
+				        mapView.addView(_bubbleLayout);
+				         
+				        // Animate the map to center on the location
+				        mapView.getController().animateTo(longpressLocation);
+						mapController.setZoom(18);
+						//mapView.invalidate();
+				        
+				        Button takeButton = (Button) findViewById(R.id.button2);
+						takeButton.setOnClickListener(new OnClickListener(){
+							public void onClick(View v) {
+								mapView.removeAllViews();
+								mapView.getOverlays().remove(mapView.getOverlays().size()-1);
+							}
+						});
+						
+				        Button submitButton = (Button) findViewById(R.id.button1);
+				        submitButton.setOnClickListener(new OnClickListener(){
+							public void onClick(View v) {
+								mapView.removeAllViews();
+								mapView.getOverlays().remove(mapView.getOverlays().size()-1);
+							}
+						});
+				    
 					}
 				});
 			}
@@ -106,7 +172,7 @@ public class CreateTourActivity extends MapActivity {
 			List<Overlay> listOfOverlays = mapView.getOverlays();
 			//listOfOverlays.clear();
 			listOfOverlays.add(mapOverlay);
-			mapController.setZoom(16); 
+			mapController.setZoom(18); 
 			mapView.invalidate();
 		};
 	};

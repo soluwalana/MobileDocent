@@ -42,6 +42,9 @@
         <activity 
             android:name=".CreateTourActivity" >
         </activity>
+        <activity 
+            android:name=".TourNameActivity" >
+        </activity>
         <uses-library android:name="com.google.android.maps" />
     </application>
 

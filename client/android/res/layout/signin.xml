@@ -33,7 +33,9 @@
     <EditText
         android:id="@+id/txt_password"
         android:layout_width="198dp"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:inputType="textPassword"  />
 
 
     <Button
