@@ -13,6 +13,7 @@ import com.google.gson.JsonParser;
 
 import edu.stanford.mdocent.db.Constants;
 import edu.stanford.mdocent.db.DBInteract;
+import edu.stanford.mdocent.utilities.Callback;
 import edu.stanford.mdocent.utilities.QueryString;
 
 public class Tour {	
@@ -27,10 +28,10 @@ public class Tour {
 	private String tourDesc = null;
 	private Integer locId = null;
 	private Double tourDist = null;
-	private Node[] tourNodes = null;
+	private Vector<Node> tourNodes = null;
 	private boolean official;
 	private boolean active;
-	private TourTag[] tourTags;
+	private Vector<TourTag> tourTags;
 
 	public Tour() {}
 	
@@ -68,9 +69,25 @@ public class Tour {
 				Log.v(TAG, "Update Failed "+updateResult.toString());
 				return false;
 			}
+			if (tourNodes != null){
+				for (int i = 0; i < tourNodes.size(); i ++){
+					Node n = tourNodes.get(i);
+					n.setTourId(tourId);
+					n.save(new Callback(){
+						@Override
+						public void onFinish(Node newNode){
+							if (newNode == null){
+								Log.e(TAG, "A node failed to load");
+							} else {
+								Log.v(TAG, "Node Saved correctly");
+							}
+						}
+					});
+				}
+			}
 			return true;
 		} catch (Exception e1){
-			Log.v(TAG, "Something horrible happened when saving tour");
+			Log.v(TAG, "Something horrible happened when saving tour "+e1.toString());
 			return false;
 		}
 	}
@@ -123,22 +140,86 @@ public class Tour {
 		this.tourDist = walkingDistance;
 	}
 
-	public Node[] getTourNodes() {
-		
+	private void loadNodes() {
+		if (tourId == null || tourNodes != null){
+			return;
+		}
+		QueryString qs = new QueryString("tourId", tourId.toString());
+		JsonElement result = DBInteract.getData(Constants.TOUR_URL, qs.toString());
+		if (result == null || !result.isJsonObject()){
+			Log.v(TAG, result.toString());
+			return;
+		}
+		Log.v(TAG, result.toString());
+		loadNodes(result);
+	}
+	private void loadNodes(JsonElement json){
+		System.out.println("Loading Nodes");
+		if(!json.isJsonObject() || !json.getAsJsonObject().has("nodes")){
+			return;
+		}
+		JsonElement data = json.getAsJsonObject().get("nodes");
+		if (!data.isJsonArray()){
+			return;
+		}
+		JsonArray nodes = data.getAsJsonArray();
+		tourNodes = new Vector<Node>();
+		Gson gson = new Gson();
+		for (int i = 0; i < nodes.size(); i ++){
+			tourNodes.add(gson.fromJson(nodes.get(i), Node.class));
+		}
+	}
+	
+	public Vector<Node> getTourNodes() {
+		if (tourNodes == null){
+			loadNodes();
+		}
 		return tourNodes;
 	}
 
-	public void appendNode(Node newNode){
-				
+	public void appendNode(Node newNode, final Callback cb){
+		getTourNodes();
+		newNode.setTourId(tourId);
+		newNode.save(new Callback(){
+			@Override
+			public void onFinish(Node node){
+				if (node == null){
+					cb.onFinish(node);
+					return;
+				}
+				tourNodes.add(node);
+				cb.onFinish(node);
+			}
+		});
+		return;
 	}
 	
-	public void insertNode(Node newNode, int idx){
-		
+	public void insertNode(Node newNode, final int idx, final Callback cb){
+		Node finished = null;
+		if (idx >= tourNodes.size() || idx < 0){
+			cb.onFinish(finished);
+			return;
+		}
+		newNode.setPrevNode(tourNodes.get(idx).getPrevNode());
+		newNode.setTourId(tourId);
+		newNode.save(new Callback(){
+			@Override
+			public void onFinish(Node node){
+				if (node == null){
+					cb.onFinish(node);
+					return;
+				}
+				tourNodes.get(idx).setPrevNode(node.getNodeId());
+				if (idx > 0){
+					tourNodes.get(idx - 1).setNextNode(node.getNodeId());
+				}
+				tourNodes.insertElementAt(node, idx);
+				cb.onFinish(node);
+			}
+		});
+		return;
 	}
-	
-	public void deleteNode(int idx){
-				
-	}
+
 
 	public boolean isOfficial() {
 		return official;
@@ -164,20 +245,27 @@ public class Tour {
 		return userId;
 	}
 
-	public TourTag[] getTourTags() {
+	public Vector<TourTag> getTourTags() {
 		return tourTags;
 	}
 	
-
 	@Override
 	public String toString() {
+		String nodes = "null";
+		if (tourNodes != null){
+			nodes = tourNodes.toString();
+		}
+		String tags = "null";
+		if (tourTags != null){
+			tags = tourTags.toString(); 
+		}
 		return "Tour [tourId=" + tourId + ", userId=" + userId + ", latitude="
 				+ latitude + ", longitude=" + longitude + ", tourName="
 				+ tourName + ", tourDesc=" + tourDesc + ", locId="
 				+ locId + ", tourDist=" + tourDist
-				+ ", tourNodes=" + Arrays.toString(tourNodes) + ", official="
+				+ ", tourNodes=" +  nodes + ", official="
 				+ official + ", active=" + active + ", tourTags="
-				+ Arrays.toString(tourTags) + "]";
+				+ tags + "]";
 	}
 
 	/* Static Functions on the tour object*/
@@ -250,22 +338,27 @@ public class Tour {
 				return null;
 			}
 			Log.v(TAG, result.toString());
-			return new Gson().fromJson(result.toString(), Tour.class);
+			Tour newTour = new Gson().fromJson(result.toString(), Tour.class);
+			newTour.loadNodes(result);
+			return newTour;
 		} catch (Exception e1) {
 			e1.printStackTrace();
 		}
 		return null;
 	}
 	
+
 	public static Tour getTourByName (String tourName){
 		QueryString qs = new QueryString("tourName", tourName);
 		try {
 			JsonElement result = DBInteract.getData(Constants.TOUR_URL, qs.toString());
 			if (result == null || !result.isJsonObject()){
-				Log.v(TAG, result.toString());
+				Log.v(TAG, "No Tours found for that query");
 				return null;
 			}
-			return new Gson().fromJson(result.toString(), Tour.class);
+			Tour newTour = new Gson().fromJson(result.toString(), Tour.class);
+			newTour.loadNodes(result);
+			return newTour;
 		} catch (Exception e1) {
 			e1.printStackTrace();
 		}

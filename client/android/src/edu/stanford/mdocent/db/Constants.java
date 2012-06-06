@@ -5,6 +5,7 @@ public interface Constants {
 	public static final String MONGO_FILE_URL = "/mongoFile";
 	public static final String USER_URL = "/user";
 	public static final String TOUR_URL = "/tour";
+	public static final String NODE_URL = "/node";
 	public static final String NODE_CONTENT_URL = "/nodeContent";
 	public static final String IP_TO_LOCATION_URL = "/ipLocation";
 	public static final String TAGS_URL = "/tags";
@@ -19,4 +20,8 @@ public interface Constants {
 	public static final String LOGIN_URL = "/login";
 	public static final String LOGOUT_URL = "/logout";
 	
+	public static final String PLAIN_TEXT = "text/plain";
+	public static final String HTML_TEXT = "text/html";
+	public static final String JPEC_TYPE = "img/jpeg";
+	public static final String PNG_TYPE = "img/png";
 }

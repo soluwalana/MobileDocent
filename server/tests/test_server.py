@@ -290,7 +290,9 @@ def test_create_tour():
         'brief' : {
             'title' : 'Test Node',
             'desc' : 'This is a test node that has three repetive pics',
-            'thumbId' : 'thumb1' },
+            'thumbId' : 'thumb1',
+            'thumbType' : 'image/jpg'
+        },
         'content' : [
             [{'xpos' : 0, 'ypos' : 0,
               'width' : 20, 'height': 20,
@@ -334,6 +336,7 @@ def test_create_tour():
     #Node 1
     res = send_files('node', data, cookie)
     assert_result(res)
+    print res
 
     
     #Tests missing file and missing content, only brief available
@@ -346,7 +349,8 @@ def test_create_tour():
                 'brief' : {
                     'title' : 'Test Node',
                     'desc' : 'This is a test node that has three repetive pics',
-                    'thumbId' : 'thumb1'
+                    'thumbId' : 'thumb1',
+                    'thumbType' : 'image/jpg'
                     }
                 })}
     res = send_request('node', brief_node, cookie)[0];
@@ -412,7 +416,7 @@ def test_create_tour2 ():
                 'longitude' : 999,
                 'brief' : {
                     'title' : 'Test Node',
-                    'desc' : 'Whatever'
+                    'desc' : 'Whatever',
                     }
                  }
 
@@ -456,7 +460,7 @@ def test_create_tour2 ():
     assert_tour(res, 'Stanford2', 5)
     
     expected_order = [111, 111, 999, 200, 999, 999]
-
+        
     for idx, val in enumerate(res['nodes']):
         assert 'latitude' in val
         assert 'longitude' in val
@@ -530,6 +534,7 @@ def test_file_retreive():
     node_id = tour['nodes'][0]['nodeId']
     mongo_id = tour['nodes'][0]['mongoId']
     res = send_request('nodeContent?nodeId='+str(node_id), None, cookie)[0]
+    print res
     content_id = res[0]['content'][0]['page'][0]['contentId']
     res = send_request('mongoFile?mongoFile='+content_id, None, cookie, True)[0]
     

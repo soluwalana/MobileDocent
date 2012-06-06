@@ -89,6 +89,8 @@ var formatTourRows = function (rows, single){
     for (var i = 0; i < rows.length; i ++){
         var row = rows[i];
         var retObj = _.pick(row, KEYS.tourKeys);
+        retObj.latitude = row.tourLatitude;
+        retObj.latitude = row.tourLongitude;
         retObj.nodes = [];
         
         var nodes = {};
@@ -366,7 +368,7 @@ var TourManager = function(store){
 
         var sql = SQL.appendNode;
         var sqlParams = [latitude, longitude, pseudo, tourId, tourId, tourId, tourId];
-        
+
         if (nodeData.prevNode !== undefined){
             var prevNode  = nodeData.prevNode;
             if (prevNode === null){
@@ -435,7 +437,8 @@ var TourManager = function(store){
                                     callback, function (rows, cols){
                                         result.mongoId = mongoId;
                                         var retObj = {'success' : 'Node Created',
-                                                      'result': result};
+                                                      'result': result,
+                                                      'mongoObj' : mongoObject};
                                         if (filesResult) retObj.filesResult = filesResult;
                                         callback(retObj);
                                     }
@@ -487,22 +490,11 @@ var TourManager = function(store){
         }
     };
     
-    self._modifyNode = function (params, conn, callback){
-        callback({'error' : 'Unimplemented'});
-    };
-    
-    self.modifyNode = function (params, callback){
-        if (!params.tourId || !params.authUserId || !params.nodeId){
+    self.modifyNode = function (params, files, callback){
+        //if (!params.nodeData || !params.nodeData.nodeId){
             return errorCallback('Missing Required Parameters', callback);
-        }
-
-        self._verifyOwnership(
-            SQL.checkNodeOwnership,
-            [params.authUserId, params.tourId, params.nodeId],
-            errorWrap(callback, function(conn){
-                self._modifyNode(params, conn, callback);
-            })
-        );
+        //}
+        //return self.createNode(params, files, callback);
     };
 
     self._storeFile = function (files, data, callback){

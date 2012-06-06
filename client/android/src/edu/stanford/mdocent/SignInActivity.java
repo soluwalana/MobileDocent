@@ -61,6 +61,8 @@ public class SignInActivity extends Activity {
 		testButton.setOnClickListener(new OnClickListener(){
 			public void onClick(View v){
 				SimpleTest.testTourCreation();
+				SimpleTest.testMultpartPost(getBaseContext());
+				SimpleTest.testSaveNode(getBaseContext());
 			}
 		});
 
@@ -79,6 +81,7 @@ public class SignInActivity extends Activity {
 
 	public void restartWelcome (){
 		Intent intent = new Intent(this, SignInActivity.class );
+		
 		startActivity(intent);
 	}
 	

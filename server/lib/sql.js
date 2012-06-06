@@ -46,9 +46,9 @@ exports.queries= {
     activeTour : 'update tours set active = ? where tourId = ? and userId = ?;',
     makeTourOfficial : 'update tours set official = 1 where tourId = ? and userId = ?;',
     
-    getTourById : 'select * from tours as T left join nodes as N on N.tourId = T.tourId where T.tourId = ? ;',
+    getTourById : 'select T.*, N.*, L.latitude as tourLatitude, L.longitude as tourLongitude from tours as T left join locations as L on L.locId = T.locId left join nodes as N on N.tourId = T.tourId where T.tourId = ? ;',
         
-    getTourByName: 'select * from tours as T left join nodes as N on N.tourId = T.tourId where T.tourName = ? ;',
+    getTourByName: 'select T.*, N.*, L.latitude as tourLatitude, L.longitude as tourLongitude from tours as T left join locations as L on L.locId = T.locId left join nodes as N on N.tourId = T.tourId where T.tourName = ? ;',
         
     /* Node Queries */
     checkTourOwnership : 'select T.*, L.latitude, L.longitude from tours as T left join locations as L on T.locId = L.locId  where userId = ? and tourId = ?;',

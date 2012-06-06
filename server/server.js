@@ -153,9 +153,7 @@ app.post('/modifyTour', function(req, res){
 
 app.post('/modifyNode', function(req, res){
     logger.info('Modify Tour Request');
-    callback({'success' : 'modify node',
-              'data' : req.body,
-              'files' : req.files});
+    tourManager.modifyNode(req.body, req.files, res.send);
 });
 
 /* Destructive API */
