@@ -9,7 +9,7 @@
 <TextView android:id="@+id/description" android:layout_width="fill_parent"
           android:layout_height="wrap_content"/>
  
- <data.CreateMapView
+ <edu.stanford.mdocent.data.CreateMapView
   xmlns:android="http://schemas.android.com/apk/res/android"
   android:id="@+id/map_view"
   android:layout_width="fill_parent" 

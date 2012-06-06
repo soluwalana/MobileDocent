@@ -24,11 +24,26 @@ import android.widget.AdapterView.OnItemClickListener;
 public class MyToursActivity extends ListActivity {
 
 	private static final String TAG = "MyToursActivity";
+	
+	private void startMainPage() {
+		Intent intent = new Intent(this, MainPageActivity.class );
+		startActivity(intent);
+	}
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
 		setContentView(R.layout.mytours);
+		
+		Button button = (Button) findViewById(R.id.button1);
+		button.setOnClickListener(new OnClickListener(){
+			public void onClick(View v) {
+				startMainPage();
+			}
+
+		});
+		
+		
 
 		Vector<Tour> tourVector = Tour.tourUserSearch();
 		if(tourVector!=null){
@@ -52,9 +67,9 @@ public class MyToursActivity extends ListActivity {
 							((TextView) view).getText(), Toast.LENGTH_SHORT).show();
 				}
 			});
+
+
 		}
-
-
 
 
 

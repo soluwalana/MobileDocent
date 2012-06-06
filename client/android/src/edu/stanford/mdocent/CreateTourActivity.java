@@ -11,7 +11,10 @@ import java.util.Vector;
 
 import edu.stanford.mdocent.RoadProvider;
 import edu.stanford.mdocent.data.CreateMapView;
+import edu.stanford.mdocent.data.MapOverlay;
+import edu.stanford.mdocent.data.Node;
 import edu.stanford.mdocent.data.Road;
+import edu.stanford.mdocent.data.Tour;
 
 import android.content.Context;
 import android.content.Intent;
@@ -25,6 +28,8 @@ import android.graphics.Bitmap.Config;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -41,122 +46,132 @@ import com.google.android.maps.MapController;
 import com.google.android.maps.MapView;
 import com.google.android.maps.Overlay;
 
-public class CreateTourActivity extends MapActivity {
+public class CreateTourActivity extends MapActivity  {
 
 	private static final String TAG = "CreateTourActivity";
-	
+
 	LinearLayout linearLayout;
 	CreateMapView mapView;
 	private Road mRoad; 
 	private MapController mapController;
 	//Vector<NodeData> nodeVector = new Vector<NodeData>();
 	private ArrayList _displayedMarkers; 
-	private LinearLayout _bubbleLayout; 
- 
+	private LinearLayout _bubbleLayout;
+	private Tour newTour;
+	private final static int tourRequestCode = 1;
+	boolean firstNode = true;
+
+	private double tla; //testing
+	private double tlo; //testing
+
+	@Override
+	public void onActivityResult(int requestCode,int resultCode,Intent data){
+		super.onActivityResult(requestCode, resultCode, data);
+		if (resultCode == RESULT_OK){
+			Log.v(TAG, "RESULT_OK");
+			//RENDER POINTS
+			renderPoints();
+		}
+		else{
+			Log.v(TAG, "RESULT_CANCELED");
+			Intent intent = new Intent(this, MyToursActivity.class );
+			startActivity(intent);
+		}
+	}
+	private void renderPoints(){
+		double prevLat = -900.0;
+		double prevLong = -900.0;
+		Vector<Node> nodes = newTour.getTourNodes();
+		/*nodes = new Node[1];
+		Node temp = new Node();
+		temp.setLatitude(tla);
+		temp.setLongitude(tlo);
+		nodes[0]=temp;*/
+		if(nodes!=null){
+			for(int i = 0; i<nodes.size(); i++){
+				Node curNode = nodes.get(i);
+				if(firstNode){
+					prevLat = curNode.getLatitude();
+					prevLong = curNode.getLongitude();
+					Log.v(TAG, "lat: " + prevLat + " long: "+ prevLong);
+					renderPoint(prevLat, prevLong);
+					firstNode = false;
+				}
+				else {
+					double fromLat = prevLat, fromLon = prevLong, toLat =curNode.getLatitude(), toLon =curNode.getLongitude();
+					String url = RoadProvider
+							.getUrl(fromLat, fromLon, toLat, toLon);
+					InputStream is = getConnection(url);
+					mRoad = RoadProvider.getRoute(is);
+					mHandler.sendEmptyMessage(0);
+					prevLat = toLat;
+					prevLong = toLon;
+					firstNode = false;
+					renderPoint(toLat, toLon);
+				}
+			}
+		}
+		firstNode =true;
+	}
+	private void renderPoint(double newLat, double newLong){
+		GeoPoint point = new GeoPoint(  //LatLng 
+				(int) (newLat * 1E6),
+				(int) (newLong * 1E6));
+		MapOverlayPoint mapOverlay = new MapOverlayPoint();
+		mapOverlay.setPointToDraw(point);
+		mapView.getOverlays().add(mapOverlay);
+		mapController.setZoom(16);
+		mapView.invalidate();
+		//addNewNode(newLat, newLong);
+	}
+
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.createtour);
-		
+
 		Intent sender=getIntent();
-        String tourName=sender.getExtras().getString("tourName");
-        String tourDescription=sender.getExtras().getString("tourDescription");
-        Log.v(TAG, "name: " + tourName + " desc: "+ tourDescription);
-		
+		String tourName=sender.getExtras().getString("tourName");
+		String tourDescription=sender.getExtras().getString("tourDescription");
+		Log.v(TAG, "name: " + tourName + " desc: "+ tourDescription);
+		newTour = new Tour();
+		newTour.setTourName(tourName);
+		newTour.setTourDesc(tourDescription);
+		if(!newTour.save()){
+			Log.v(TAG,"Create tour error: " + tourName);
+		}
+
 		mapView = (CreateMapView) findViewById(R.id.map_view);
 		mapView.setBuiltInZoomControls(true);
 		mapController = mapView.getController();
 		mapController.setZoom(18); 
-		
+
 		Toast.makeText(getApplicationContext(), 
-                "Press and Hold to make a new Node", Toast.LENGTH_LONG).show();
+				"Press and Hold to make a new Node", Toast.LENGTH_LONG).show();
 
 		mapView.setOnLongpressListener(new CreateMapView.OnLongpressListener() {
-			double prevLat = -900.0;
-			double prevLong = -900.0;
+
 			private static final String TAG = "setOnLongpressListener";
-			
+
 			/*private void addNewNode(double newLat, double newLong){
 				NodeData newNode = new NodeData();
 				newNode.latitude = newLat;
 				newNode.longitude = newLong;
 				nodeVector.add(newNode);
 			}*/
-			
-			private void renderPoint(double newLat, double newLong){
-				GeoPoint point = new GeoPoint(  //LatLng 
-						(int) (newLat * 1E6),
-						(int) (newLong * 1E6));
-				MapOverlayPoint mapOverlay = new MapOverlayPoint();
-				mapOverlay.setPointToDraw(point);
-				mapView.getOverlays().add(mapOverlay);
-				mapController.setZoom(16);
-				mapView.invalidate();
-				//addNewNode(newLat, newLong);
 
-			}
+
 			public void onLongpress(final MapView view, final GeoPoint longpressLocation) {
 				runOnUiThread(new Runnable() {
 					public void run() {
-						if(prevLat != -900.0){
-							double fromLat = prevLat, fromLon = prevLong, toLat = (double)longpressLocation.getLatitudeE6()  / (double)1E6, toLon = (double)longpressLocation.getLongitudeE6()/ (double)1E6;
-							String url = RoadProvider
-									.getUrl(fromLat, fromLon, toLat, toLon);
-							InputStream is = getConnection(url);
-							mRoad = RoadProvider.getRoute(is);
-							mHandler.sendEmptyMessage(0);
-							prevLat = toLat;
-							prevLong = toLon;
-							renderPoint(toLat, toLon);
-						}
-						else {
-							prevLat = (double)longpressLocation.getLatitudeE6()  / (double)1E6;
-							prevLong = (double)longpressLocation.getLongitudeE6()/ (double)1E6;
-							Log.v(TAG, "lat: " + prevLat + " long: "+ prevLong);
-							renderPoint(prevLat, prevLong);
-						}
-						
-
-				        // Get instance of the Bubble Layout ...
-				        LayoutInflater inflater = (LayoutInflater) mapView.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-				        _bubbleLayout = (LinearLayout) inflater.inflate(R.layout.createtourbubble, mapView, false);
-				 
-				        // .. configure its layout parameters
-				        MapView.LayoutParams params = new MapView.LayoutParams(300, 500, longpressLocation,
-				                MapView.LayoutParams.BOTTOM_CENTER);
-				 
-				       _bubbleLayout.setLayoutParams(params);
-				 
-				        // Locate the TextView
-				        TextView locationNameText = (TextView) _bubbleLayout.findViewById(R.id.locationName);
-				         
-				        // Set the Text
-				        //locationNameText.setText(getSampleText());
-				 
-				        // Add the view to the Map
-				        mapView.addView(_bubbleLayout);
-				         
-				        // Animate the map to center on the location
-				        mapView.getController().animateTo(longpressLocation);
-						mapController.setZoom(18);
-						//mapView.invalidate();
-				        
-				        Button takeButton = (Button) findViewById(R.id.button2);
-						takeButton.setOnClickListener(new OnClickListener(){
-							public void onClick(View v) {
-								mapView.removeAllViews();
-								mapView.getOverlays().remove(mapView.getOverlays().size()-1);
-							}
-						});
-						
-				        Button submitButton = (Button) findViewById(R.id.button1);
-				        submitButton.setOnClickListener(new OnClickListener(){
-							public void onClick(View v) {
-								mapView.removeAllViews();
-								mapView.getOverlays().remove(mapView.getOverlays().size()-1);
-							}
-						});
-				    
+						mapView.getOverlays().clear();
+						Intent intent = new Intent(getBaseContext(), AddNodeActivity.class );
+						intent.putExtra("tourID", newTour.getTourId());
+						tla = (double)longpressLocation.getLatitudeE6()/ (double)1E6;
+						tlo = (double)longpressLocation.getLongitudeE6()/ (double)1E6;
+						intent.putExtra("nodeLat", (double)longpressLocation.getLatitudeE6()/ (double)1E6);
+						intent.putExtra("nodeLon", (double)longpressLocation.getLongitudeE6()/ (double)1E6);
+						startActivityForResult(intent,tourRequestCode);
 					}
 				});
 			}
@@ -223,56 +238,4 @@ public class CreateTourActivity extends MapActivity {
 		}
 	} 
 
-	class MapOverlay extends com.google.android.maps.Overlay {
-		Road mRoad;
-		ArrayList<GeoPoint> mPoints;
-
-		public MapOverlay(Road road, MapView mv) {
-			mRoad = road;
-			if (road.mRoute.length > 0) {
-				mPoints = new ArrayList<GeoPoint>();
-				for (int i = 0; i < road.mRoute.length; i++) {
-					mPoints.add(new GeoPoint((int) (road.mRoute[i][1] * 1000000),
-							(int) (road.mRoute[i][0] * 1000000)));
-				}
-				int moveToLat = (mPoints.get(0).getLatitudeE6() + (mPoints.get(
-						mPoints.size() - 1).getLatitudeE6() - mPoints.get(0)
-						.getLatitudeE6()) / 2);
-				int moveToLong = (mPoints.get(0).getLongitudeE6() + (mPoints.get(
-						mPoints.size() - 1).getLongitudeE6() - mPoints.get(0)
-						.getLongitudeE6()) / 2);
-				GeoPoint moveTo = new GeoPoint(moveToLat, moveToLong);
-
-				MapController mapController = mv.getController();
-				mapController.animateTo(moveTo);
-				mapController.setZoom(7);
-			}
-		}
-
-		@Override
-		public boolean draw(Canvas canvas, MapView mv, boolean shadow, long when) {
-			super.draw(canvas, mv, shadow);
-			drawPath(mv, canvas);
-			return true;
-		}
-
-		public void drawPath(MapView mv, Canvas canvas) {
-			int x1 = -1, y1 = -1, x2 = -1, y2 = -1;
-			Paint paint = new Paint();
-			paint.setColor(Color.GREEN);
-			paint.setStyle(Paint.Style.STROKE);
-			paint.setStrokeWidth(3);
-			for (int i = 0; i < mPoints.size(); i++) {
-				Point point = new Point();
-				mv.getProjection().toPixels(mPoints.get(i), point);
-				x2 = point.x;
-				y2 = point.y;
-				if (i > 0) {
-					canvas.drawLine(x1, y1, x2, y2, paint);
-				}
-				x1 = x2;
-				y1 = y2;
-			}
-		}
-	}
 }

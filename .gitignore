@@ -5,3 +5,4 @@
 .project
 *.class
 client/android/bin/*
+R.java

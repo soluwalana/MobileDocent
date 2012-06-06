@@ -1,5 +1,6 @@
 package edu.stanford.mdocent;
 
+import edu.stanford.mdocent.data.Node;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -13,7 +14,7 @@ public class MainPageActivity extends Activity {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-
+		
 		setContentView(R.layout.main);
 
 		Button takeButton = (Button) findViewById(R.id.Button00);

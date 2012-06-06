@@ -19,7 +19,6 @@ import edu.stanford.mdocent.utilities.QueryString;
 public class Tour {	
 	
 	private static final String TAG = "Tour";
-	
 	private Integer tourId = null;
 	private Integer userId = null;
 	private Double latitude = null;
@@ -55,10 +54,12 @@ public class Tour {
 					Log.v(TAG, "Something horrible happened when saving tour");
 					return false;
 				}
-				this.tourId = tourId.getAsInt();
-				this.userId = userId.getAsInt();
+				this.tourId = new Integer(tourId.getAsInt());
+				this.userId = new Integer(userId.getAsInt());
 				jsonElem = new JsonParser().parse(gson.toJson(this));
 			}
+			Log.v(TAG, "Tour Pre Save");
+			Log.v(TAG, jsonElem.toString());
 			JsonElement result = DBInteract.postData(jsonElem, Constants.MODIFY_TOUR_URL);
 			if (result == null || !result.isJsonObject()){
 				Log.v(TAG, "Update Failed "+result.toString());
@@ -337,9 +338,11 @@ public class Tour {
 				Log.v(TAG, result.toString());
 				return null;
 			}
+			Log.v(TAG, "GET BY ID");
 			Log.v(TAG, result.toString());
 			Tour newTour = new Gson().fromJson(result.toString(), Tour.class);
 			newTour.loadNodes(result);
+			System.out.println(newTour);
 			return newTour;
 		} catch (Exception e1) {
 			e1.printStackTrace();

@@ -11,11 +11,16 @@
         android:text="My Tours"
         android:textAppearance="?android:attr/textAppearanceLarge" />
 
+    <Button
+        android:id="@+id/button1"
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:text="Main Page" />
 
     <ListView
         android:id="@+id/android:list"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" >
+        android:layout_width="321dp"
+        android:layout_height="388dp" >
     </ListView>
 
 </LinearLayout>

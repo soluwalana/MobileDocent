@@ -79,6 +79,7 @@ public class Node {
 		   replace all pages and sections */
 		HashMap <String, File> fileMap = new HashMap <String, File>();
 		HashMap <String, String> typeMap = new HashMap <String, String>();
+		getPages();
 		
 		JsonObject jo = new JsonObject();
 		jo.addProperty("tourId", tourId);
