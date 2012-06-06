@@ -34,7 +34,7 @@ public class SignInActivity extends Activity {
 				EditText pword = (EditText)findViewById(R.id.txt_password);
 				String password = pword.getText().toString();
 
-				if(DBInteract.postLoginData(username, password)){
+				if(/*DBInteract.postLoginData(username, password)*/true){
 					startMainPage();
 				}
 				else {
