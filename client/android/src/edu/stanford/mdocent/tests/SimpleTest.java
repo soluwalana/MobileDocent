@@ -126,8 +126,7 @@ public class SimpleTest{
 			newNode.setLongitude(-122.34);
 			
 			newNode.appendPage(newPage);
-			
-			
+						
 			tour.appendNode(newNode, new Callback(){
 				@Override
 				public void onFinish(Node node){

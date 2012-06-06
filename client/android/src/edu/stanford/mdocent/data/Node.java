@@ -27,7 +27,7 @@ public class Node {
 		private String desc = null;
 		private String thumbId = null;
 		
-		public transient String thumbType = null;
+		public String thumbType = Constants.PLAIN_TEXT;
 		public transient File thumbImg = null;
 						
 		public Brief(){}
@@ -50,7 +50,7 @@ public class Node {
 		public String getThumbId() {
 			return this.thumbId;
 		}
-		public void setThumbkey(File thumbnail, String type){
+		public void setThumbImg(File thumbnail, String type){
 			this.thumbImg = thumbnail;
 			this.thumbType = type;
 		}
@@ -76,12 +76,12 @@ public class Node {
 	
 	public void save(final Callback cb){
 		/* Serialize pages and save them, then when save complete 
-		   replace all pages and sections */
+		Vector<Page> pages = getPages();   replace all pages and sections */
+		getPages();
 		HashMap <String, File> fileMap = new HashMap <String, File>();
 		HashMap <String, String> typeMap = new HashMap <String, String>();
-		getPages();
-		
-		JsonObject jo = new JsonObject();
+        getPages();
+        JsonObject jo = new JsonObject();
 		jo.addProperty("tourId", tourId);
 		jo.addProperty("latitude", latitude);
 		jo.addProperty("longitude", longitude);
@@ -104,6 +104,7 @@ public class Node {
 		final Gson gson = new Gson();
 		JsonParser parser = new JsonParser();
 		JsonArray jPages = new JsonArray();
+		
 		for (int i = 0; i < pages.size(); i ++){
 			Vector<Section> sections = pages.get(i).getSections();
 			JsonArray jSections = new JsonArray();
@@ -198,6 +199,7 @@ public class Node {
 	public String getMongoId() {
 		return mongoId;
 	}
+	
 	public Vector<Page> getPages() {
 		if (pages == null && mongoId == null){
 			pages = new Vector<Page>();
