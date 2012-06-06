@@ -42,6 +42,7 @@
         <activity 
             android:name=".CreateTourActivity" >
         </activity>
+
        	<!--  Node Tabs -->
         <activity android:name=".NodeTabLayoutActivity" />
         
@@ -54,6 +55,11 @@
         <!--  Tab Photos Activity -->
         <activity android:name=".TabPhotosActivity" />
         
+
+        <activity 
+            android:name=".TourNameActivity" >
+        </activity>
+
         <uses-library android:name="com.google.android.maps" />
     </application>
 

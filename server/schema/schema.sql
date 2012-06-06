@@ -7,19 +7,19 @@ drop table if exists tourHistory;
 drop table if exists tours;
 drop table if exists userDevices;
 drop table if exists users;
-drop table if exists ipBlocks;
+/*drop table if exists ipBlocks;
 drop table if exists locations;
     
 create table locations (
   locId integer unsigned not null,
-  country varchar(2)  character set utf8 collate utf8_general_ci not null,
-  region varchar(2)  character set utf8 collate utf8_general_ci not null,
-  city varchar(255)  character set utf8 collate utf8_general_ci not null,
+  country varchar(2)  character set utf8 collate utf8_general_ci,
+  region varchar(2)  character set utf8 collate utf8_general_ci,
+  city varchar(255)  character set utf8 collate utf8_general_ci,
   postalCode varchar(8),
   latitude double,
   longitude double,
-  metroCode integer,
-  areaCode integer,
+  metroCode varchar(8),
+  areaCode varchar(8),
   primary key (locId),
   unique(country, region, city, postalCode)
 ) ENGINE InnoDB character set utf8 collate utf8_general_ci;
@@ -32,7 +32,7 @@ create table ipBlocks (
     index (endipnum),
     foreign key (locId) references locations(locId) on delete cascade
 ) ENGINE InnoDB character set utf8 collate utf8_general_ci;
-    
+*/  
 create table users (
     userId integer unsigned not null auto_increment,
 	userName varchar(255) not null,
@@ -50,9 +50,9 @@ create table tours (
 	tourId integer unsigned not null auto_increment,
     userId integer unsigned not null, 
 	tourName varchar(255) not null,
- 	description text,
+ 	tourDesc text,
   	locId integer unsigned,
-  	walkingDistance double default null,
+  	tourDist double default null,
     official tinyint(1) default 0,
     active tinyint(1) default 0,
 	primary key(tourId),
@@ -76,7 +76,7 @@ create table tourHistory (
 create table tags (
     tagId integer unsigned not null auto_increment,
 	tagName varchar(256) not null,
-	description text not null,
+	tagDesc text not null,
     userId integer unsigned not null,
   	primary key(tagId),
     foreign key (userId) references users(userId) on delete cascade

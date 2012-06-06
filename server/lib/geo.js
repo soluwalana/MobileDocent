@@ -39,6 +39,8 @@ var gcDistDeg = function(lat1, long1, lat2, long2){
 };
 
 var sortGenerator = function (orgLat, orgLong){
+    orgLat = parseFloat(orgLat);
+    orgLong = parseFloat(orgLong);
     return function (obj1, obj2){
         var hasLoc1 = (_.isNumber(obj1.latitude) && _.isNumber(obj1.longitude));
         var hasLoc2 = (_.isNumber(obj2.latitude) && _.isNumber(obj2.longitude));

@@ -33,7 +33,9 @@
     <EditText
         android:id="@+id/txt_password"
         android:layout_width="198dp"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:inputType="textPassword"  />
 
 
     <Button
@@ -54,5 +56,11 @@
         android:layout_width="132dp"
         android:layout_height="wrap_content"
         android:text="Sign Up" />
+
+    <Button
+        android:id="@+id/test_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Test" />
 
 </LinearLayout>

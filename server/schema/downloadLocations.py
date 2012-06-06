@@ -8,33 +8,80 @@ import os
 import sys
 import MySQLdb
 
-def insert_locations(cursor, locations):
-    query = 'delete from locations'
-    cursor.execute(query)
-    for line in locations:
-        if (line == "" ): break
-        line = line[0:-1]
-        line = line.replace('"', '')
-        columns = line.split(",")
-        query = 'insert ignore into locations (locId, country, region, city, postalCode, latitude, longitude, metroCode, areaCode ) values (%s, %s, %s, %s, %s, %s, %s, %s, %s)'  
-        for idx, column in enumerate(columns):
-            columns[idx] = columns[idx].decode('latin-1')
-            
-	cursor.execute(query, columns )   
+CHUNK_SIZE = 5000
 
-def insert_blocks(cursor, blocks):
-    query = 'delete from ipBlocks'
-    cursor.execute(query)
-    for line in blocks:
-        if (line == "" ): break
-        line = line[0:-1]
-        line = line.replace('"', '')
-        columns = line.split(",")
-        query = 'insert into ipBlocks (startIpNum, endIpNum, locId) values (%s, %s, %s)'
-        for idx, column in enumerate(columns):
-            columns[idx] = columns[idx].decode('utf_8')
+def valueChunks (inputFile, size):
+    outputValues = []
+    count = 0
+    
+    while True:
+        count += 1
+        line = inputFile.readline()
+        outputValues.append(line)
+        if line == '' or count == size:
+            yield outputValues
+            count = 0
+            outputValues = []
+        if line == '':
+            return 
+            
+def insert_locations(db, cursor, locations):
+    
+    for lines in valueChunks(locations, CHUNK_SIZE):
         
-        cursor.execute(query, columns)
+        query = 'insert ignore into locations (locId, country, region, city, postalCode, latitude, longitude, metroCode, areaCode ) values '
+        first = True
+        print 1
+        for line in lines:
+            if (line == "" ): break
+            line = line[0:-1]
+            line = line.replace('"', '')
+            columns = line.split(",")
+            
+            columns = [column.decode('latin-1') for column in columns]
+            columns = '( "'+('", "'.join(columns))+'" )';
+            if first:
+                query += columns
+                first = False
+            else :
+                query += ', '+columns
+        """query += ' on duplicate key update country=values(country), region=values(region), '
+        query += ' city=values(city), postalCode=values(postalCode), latitude=values(latitude), '
+        query += ' longitude=values(longitude), metroCode=values(metroCode), areaCode=values(areaCode)'"""
+        cursor.execute(query)   
+        db.commit()
+        
+def insert_blocks(db, cursor, blocks):
+    
+    for lines in valueChunks(blocks, CHUNK_SIZE):
+        
+        query0 = 'insert ignore into locations (locId) values '
+        query = 'insert into ipBlocks (startIpNum, endIpNum, locId) values '
+        first = True
+        for line in lines:
+            if (line == "" ): break
+            line = line[0:-1]
+            line = line.replace('"', '')
+            columns = line.split(",")
+
+            missing = '( '+columns[2] +' )'
+            columns = [column.decode('utf_8') for column in columns]
+            columns = '( "'+('", "'.join(columns))+'" )';
+
+            if first:
+                query += columns
+                query0 += missing
+                first = False
+            else :
+                query += ', '+columns
+                query0 += ', '+missing
+                
+        cursor.execute(query0)
+        db.commit()
+        
+        cursor.execute(query)
+        db.commit()
+                        
         
 def main():
     db = MySQLdb.connect(host="localhost",
@@ -68,10 +115,10 @@ def main():
     for n in range(0,2):
         blocks.readline()
         location.readline()
-        
-    insert_locations(cursor, location)
-    db.commit()
-    #insert_blocks(cursor, blocks)
-    #db.commit()
+    
+    insert_locations(db, cursor, location)
+    insert_blocks(db, cursor, blocks)
+    
+    
     
 main()

@@ -11,9 +11,10 @@
         android:text="My Tours"
         android:textAppearance="?android:attr/textAppearanceLarge" />
 
+
     <ListView
-        android:id="@+id/listView1"
-        android:layout_width="316dp"
+        android:id="@+id/android:list"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content" >
     </ListView>
 
