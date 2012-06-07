@@ -18,11 +18,12 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
-
+import edu.stanford.mdocent.db.Constants;
 
 public class TourNameActivity extends Activity {
 	
 	private static final String TAG = "TourNameActivity";
+	private final static int tourNameRequestCode = 2;
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -49,9 +50,24 @@ public class TourNameActivity extends Activity {
 		Intent intent = new Intent(this, CreateTourActivity.class );
 		intent.putExtra("tourName", nameStr);
 		intent.putExtra("tourDescription", descriptionStr);
-		startActivity(intent);
+		startActivityForResult(intent, tourNameRequestCode);
 	}
-
+	@Override
+	public void onActivityResult(int requestCode,int resultCode,Intent data){
+		super.onActivityResult(requestCode, resultCode, data);
+		if (resultCode == Constants.RESULT_RETURN){
+			Log.v(TAG, "RESULT_RETURN");
+			Intent intent = new Intent(this, MainPageActivity.class );
+			setResult(Constants.RESULT_RETURN, intent);
+			finish();
+		}
+		else{
+			Log.v(TAG, "RESULT_CANCELED");
+			Intent intent = new Intent(this, MainPageActivity.class );
+			setResult(RESULT_CANCELED, intent);
+			finish();
+		}
+	}
 
 
 }

@@ -9,13 +9,43 @@
 <TextView android:id="@+id/description" android:layout_width="fill_parent"
           android:layout_height="wrap_content"/>
  
- <edu.stanford.mdocent.data.CreateMapView
-  xmlns:android="http://schemas.android.com/apk/res/android"
-  android:id="@+id/map_view"
-  android:layout_width="fill_parent" 
-  android:layout_height="fill_parent"
-  android:clickable="true"  
-  android:enabled="true"
-  android:apiKey="0qxBwiyitm83oVJZGSp0U-lI60xIAyxvF-1eawg" />
+
+ <LinearLayout 
+    xmlns:android="http://schemas.android.com/apk/res/android" 
+    android:id="@+id/MapLayout" 
+    android:orientation="vertical" 
+    android:layout_width="fill_parent" 
+    android:layout_height="fill_parent"> 
+    <edu.stanford.mdocent.data.CreateMapView 
+        android:id="@+id/map_view" 
+        android:layout_width="fill_parent" 
+        android:layout_height="fill_parent" 
+        android:clickable="true" 
+         android:enabled="true"
+        android:apiKey="0qxBwiyitm83oVJZGSp0U-lI60xIAyxvF-1eawg" 
+    /> 
+    </LinearLayout> 
+<LinearLayout
+
+    android:id="@+id/ButtonLayout"
+    android:layout_width="wrap_content"
+    android:layout_height="fill_parent"
+    android:layout_alignParentLeft="true"
+    android:layout_alignParentTop="true"
+    android:layout_marginLeft="83dp" >
+
+    <Button
+        android:id="@+id/button2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Cancel" />
+
+    <Button
+        android:id="@+id/button1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Finish Tour" />
+
+</LinearLayout>
    
 </RelativeLayout>

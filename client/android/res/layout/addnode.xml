@@ -37,7 +37,8 @@
     <EditText
         android:id="@+id/editText2"
         android:layout_width="match_parent"
-        android:layout_height="232dp"
+        android:layout_height="203dp"
+        android:layout_gravity="left|top"
         android:ems="10"
         android:inputType="textMultiLine" />
 
@@ -53,10 +54,5 @@
         android:layout_height="wrap_content"
         android:text="Cancel" />
 
-    <Button
-        android:id="@+id/button3"
-        android:layout_width="136dp"
-        android:layout_height="wrap_content"
-        android:text="Save Tour" />
 
 </LinearLayout>

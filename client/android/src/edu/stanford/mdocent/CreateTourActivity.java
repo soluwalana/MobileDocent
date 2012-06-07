@@ -15,6 +15,7 @@ import edu.stanford.mdocent.data.MapOverlay;
 import edu.stanford.mdocent.data.Node;
 import edu.stanford.mdocent.data.Road;
 import edu.stanford.mdocent.data.Tour;
+import edu.stanford.mdocent.db.Constants;
 
 import android.content.Context;
 import android.content.Intent;
@@ -52,43 +53,41 @@ public class CreateTourActivity extends MapActivity  {
 
 	LinearLayout linearLayout;
 	CreateMapView mapView;
-	private Road mRoad; 
+	public Vector<Road> roadVec = new Vector<Road>(); 
 	private MapController mapController;
 	//Vector<NodeData> nodeVector = new Vector<NodeData>();
 	private ArrayList _displayedMarkers; 
 	private LinearLayout _bubbleLayout;
 	private Tour newTour;
+	private int tourID;
 	private final static int tourRequestCode = 1;
-	boolean firstNode = true;
-
 	private double tla; //testing
 	private double tlo; //testing
 
 	@Override
 	public void onActivityResult(int requestCode,int resultCode,Intent data){
 		super.onActivityResult(requestCode, resultCode, data);
-		if (resultCode == RESULT_OK){
+		if (resultCode == RESULT_OK ||resultCode == RESULT_CANCELED){
 			Log.v(TAG, "RESULT_OK");
 			//RENDER POINTS
 			renderPoints();
 		}
-		else{
-			Log.v(TAG, "RESULT_CANCELED");
-			Intent intent = new Intent(this, MyToursActivity.class );
-			startActivity(intent);
+		else if (resultCode ==Constants.RESULT_RETURN){
+			Log.v(TAG, "RESULT_RETURN");
+			Intent intent = new Intent(this, TourNameActivity.class );
+			setResult(Constants.RESULT_RETURN, intent);
+			finish();
 		}
 	}
 	private void renderPoints(){
+		newTour = Tour.getTourById(newTour.getTourId());  //CHANEG UPON PULL TODO
 		double prevLat = -900.0;
 		double prevLong = -900.0;
+		boolean firstNode = true;
 		Vector<Node> nodes = newTour.getTourNodes();
-		/*nodes = new Node[1];
-		Node temp = new Node();
-		temp.setLatitude(tla);
-		temp.setLongitude(tlo);
-		nodes[0]=temp;*/
 		if(nodes!=null){
 			for(int i = 0; i<nodes.size(); i++){
+				Log.v(TAG, "Nodes size: "+nodes.size());
 				Node curNode = nodes.get(i);
 				if(firstNode){
 					prevLat = curNode.getLatitude();
@@ -98,20 +97,27 @@ public class CreateTourActivity extends MapActivity  {
 					firstNode = false;
 				}
 				else {
+					/*new Thread() {
+						@Override
+						public void run() {*/
 					double fromLat = prevLat, fromLon = prevLong, toLat =curNode.getLatitude(), toLon =curNode.getLongitude();
-					String url = RoadProvider
+					Log.v(TAG, "Prevlat: "+prevLat+" Prevlong: "+prevLong+" ToLat: " + toLat+" ToLong: "+toLon);
+					 String url = RoadProvider
 							.getUrl(fromLat, fromLon, toLat, toLon);
 					InputStream is = getConnection(url);
-					mRoad = RoadProvider.getRoute(is);
+					Road mRoad = RoadProvider.getRoute(is);
+					roadVec.add(mRoad);
 					mHandler.sendEmptyMessage(0);
+
 					prevLat = toLat;
 					prevLong = toLon;
-					firstNode = false;
 					renderPoint(toLat, toLon);
+					/*}
+					}.start();*/
 				}
+
 			}
 		}
-		firstNode =true;
 	}
 	private void renderPoint(double newLat, double newLong){
 		GeoPoint point = new GeoPoint(  //LatLng 
@@ -120,15 +126,38 @@ public class CreateTourActivity extends MapActivity  {
 		MapOverlayPoint mapOverlay = new MapOverlayPoint();
 		mapOverlay.setPointToDraw(point);
 		mapView.getOverlays().add(mapOverlay);
-		mapController.setZoom(16);
+		mapController.setZoom(18);
 		mapView.invalidate();
 		//addNewNode(newLat, newLong);
+	}
+	public void finishCreateTour (){
+		Intent intent = new Intent(this, CreateTourActivity.class );
+		setResult(Constants.RESULT_RETURN, intent);
+	    finish();
+	}
+	public void createTourCancel (){
+		Intent intent = new Intent(this, CreateTourActivity.class );
+		setResult(RESULT_CANCELED, intent);
+	    finish();
 	}
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
+
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.createtour);
+		Button finishButton = (Button) findViewById(R.id.button1);
+		finishButton.setOnClickListener(new OnClickListener(){
+			public void onClick(View v) {
+				finishCreateTour();	
+			}
+		});
+		Button cancelButton = (Button) findViewById(R.id.button2);
+		cancelButton.setOnClickListener(new OnClickListener(){
+			public void onClick(View v) {
+				createTourCancel();	
+			}
+		});
 
 		Intent sender=getIntent();
 		String tourName=sender.getExtras().getString("tourName");
@@ -180,14 +209,17 @@ public class CreateTourActivity extends MapActivity  {
 
 	Handler mHandler = new Handler() {
 		public void handleMessage(android.os.Message msg) {
-			TextView textView = (TextView) findViewById(R.id.description);
-			textView.setText(mRoad.mName + " " + mRoad.mDescription);
-			MapOverlay mapOverlay = new MapOverlay(mRoad, mapView);
-			List<Overlay> listOfOverlays = mapView.getOverlays();
-			//listOfOverlays.clear();
-			listOfOverlays.add(mapOverlay);
-			mapController.setZoom(18); 
-			mapView.invalidate();
+			for(int i = 0; i < roadVec.size(); i++){
+				Road mRoad = roadVec.get(i);
+				TextView textView = (TextView) findViewById(R.id.description);
+				textView.setText(mRoad.mName + " " + mRoad.mDescription);
+				MapOverlay mapOverlay = new MapOverlay(mRoad, mapView);
+				List<Overlay> listOfOverlays = mapView.getOverlays();
+				//listOfOverlays.clear();
+				listOfOverlays.add(mapOverlay);
+				mapController.setZoom(18); 
+				mapView.invalidate();
+			}
 		};
 	};
 

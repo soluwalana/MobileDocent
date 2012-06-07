@@ -37,7 +37,7 @@ public class RoadProvider {
 	public static String getUrl(double fromLat, double fromLon, double toLat,
 			double toLon) {// connect to map web service
 		StringBuffer urlString = new StringBuffer();
-			urlString.append("http://maps.google.com/maps?f=d&hl=en");
+			urlString.append("http://maps.google.com/maps?f=d&hl=en&dirflg=w");
 			urlString.append("&saddr=");// from
 			urlString.append(Double.toString(fromLat));
 			urlString.append(",");

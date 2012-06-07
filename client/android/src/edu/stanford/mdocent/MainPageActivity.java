@@ -1,15 +1,20 @@
 package edu.stanford.mdocent;
 
 import edu.stanford.mdocent.data.Node;
+import edu.stanford.mdocent.db.Constants;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 
 
 public class MainPageActivity extends Activity {
+
+	private static final String TAG = "MainPageActivity";
+	private final static int mainTourCreateRequestCode = 3;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -62,7 +67,7 @@ public class MainPageActivity extends Activity {
 	
 	public void createTour (){
 		Intent intent = new Intent(this, TourNameActivity.class );
-		startActivity(intent);
+		startActivityForResult(intent, mainTourCreateRequestCode);
 	}
 	
 	public void myTours (){
@@ -74,6 +79,13 @@ public class MainPageActivity extends Activity {
 		Intent intent = new Intent(this, SignInActivity.class );
 		startActivity(intent);
 	}
-
+	@Override
+	public void onActivityResult(int requestCode,int resultCode,Intent data){
+		super.onActivityResult(requestCode, resultCode, data);
+		if (resultCode == Constants.RESULT_RETURN){
+			Log.v(TAG, "RESULT_RETURN");
+			myTours();
+		}
+	}
 
 }

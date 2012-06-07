@@ -52,16 +52,18 @@ public class MapOverlay extends com.google.android.maps.Overlay {
 		paint.setColor(Color.GREEN);
 		paint.setStyle(Paint.Style.STROKE);
 		paint.setStrokeWidth(3);
-		for (int i = 0; i < mPoints.size(); i++) {
-			Point point = new Point();
-			mv.getProjection().toPixels(mPoints.get(i), point);
-			x2 = point.x;
-			y2 = point.y;
-			if (i > 0) {
-				canvas.drawLine(x1, y1, x2, y2, paint);
+		if (mPoints!=null){
+			for (int i = 0; i < mPoints.size(); i++) {
+				Point point = new Point();
+				mv.getProjection().toPixels(mPoints.get(i), point);
+				x2 = point.x;
+				y2 = point.y;
+				if (i > 0) {
+					canvas.drawLine(x1, y1, x2, y2, paint);
+				}
+				x1 = x2;
+				y1 = y2;
 			}
-			x1 = x2;
-			y1 = y2;
 		}
 	}
 }

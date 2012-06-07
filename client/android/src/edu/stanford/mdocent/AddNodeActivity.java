@@ -5,6 +5,7 @@ import java.util.Vector;
 import edu.stanford.mdocent.data.Node;
 import edu.stanford.mdocent.data.Tour;
 import edu.stanford.mdocent.data.Node.Brief;
+import edu.stanford.mdocent.db.Constants;
 import edu.stanford.mdocent.db.DBInteract;
 import edu.stanford.mdocent.utilities.Callback;
 import android.app.Activity;
@@ -26,6 +27,7 @@ import android.widget.Toast;
 public class AddNodeActivity extends Activity {
 	
 	private static final String TAG = "AddNodeActivity";
+	private int retTourID = 0;
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -38,7 +40,7 @@ public class AddNodeActivity extends Activity {
 		final Double nodeLat = sender.getExtras().getDouble("nodeLat");
 		final Double nodeLon = sender.getExtras().getDouble("nodeLon");
 		final Tour curTour = Tour.getTourById(tourID);
-
+		retTourID = tourID;
 		Button loginButton = (Button) findViewById(R.id.button1);
 		loginButton.setOnClickListener(new OnClickListener(){
 			public void onClick(View v) {
@@ -60,7 +62,7 @@ public class AddNodeActivity extends Activity {
 					public void onFinish(Node node){
 						Toast.makeText(getApplicationContext(), 
 								"New Node Added.", Toast.LENGTH_LONG).show();
-						startCreateTour();	
+						startCreateTourSuccess();	
 					}
 				});
 			}
@@ -69,25 +71,26 @@ public class AddNodeActivity extends Activity {
 		Button cancelButton = (Button) findViewById(R.id.button2);
 		cancelButton.setOnClickListener(new OnClickListener(){
 			public void onClick(View v) {
-				startCreateTour();	
+				startCreateTourCancel();	
 			}
 		});
-		
-		Button finishButton = (Button) findViewById(R.id.button3);
-		finishButton.setOnClickListener(new OnClickListener(){
-			public void onClick(View v) {
-				startMyTours();	
-			}
-		});
+
 	}
-	public void startCreateTour (){
-		Intent intent = new Intent(this, TourNameActivity.class );
+	public void startCreateTourCancel (){
+		Intent intent = new Intent(this, CreateTourActivity.class );
+		intent.putExtra("tourID", retTourID);
+		setResult(RESULT_CANCELED, intent);
+	    finish();
+	}
+	public void startCreateTourSuccess (){
+		Intent intent = new Intent(this, CreateTourActivity.class );
+		intent.putExtra("tourID", retTourID);
 		setResult(RESULT_OK, intent);
 	    finish();
 	}
-	public void startMyTours (){
-		Intent intent = new Intent(this, TourNameActivity.class );
-		setResult(RESULT_CANCELED, intent);
+	public void finishCreateTour (){
+		Intent intent = new Intent(this, CreateTourActivity.class );
+		setResult(Constants.RESULT_RETURN, intent);
 	    finish();
 	}
 }

@@ -33,16 +33,7 @@ public class MyToursActivity extends ListActivity {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		setContentView(R.layout.mytours);
-		
-		Button button = (Button) findViewById(R.id.button1);
-		button.setOnClickListener(new OnClickListener(){
-			public void onClick(View v) {
-				startMainPage();
-			}
-
-		});
-		
+		setContentView(R.layout.mytours);	
 		
 
 		Vector<Tour> tourVector = Tour.tourUserSearch();

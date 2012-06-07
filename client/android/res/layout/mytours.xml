@@ -11,12 +11,6 @@
         android:text="My Tours"
         android:textAppearance="?android:attr/textAppearanceLarge" />
 
-    <Button
-        android:id="@+id/button1"
-        android:layout_width="100dp"
-        android:layout_height="wrap_content"
-        android:text="Main Page" />
-
     <ListView
         android:id="@+id/android:list"
         android:layout_width="321dp"
