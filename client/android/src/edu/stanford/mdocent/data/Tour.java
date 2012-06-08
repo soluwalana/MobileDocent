@@ -1,6 +1,7 @@
 package edu.stanford.mdocent.data;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Vector;
 
 import android.util.Log;
@@ -32,8 +33,12 @@ public class Tour {
 	private boolean active;
 	private Vector<TourTag> tourTags;
 
-	public Tour() {}
+	/* A private cache for non saved Tours */
+	private static HashMap<Integer, Tour> tourCache = new HashMap<Integer, Tour>();
+	private static HashMap<String, Integer> nameMap = new HashMap<String, Integer>();
 	
+	public Tour(){}
+			
 	public boolean save(){
 		try {
 			Gson gson = new Gson();
@@ -330,7 +335,10 @@ public class Tour {
 		return null;
 	} 
 	
-	public static Tour getTourById (Integer tourId){
+	public static Tour getTourById (Integer tourId, boolean cached){
+		if (cached && tourCache.containsKey(tourId)){
+			return tourCache.get(tourId);
+		}
 		QueryString qs = new QueryString("tourId", tourId.toString());
 		try {
 			JsonElement result = DBInteract.getData(Constants.TOUR_URL, qs.toString());
@@ -343,6 +351,8 @@ public class Tour {
 			Tour newTour = new Gson().fromJson(result.toString(), Tour.class);
 			newTour.loadNodes(result);
 			System.out.println(newTour);
+			tourCache.put(tourId, newTour);
+			nameMap.put(newTour.getTourName(), newTour.getTourId());
 			return newTour;
 		} catch (Exception e1) {
 			e1.printStackTrace();
@@ -350,8 +360,11 @@ public class Tour {
 		return null;
 	}
 	
-
-	public static Tour getTourByName (String tourName){
+	public static Tour getTourByName (String tourName, boolean cached){
+		if (cached && nameMap.containsKey(tourName) && 
+				tourCache.containsKey(nameMap.get(tourName))){
+			return tourCache.get(nameMap.get(tourName));
+		}
 		QueryString qs = new QueryString("tourName", tourName);
 		try {
 			JsonElement result = DBInteract.getData(Constants.TOUR_URL, qs.toString());

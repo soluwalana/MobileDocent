@@ -6,3 +6,4 @@
 *.class
 client/android/bin/*
 R.java
+client/android/gen/*

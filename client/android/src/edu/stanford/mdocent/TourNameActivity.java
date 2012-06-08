@@ -41,10 +41,7 @@ public class TourNameActivity extends Activity {
 				startCreateTour(nameStr, descriptionStr);
 				
 			}
-
 		});
-		
-
 	}
 	public void startCreateTour (String nameStr, String descriptionStr){
 		Intent intent = new Intent(this, CreateTourActivity.class );

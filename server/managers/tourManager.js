@@ -264,8 +264,9 @@ var TourManager = function(store){
                 self._finishNodeAdd(nodeData, sections, result, conn, callback);
             }
         };
-        
+
         nodeData.content = convertContent(nodeData.content);
+        
         var nodeContent = nodeData.content;
         sections = nodeContent ? nodeContent.sections : {};
         
@@ -405,8 +406,6 @@ var TourManager = function(store){
             var nodeId = result.nodeId;
             
             var mongoObject = {};
-            mongoObject.tourId = tourId;
-            mongoObject.nodeId = nodeId;
             
             if (nodeData.brief){
                 mongoObject.brief = nodeData.brief;
@@ -420,6 +419,9 @@ var TourManager = function(store){
                 return callback({'success': 'committed pseudo node',
                                  'result' : result});
             }
+            mongoObject.tourId = tourId;
+            mongoObject.nodeId = nodeId;
+
             store.mongoCollection(
                 constants.NODE_COLLECTION,
                 errorWrap(callback, function (collection){
@@ -466,7 +468,7 @@ var TourManager = function(store){
                     var query = { _id : _id };
                     collection.findOne(query, errorWrap(callback, function (record){
                         record._id = record._id.toHexString();
-                        callback([record]);
+                        callback(record);
                     }));
                 })
             );

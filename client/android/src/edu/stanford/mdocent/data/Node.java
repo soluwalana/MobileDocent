@@ -7,6 +7,8 @@ import java.util.HashMap;
 import java.util.Random;
 import java.util.Vector;
 
+import android.util.Log;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -55,6 +57,8 @@ public class Node {
 			this.thumbType = type;
 		}
 	}
+
+	private static final String TAG = "Node";
 	
 	private Integer tourId = null;
 	private Integer nodeId = null;
@@ -77,7 +81,6 @@ public class Node {
 	public void save(final Callback cb){
 		/* Serialize pages and save them, then when save complete 
 		Vector<Page> pages = getPages();   replace all pages and sections */
-		getPages();
 		HashMap <String, File> fileMap = new HashMap <String, File>();
 		HashMap <String, String> typeMap = new HashMap <String, String>();
         getPages();
@@ -123,9 +126,11 @@ public class Node {
 			}
 			jPages.add(jSections);
 		}
+		
 		if (jPages.size() > 0){
-			jo.addProperty("content", gson.toJson(jPages));
+			jo.add("content", jPages);
 		}
+		
 		System.out.println("Before Save");
 		System.out.println(jo.toString());
 		
@@ -169,12 +174,18 @@ public class Node {
 			QueryString qs = new QueryString("nodeId", nodeId.toString());
 			JsonElement je = DBInteract.getData(Constants.NODE_CONTENT_URL, qs.toString());
 			if (!je.isJsonObject()){
+				Log.e(TAG, "Was expecting a JSON object but got "+je.toString());
 				return null;
 			}
 			JsonObject nodeData = je.getAsJsonObject();
 			if (nodeData.has("brief")){
 				brief = new Gson().fromJson(nodeData.get("brief").toString(), Brief.class);
-			} 
+			} else {
+				brief = new Brief();
+			}
+			if (nodeData.has("content")){
+				loadPages(je);
+			}
 		} 
 		if (brief == null){
 			brief = new Brief();
@@ -200,6 +211,21 @@ public class Node {
 		return mongoId;
 	}
 	
+	private void loadPages (JsonElement je){
+		pages = new Vector<Page>();
+		if (!je.isJsonObject()){
+			return;
+		}
+		JsonObject nodeData = je.getAsJsonObject();
+		if (!nodeData.has("content") || !nodeData.get("content").isJsonArray()){
+			return;
+		}
+		JsonArray nodePages = nodeData.get("content").getAsJsonArray();
+		for (int i = 0; i < nodePages.size(); i ++){
+			pages.add(new Page(nodePages.get(i)));
+		}			
+	}
+	
 	public Vector<Page> getPages() {
 		if (pages == null && mongoId == null){
 			pages = new Vector<Page>();
@@ -208,17 +234,7 @@ public class Node {
 			// Get the content from the server
 			QueryString qs = new QueryString("mongoId", mongoId);
 			JsonElement je = DBInteract.getData(Constants.NODE_CONTENT_URL, qs.toString());
-			if (!je.isJsonObject()){
-				return null;
-			}
-			JsonObject nodeData = je.getAsJsonObject();
-			if (!nodeData.has("content") || !nodeData.get("content").isJsonArray()){
-				return null;
-			}
-			JsonArray nodePages = nodeData.get("content").getAsJsonArray();
-			for (int i = 0; i < nodePages.size(); i ++){
-				pages.add(new Page(nodePages.get(i)));
-			}			
+			loadPages(je);
 		}
 		return pages;
 	}

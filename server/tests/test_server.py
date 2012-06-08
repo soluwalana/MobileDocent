@@ -93,7 +93,6 @@ def test_user_create():
                   'about' : 'I like CS',
                   'email' : 'soluwalana@gmail.com'}
                  )
-    
     #success multi user one phone
     success_test('user', 'User Created Successfully',
                  {'userName' : 'samo1',
@@ -421,27 +420,27 @@ def test_create_tour2 ():
                  }
 
     # create 2 nodes 
-    node_data['content'] = [[{'content' : 2}]]
+    node_data['content'] = [[{'content' : 2, 'contentType' : 'text/plain'}]]
     pseudo_node = { 'nodeData' : json.dumps(node_data)}
     res = send_request('node', pseudo_node, cookie)[0];
     assert_result(res)
     first_node = res['result']['nodeId']
 
-    
-    node_data['content'] = [[{'content' : 4}]]
+    node_data['content'] = [[{'content' : 4, 'contentType' : 'text/plain'}]]
     pseudo_node = { 'nodeData' : json.dumps(node_data)}
     res = send_request('node', pseudo_node, cookie)[0];
     assert_result(res)
 
+    #create two more
     node_data['prevNode'] = None
     node_data['latitude'] = 111
     node_data['longitude'] = 111
-    node_data['content'] = [[{'content' : 1}]]
+    node_data['content'] = [[{'content' : 1, 'contentType' : 'text/plain'}]]
     pseudo_node = { 'nodeData' : json.dumps(node_data)}
     res = send_request('node', pseudo_node, cookie)[0];
     assert_result(res)
 
-    node_data['content'] = [[{'content' : 0}]]
+    node_data['content'] = [[{'content' : 0, 'contentType' : 'text/plain'}]]
     pseudo_node = { 'nodeData' : json.dumps(node_data)}
     res = send_request('node', pseudo_node, cookie)[0];
     assert_result(res)
@@ -451,7 +450,7 @@ def test_create_tour2 ():
     node_data['prevNode'] = first_node
     node_data['latitude'] = 200
     node_data['longitude'] = 200
-    node_data['content'] = [[{'content' : 3}]]
+    node_data['content'] = [[{'content' : 3, 'contentType' : 'text/plain'}]]
     pseudo_node = { 'nodeData' : json.dumps(node_data)}
     res = send_request('node', pseudo_node, cookie)[0];
     assert_result(res)
@@ -459,7 +458,7 @@ def test_create_tour2 ():
     res = send_request('tour?tourId=2', None, cookie)[0]
     assert_tour(res, 'Stanford2', 5)
     
-    expected_order = [111, 111, 999, 200, 999, 999]
+    expected_order = [111, 111, 999, 200, 999]
         
     for idx, val in enumerate(res['nodes']):
         assert 'latitude' in val
@@ -683,7 +682,7 @@ def test_search():
                 'title' : 'Only4',
                 'desc' : '4AND5'
                 },
-            'content' : [[{'content' : 'withAll'}]]
+            'content' : [[{'content' : 'withAll', 'contentType' : 'text/plain'}]]
             })
         }
     
@@ -703,7 +702,7 @@ def test_search():
                 'title' : '5AND6',
                 'desc' : '4AND5'
                 },
-            'content' : [[{'content' : 'withAll'}]]
+            'content' : [[{'content' : 'withAll', 'contentType' : 'text/plain'}]]
             })
         }
     
@@ -723,7 +722,7 @@ def test_search():
                 'title' : '5AND6',
                 'desc' : 'ONLY6'
                 },
-            'content' : [[{'content' : 'withAll'}]]
+            'content' : [[{'content' : 'withAll', 'contentType' : 'text/plain'}]]
             })
         }
     
@@ -743,7 +742,7 @@ def test_search():
                 'title' : 'Only7',
                 'desc' : 'Only7'
                 },
-            'content' : [[{'content' : 'withAll'}]]
+            'content' : [[{'content' : 'withAll', 'contentType' : 'text/plain'}]]
             })
         }
     
@@ -833,7 +832,18 @@ def test_search():
     assert tours[3]['tourId'] == 6
     
     print 'Search Test Successful'
+
+def set_defaults():
+    #success test
+    success_test('user', 'User Created Successfully',
+                 {'userName' : 'a',
+                  'pass' : 'a',
+                  'passConf' : 'a',
+                  'about' : 'I like CS',
+                  'email' : 'soluwalana@gmail.com'}
+                 )
     
+
 test_user_create()
 test_user_auth()
 test_user_get()
@@ -845,5 +855,6 @@ test_file_retreive()
 test_modify_tour()
 test_tags()
 test_search()
+set_defaults()
 
 

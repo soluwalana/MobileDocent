@@ -39,7 +39,7 @@ public class AddNodeActivity extends Activity {
 		int tourID = sender.getExtras().getInt("tourID");
 		final Double nodeLat = sender.getExtras().getDouble("nodeLat");
 		final Double nodeLon = sender.getExtras().getDouble("nodeLon");
-		final Tour curTour = Tour.getTourById(tourID);
+        final Tour curTour = Tour.getTourById(tourID, true);
 		retTourID = tourID;
 		Button loginButton = (Button) findViewById(R.id.button1);
 		loginButton.setOnClickListener(new OnClickListener(){

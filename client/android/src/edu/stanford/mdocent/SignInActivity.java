@@ -1,13 +1,23 @@
 package edu.stanford.mdocent;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+
 import edu.stanford.mdocent.db.Administration;
 import edu.stanford.mdocent.db.DBInteract;
 import edu.stanford.mdocent.tests.SimpleTest;
 import android.app.Activity;
+import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
+import android.provider.MediaStore.Images.Media;
 import android.provider.Settings.Secure;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -15,11 +25,14 @@ import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 
 
 public class SignInActivity extends Activity {
 	
+	private static final String TAG = "SignInActivity";
 	private PopupWindow pw;
 
 	@Override
@@ -60,9 +73,15 @@ public class SignInActivity extends Activity {
 		Button testButton = (Button) findViewById(R.id.test_button);
 		testButton.setOnClickListener(new OnClickListener(){
 			public void onClick(View v){
+				Intent photoPick = new Intent(Intent.ACTION_GET_CONTENT);
+				
+				photoPick.setType("image/*");
+				startActivityForResult(photoPick, 1);
 				SimpleTest.testTourCreation();
 				SimpleTest.testMultpartPost(getBaseContext());
 				SimpleTest.testSaveNode(getBaseContext());
+				
+				
 			}
 		});
 
@@ -84,7 +103,23 @@ public class SignInActivity extends Activity {
 		
 		startActivity(intent);
 	}
+
+	protected void onActivityResult(int requestCode, int resultCode, Intent data){
+		super.onActivityResult(requestCode, resultCode, data);
+		if (resultCode == RESULT_OK){
+			Uri chosenImageUri = data.getData();
+			Log.v(TAG, chosenImageUri.toString());
+			try {
+				Bitmap mBitmap = Media.getBitmap(this.getContentResolver(), chosenImageUri);
+				SimpleTest.testFileUpload(getBaseContext(), this, mBitmap);
+				
+			} catch (Exception e) {
+				e.printStackTrace();
+			} 
+		}
+	}
 	
+
 	public void popUpNotification () {
 		   // Make a View from our XML file
 		   LayoutInflater inflater = (LayoutInflater)

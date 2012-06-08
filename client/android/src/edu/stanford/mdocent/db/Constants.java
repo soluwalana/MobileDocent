@@ -1,5 +1,7 @@
 package edu.stanford.mdocent.db;
 
+import android.graphics.Bitmap;
+
 public interface Constants {
 	public static final String SERVER_URL = "http://samo.stanford.edu:8787";
 	public static final String MONGO_FILE_URL = "/mongoFile";
@@ -22,7 +24,11 @@ public interface Constants {
 	
 	public static final String PLAIN_TEXT = "text/plain";
 	public static final String HTML_TEXT = "text/html";
-	public static final String JPEC_TYPE = "img/jpeg";
+	
+	public static final String JPEG_TYPE = "img/jpeg";
 	public static final String PNG_TYPE = "img/png";
-	public static final int RESULT_RETURN = 3;
+	public static final Integer RESULT_RETURN = 3;
+	public static final Integer DEFAULT_QUALITY = 80;
+	public static final String DEFAULT_IMG_MIME_TYPE = PNG_TYPE;
+	public static final Bitmap.CompressFormat DEFAULT_IMG_TYPE = Bitmap.CompressFormat.PNG;
 }

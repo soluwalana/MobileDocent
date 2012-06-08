@@ -132,6 +132,7 @@ app.post('/tour', function(req, res){
 /* Add a node to the tour given by the tourId and userId */
 app.post('/node', function(req, res){
     var tourManager = new TourManager(req.ds);
+    logger.warn(req.body);
     tourManager.createNode(req.body, req.files, res.send);
 });
 
