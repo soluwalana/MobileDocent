@@ -27,7 +27,46 @@ import android.widget.Toast;
 public class AddNodeActivity extends Activity {
 	
 	private static final String TAG = "AddNodeActivity";
-	private int retTourID = 0;
+	private final static int nodeRequestCode = 4;
+	private Node newNode;
+	private Tour curTour;
+	private int curTourID;
+	private int curNodeID;
+	
+	@Override
+	public void onActivityResult(int requestCode,int resultCode,Intent data){
+		super.onActivityResult(requestCode, resultCode, data);
+		if (resultCode == RESULT_OK){
+			Log.v(TAG, "RESULT_OK");
+			retrieveNode(data);
+		}
+		if (resultCode == RESULT_CANCELED){
+			Log.v(TAG, "RESULT_CANCELED");
+			retrieveNode(data);
+		}
+		else if (resultCode ==Constants.RESULT_RETURN){
+			Log.v(TAG, "RESULT_RETURN");
+			Intent intent = new Intent(this, CreateTourActivity.class );
+			setResult(Constants.RESULT_RETURN, intent);
+			finish();
+		}
+	}
+	
+	private void retrieveNode(Intent data){
+		curTourID = data.getExtras().getInt("tourID");
+		curNodeID = data.getExtras().getInt("nodeID");
+		curTour = Tour.getTourById(curTourID);
+		Vector<Node> nodeVec = curTour.getTourNodes();
+		for(int i = 0; i < nodeVec.size(); i++){
+			if(nodeVec.get(i).getNodeId()==curNodeID){
+				curNodeID=nodeVec.get(i).getNodeId();
+				Log.v(TAG, "Retrieved node: "+curNodeID);
+			}
+			else{
+				Log.v(TAG, "Node was null");
+			}
+		}
+	}
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -35,12 +74,14 @@ public class AddNodeActivity extends Activity {
 
 		setContentView(R.layout.addnode);
 		
-		Intent sender = getIntent();
-		int tourID = sender.getExtras().getInt("tourID");
-		final Double nodeLat = sender.getExtras().getDouble("nodeLat");
-		final Double nodeLon = sender.getExtras().getDouble("nodeLon");
-        final Tour curTour = Tour.getTourById(tourID, true);
-		retTourID = tourID;
+		curTourID = sender.getExtras().getInt("tourID");
+		curTour = Tour.getTourById(curTourID);
+		newNode = new Node();
+		newNode.setLatitude(sender.getExtras().getDouble("nodeLat"));
+		newNode.setLongitude(sender.getExtras().getDouble("nodeLon"));
+		Node node = curTour.appendNode(newNode);
+		curNodeID =  newNode.getNodeId();
+		
 		Button loginButton = (Button) findViewById(R.id.button1);
 		loginButton.setOnClickListener(new OnClickListener(){
 			public void onClick(View v) {
@@ -49,45 +90,62 @@ public class AddNodeActivity extends Activity {
 				EditText descriptionText = (EditText)findViewById(R.id.editText2);
 				String descriptionStr = descriptionText.getText().toString();
 				//ADD NODE TO TOUR
-				
-				Node newNode = new Node();
 				Brief newBrief = newNode.getBrief();
 				newBrief.setDesc(descriptionStr);
 				newBrief.setTitle(nameStr);
-				newNode.setLatitude(nodeLat);
-				newNode.setLongitude(nodeLon);
-				
-				Node node = curTour.appendNode(newNode);
-				Toast.makeText(getApplicationContext(), 
-						"New Node Added.", Toast.LENGTH_LONG).show();
-				startCreateTourSuccess();	
-			
+
+				Toast.makeText(getApplicationContext(),"New Node Added.", Toast.LENGTH_LONG).show();
+				startCreateTourSuccess();
+
 			}
 		});
 		
 		Button cancelButton = (Button) findViewById(R.id.button2);
 		cancelButton.setOnClickListener(new OnClickListener(){
 			public void onClick(View v) {
+				Vector<Node>nodeVec=curTour.getTourNodes();
+				for(int i = 0; i < nodeVec.size(); i++){
+					if(nodeVec.get(i).getNodeId()==curNodeID){
+						nodeVec.remove(i);
+					}
+					else{
+						Log.v(TAG, "Node was null");
+					}
+				}
 				startCreateTourCancel();	
+			}
+		});
+		
+		Button addPageButton = (Button) findViewById(R.id.button3);
+		addPageButton.setOnClickListener(new OnClickListener(){
+			public void onClick(View v) {
+				startAddPage();	
 			}
 		});
 
 	}
+	public void startAddPage (){
+		Intent intent = new Intent(this, AddPageActivity.class );
+		intent.putExtra("tourID", curTourID);
+		intent.putExtra("nodeID", curNodeID);
+		startActivityForResult(intent,nodeRequestCode);
+	}
 	public void startCreateTourCancel (){
 		Intent intent = new Intent(this, CreateTourActivity.class );
-		intent.putExtra("tourID", retTourID);
+		intent.putExtra("tourID", curTourID);
 		setResult(RESULT_CANCELED, intent);
 	    finish();
 	}
 	public void startCreateTourSuccess (){
 		Intent intent = new Intent(this, CreateTourActivity.class );
-		intent.putExtra("tourID", retTourID);
+		intent.putExtra("tourID", curTourID);
 		setResult(RESULT_OK, intent);
 	    finish();
 	}
+	/*
 	public void finishCreateTour (){
 		Intent intent = new Intent(this, CreateTourActivity.class );
 		setResult(Constants.RESULT_RETURN, intent);
 	    finish();
-	}
+	}*/
 }

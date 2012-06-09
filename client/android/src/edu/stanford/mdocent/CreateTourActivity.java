@@ -33,6 +33,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup.LayoutParams;
@@ -59,10 +60,8 @@ public class CreateTourActivity extends MapActivity  {
 	private ArrayList _displayedMarkers; 
 	private LinearLayout _bubbleLayout;
 	private Tour newTour;
-	private int tourID;
+	private int tourID = -1;
 	private final static int tourRequestCode = 1;
-	private double tla; //testing
-	private double tlo; //testing
 
 	@Override
 	public void onActivityResult(int requestCode,int resultCode,Intent data){
@@ -97,23 +96,17 @@ public class CreateTourActivity extends MapActivity  {
 					firstNode = false;
 				}
 				else {
-					/*new Thread() {
-						@Override
-						public void run() {*/
 					double fromLat = prevLat, fromLon = prevLong, toLat =curNode.getLatitude(), toLon =curNode.getLongitude();
 					Log.v(TAG, "Prevlat: "+prevLat+" Prevlong: "+prevLong+" ToLat: " + toLat+" ToLong: "+toLon);
-					 String url = RoadProvider
+					String url = RoadProvider
 							.getUrl(fromLat, fromLon, toLat, toLon);
 					InputStream is = getConnection(url);
 					Road mRoad = RoadProvider.getRoute(is);
 					roadVec.add(mRoad);
 					mHandler.sendEmptyMessage(0);
-
 					prevLat = toLat;
 					prevLong = toLon;
 					renderPoint(toLat, toLon);
-					/*}
-					}.start();*/
 				}
 
 			}
@@ -133,12 +126,12 @@ public class CreateTourActivity extends MapActivity  {
 	public void finishCreateTour (){
 		Intent intent = new Intent(this, CreateTourActivity.class );
 		setResult(Constants.RESULT_RETURN, intent);
-	    finish();
+		finish();
 	}
 	public void createTourCancel (){
 		Intent intent = new Intent(this, CreateTourActivity.class );
 		setResult(RESULT_CANCELED, intent);
-	    finish();
+		finish();
 	}
 
 	@Override
@@ -169,7 +162,7 @@ public class CreateTourActivity extends MapActivity  {
 		if(!newTour.save()){
 			Log.v(TAG,"Create tour error: " + tourName);
 		}
-
+		Log.v(TAG, "New tour ID: "+newTour.getTourId());
 		mapView = (CreateMapView) findViewById(R.id.map_view);
 		mapView.setBuiltInZoomControls(true);
 		mapController = mapView.getController();
@@ -182,22 +175,12 @@ public class CreateTourActivity extends MapActivity  {
 
 			private static final String TAG = "setOnLongpressListener";
 
-			/*private void addNewNode(double newLat, double newLong){
-				NodeData newNode = new NodeData();
-				newNode.latitude = newLat;
-				newNode.longitude = newLong;
-				nodeVector.add(newNode);
-			}*/
-
-
 			public void onLongpress(final MapView view, final GeoPoint longpressLocation) {
 				runOnUiThread(new Runnable() {
 					public void run() {
 						mapView.getOverlays().clear();
 						Intent intent = new Intent(getBaseContext(), AddNodeActivity.class );
 						intent.putExtra("tourID", newTour.getTourId());
-						tla = (double)longpressLocation.getLatitudeE6()/ (double)1E6;
-						tlo = (double)longpressLocation.getLongitudeE6()/ (double)1E6;
 						intent.putExtra("nodeLat", (double)longpressLocation.getLatitudeE6()/ (double)1E6);
 						intent.putExtra("nodeLon", (double)longpressLocation.getLongitudeE6()/ (double)1E6);
 						startActivityForResult(intent,tourRequestCode);
@@ -214,9 +197,10 @@ public class CreateTourActivity extends MapActivity  {
 				TextView textView = (TextView) findViewById(R.id.description);
 				textView.setText(mRoad.mName + " " + mRoad.mDescription);
 				MapOverlay mapOverlay = new MapOverlay(mRoad, mapView);
-				List<Overlay> listOfOverlays = mapView.getOverlays();
+				//List<Overlay> listOfOverlays = mapView.getOverlays();
 				//listOfOverlays.clear();
-				listOfOverlays.add(mapOverlay);
+				mapView.getOverlays().add(mapOverlay);
+
 				mapController.setZoom(18); 
 				mapView.invalidate();
 			}
@@ -243,6 +227,7 @@ public class CreateTourActivity extends MapActivity  {
 
 	class MapOverlayPoint extends Overlay
 	{
+		
 		private GeoPoint pointToDraw;
 
 		public void setPointToDraw(GeoPoint point) {
@@ -268,6 +253,35 @@ public class CreateTourActivity extends MapActivity  {
 			canvas.drawBitmap(bmp, screenPts.x, screenPts.y - 24, null);    
 			return true;
 		}
+		@Override
+		public boolean onTouchEvent(MotionEvent e, MapView mapView) 
+		{   
+			GeoPoint p = new GeoPoint(0, 0);
+			if (e.getAction() == MotionEvent.ACTION_UP) {                
+				p = mapView.getProjection().fromPixels(
+						(int) e.getX(),
+						(int) e.getY());
+			}     
+			Log.v(TAG,"Inside touch event " + tourID);
+			if(p.getLatitudeE6()!=0 && tourID != -1 && Tour.getTourById(tourID).getTourNodes()!=null){
+				Vector<Node> curNodes = Tour.getTourById(tourID).getTourNodes();
+				Log.v(TAG,"Inside touch event conditions");
+				for(int i = 0; i < curNodes.size(); i++){
+					Node curNode = curNodes.get(i);
+					int curLat = (int)( curNode.getLatitude()* 1E6);
+					int curLong = (int)( curNode.getLongitude()* 1E6);
+					Log.v(TAG,"Checking closeness condition of click event "+curLat + " "+curLong);
+					Log.v(TAG,"Checking closeness condition to node "+p.getLatitudeE6() + " "+p.getLongitudeE6());
+					if (Math.abs(curLat-p.getLatitudeE6()) < Constants.CLICK_THRESH && Math.abs(curLong-p.getLongitudeE6()) < Constants.CLICK_THRESH ){
+						Toast.makeText(getApplicationContext(), 
+								"Click Detected: " + curNode.getBrief().getTitle(), Toast.LENGTH_SHORT).show();
+						return false;
+					}	
+				}
+			}
+			return false;
+		}  
+
 	} 
 
 }

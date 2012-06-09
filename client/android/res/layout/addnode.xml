@@ -42,17 +42,28 @@
         android:ems="10"
         android:inputType="textMultiLine" />
 
-    <Button
-        android:id="@+id/button1"
-        android:layout_width="136dp"
-        android:layout_height="wrap_content"
-        android:text="Create" />
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" >
 
-    <Button
-        android:id="@+id/button2"
-        android:layout_width="136dp"
-        android:layout_height="wrap_content"
-        android:text="Cancel" />
+        <Button
+            android:id="@+id/button1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Finish Node" />
 
+        <Button
+            android:id="@+id/button3"
+            android:layout_width="108dp"
+            android:layout_height="wrap_content"
+            android:text="Add Page" />
+
+        <Button
+            android:id="@+id/button2"
+            android:layout_width="93dp"
+            android:layout_height="wrap_content"
+            android:text="Cancel" />
+
+    </LinearLayout>
 
 </LinearLayout>

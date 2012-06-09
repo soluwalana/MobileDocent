@@ -63,6 +63,9 @@
         <activity 
             android:name=".AddNodeActivity" >
         </activity>
+        <activity 
+            android:name=".AddPageActivity" >
+        </activity>
         <uses-library android:name="com.google.android.maps" />
     </application>
 

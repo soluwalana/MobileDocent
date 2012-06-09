@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical" >
+
+    <TextView
+        android:id="@+id/textView1"
+        android:layout_width="318dp"
+        android:layout_height="45dp"
+        android:text="Add New Page"
+        android:textAppearance="?android:attr/textAppearanceLarge" />
+
+    <Button
+        android:id="@+id/Button00"
+        android:layout_width="90dp"
+        android:layout_height="wrap_content"
+        android:text="Finish" />
+
+    <TextView
+        android:id="@+id/textView2"
+        android:layout_width="wrap_content"
+        android:layout_height="153dp"
+        android:text=""
+        android:textAppearance="?android:attr/textAppearanceSmall" />
+
+    <Button
+        android:id="@+id/Button02"
+        android:layout_width="90dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="right"
+        android:text="Add Audio" />
+
+    <Button
+        android:id="@+id/Button03"
+        android:layout_width="90dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="right"
+        android:text="Add Image" />
+
+    <Button
+        android:id="@+id/Button01"
+        android:layout_width="90dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="right"
+        android:text="Add Video" />
+
+    <Button
+        android:id="@+id/Button04"
+        android:layout_width="90dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="right"
+        android:text="Add Text" />
+
+    <Button
+        android:id="@+id/button1"
+        android:layout_width="90dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="right"
+        android:text="Cancel" />
+
+</LinearLayout>

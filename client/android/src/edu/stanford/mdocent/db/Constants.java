@@ -29,6 +29,7 @@ public interface Constants {
 	public static final String PNG_TYPE = "img/png";
 	
 	public static final int RESULT_RETURN = 3;
+
 	public static final int RESULT_IMAGE_PICKER = 4;
 	public static final int RESULT_CAMERA = 5;
 	public static final int RESULT_VIDEO_CAMERA = 6;
@@ -38,4 +39,7 @@ public interface Constants {
 	public static final Integer DEFAULT_QUALITY = 80;
 	public static final String DEFAULT_IMG_MIME_TYPE = PNG_TYPE;
 	public static final Bitmap.CompressFormat DEFAULT_IMG_TYPE = Bitmap.CompressFormat.PNG;
+
+	public static final int CLICK_THRESH = 3000;
+
 }
