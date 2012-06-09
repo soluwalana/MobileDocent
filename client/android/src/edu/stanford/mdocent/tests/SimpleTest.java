@@ -111,14 +111,12 @@ public class SimpleTest{
 			jo.addProperty("longitude", -122.74);
 			jo.add("content", content);
 
-			DBInteract.postData(jo, fileMap, typeMap, Constants.NODE_URL, new Callback(){
-				@Override 
-				public void onFinish(JsonElement result){
-					Log.v(TAG, result.toString());
-				}
-			});
+			JsonElement result = DBInteract.postData(jo, fileMap, typeMap, Constants.NODE_URL);
+			Log.v(TAG, result.toString());
+	
 		} catch (Exception err){
-			Log.v(TAG, err.toString());
+			Log.e(TAG, err.toString());
+			err.printStackTrace();
 		}
 	}
 	
@@ -149,14 +147,11 @@ public class SimpleTest{
 			
 			newNode.appendPage(newPage);
 						
-			tour.appendNode(newNode, new Callback(){
-				@Override
-				public void onFinish(Node node){
-					Log.v(TAG, "Node 1 Added");
-					Log.v(TAG, node.toString());
-					Log.v(TAG, tour.toString());
-				}
-			});
+			Node node = tour.appendNode(newNode);
+			Log.v(TAG, "Node 1 Added");
+			Log.v(TAG, node.toString());
+			Log.v(TAG, tour.toString());
+			
 			
 			Node newNode2 = new Node();
 			Brief newBrief2 = newNode2.getBrief();
@@ -164,33 +159,26 @@ public class SimpleTest{
 			newBrief2.setTitle("Title");
 			newNode2.setLatitude(22.34);
 			newNode2.setLongitude(-122.34);
-			tour.appendNode(newNode2, new Callback(){
-				@Override
-				public void onFinish(Node node){
-					Log.v(TAG, "Node 2 Added");
-					Log.v(TAG, node.toString());
-					Log.v(TAG, tour.toString());
-				}
-			});
+			node = tour.appendNode(newNode2);
+			Log.v(TAG, "Node 2 Added");
+			Log.v(TAG, node.toString());
+			Log.v(TAG, tour.toString());
+		
 			
 			Node newNode3 = new Node();
 			newNode3.setLatitude(22.35);
 			newNode3.setLongitude(-122.4);
-			tour.appendNode(newNode3, new Callback(){
-				@Override
-				public void onFinish(Node node){
-					Log.v(TAG, "Node 3 Added");
-					Log.v(TAG, node.toString());
-					Log.v(TAG, tour.toString());
-				}
-			});
+			node = tour.appendNode(newNode3);
+			Log.v(TAG, "Node 3 Added");
+			Log.v(TAG, node.toString());
+			Log.v(TAG, tour.toString());
 			
 		} catch (Exception err){
 			Log.v(TAG, err.toString());
 		}			
 	}
 	
-	public static void testFileUpload(final Context context, final Context appContext, final Bitmap mBitmap){
+	public static Bitmap testFileUpload(Context context, Bitmap mBitmap){
 		Log.v(TAG, "Test Picture Upload From Gallery");
 		Administration.login("samo", "samo");
 		try {
@@ -233,65 +221,55 @@ public class SimpleTest{
 			
 			newNode.appendPage(newPage);
 						
-			tour.appendNode(newNode, new Callback(){
-				@Override
-				public void onFinish(Node node){
-					Log.v(TAG, "Node 1 Added");
-					Log.v(TAG, node.toString());
-					Log.v(TAG, tour.toString());
+			Node node = tour.appendNode(newNode);
+							
+			Log.v(TAG, "Node 1 Added");
+			Log.v(TAG, node.toString());
+			Log.v(TAG, tour.toString());
+			
+			Brief brief = node.getBrief();
+			assert(brief.getTitle().equals("A title"));
+			assert(brief.getDesc().equals("This is a Node that you can observe"));					
+			
+			Vector<Page> pages = node.getPages();
+			
+			assert(pages.size() == 1);
+			
+			Page page = pages.get(0);
+			Vector<Section> sections  = page.getSections();
+			assert(sections.size() == 1);
+			
+			Section section = sections.get(0);
+			assert(section.getContentId() != null);
+			assert(section.getContentType().equals(Constants.PNG_TYPE));
+			assert(section.getWidth().equals(new Integer(132)));
+			
+			File input = DBInteract.getFile(section.getContentId(), context);
+			if (input == null){
+				Log.e(TAG, "Was null");
+				return null;
+			}
+			Bitmap inBitmap = null;
+			try {
+				//InputStream inStream = new Utils.FlushedInputStream(new FileInputStream(input));
+				BufferedInputStream inStream = new BufferedInputStream(new FileInputStream(input));
+				inBitmap = BitmapFactory.decodeStream(inStream);
+				inStream.close();
+				return inBitmap;
+			} catch (Exception err){
+				err.printStackTrace();
+				return null;
+			}
 					
-					Brief brief = node.getBrief();
-					assert(brief.getTitle().equals("A title"));
-					assert(brief.getDesc().equals("This is a Node that you can observe"));					
-					
-					Vector<Page> pages = node.getPages();
-					
-					assert(pages.size() == 1);
-					
-					Page page = pages.get(0);
-					Vector<Section> sections  = page.getSections();
-					assert(sections.size() == 1);
-											
-					Section section = sections.get(0);
-					assert(section.getContentId() != null);
-					assert(section.getContentType().equals(Constants.PNG_TYPE));
-					assert(section.getWidth().equals(new Integer(132)));
-					
-					DBInteract.getFile(section.getContentId(), context, new Callback(){
-						@Override
-						public void onFinish(File input){
-							try{
-								if (input == null){
-									Log.e(TAG, "Was null");
-								}
-								//InputStream inStream = new Utils.FlushedInputStream(new FileInputStream(input));
-								BufferedInputStream inStream = new BufferedInputStream(new FileInputStream(input));								Bitmap inBitmap = BitmapFactory.decodeStream(inStream);
-								inStream.close();
-								
-								LinearLayout layout = new LinearLayout(context);
-								ImageView image = new ImageView(context);
-								image.setImageBitmap(inBitmap);
-								layout.addView(image);
-								
-								Dialog dialog = new Dialog(appContext);
-								dialog.setContentView(layout);
-								dialog.setTitle("Custom Dialog");
-								
-								dialog.show();
-							} catch (Exception err){
-								Log.e(TAG, err.toString());
-							}
-						}
-					});
-
-				}
-			});
-
-
 		} catch (Exception err){
 			Log.e(TAG, "Something Failed -_-");
-			Log.e(TAG, err.toString());
+			err.printStackTrace();
+			return null;
 		}
+	}
+	
+	public static Bitmap simpleTest(Bitmap bm){
+		return bm;
 	}
 }
 

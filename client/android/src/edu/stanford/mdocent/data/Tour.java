@@ -79,16 +79,12 @@ public class Tour {
 				for (int i = 0; i < tourNodes.size(); i ++){
 					Node n = tourNodes.get(i);
 					n.setTourId(tourId);
-					n.save(new Callback(){
-						@Override
-						public void onFinish(Node newNode){
-							if (newNode == null){
-								Log.e(TAG, "A node failed to load");
-							} else {
-								Log.v(TAG, "Node Saved correctly");
-							}
-						}
-					});
+					Node newNode = n.save();
+					if (newNode == null){
+						Log.e(TAG, "A node failed to load");
+					} else {
+						Log.v(TAG, "Node Saved correctly");
+					}
 				}
 			}
 			return true;
@@ -183,47 +179,33 @@ public class Tour {
 		return tourNodes;
 	}
 
-	public void appendNode(Node newNode, final Callback cb){
+	public Node appendNode(Node newNode){
 		getTourNodes();
 		newNode.setTourId(tourId);
-		newNode.save(new Callback(){
-			@Override
-			public void onFinish(Node node){
-				if (node == null){
-					cb.onFinish(node);
-					return;
-				}
-				tourNodes.add(node);
-				cb.onFinish(node);
-			}
-		});
-		return;
+		Node node = newNode.save();
+		if (node == null){
+			return null;
+		}
+		tourNodes.add(node);
+		return node;
 	}
 	
-	public void insertNode(Node newNode, final int idx, final Callback cb){
-		Node finished = null;
+	public Node insertNode(Node newNode, final int idx, final Callback cb){
 		if (idx >= tourNodes.size() || idx < 0){
-			cb.onFinish(finished);
-			return;
+			return null;
 		}
 		newNode.setPrevNode(tourNodes.get(idx).getPrevNode());
 		newNode.setTourId(tourId);
-		newNode.save(new Callback(){
-			@Override
-			public void onFinish(Node node){
-				if (node == null){
-					cb.onFinish(node);
-					return;
-				}
-				tourNodes.get(idx).setPrevNode(node.getNodeId());
-				if (idx > 0){
-					tourNodes.get(idx - 1).setNextNode(node.getNodeId());
-				}
-				tourNodes.insertElementAt(node, idx);
-				cb.onFinish(node);
-			}
-		});
-		return;
+		Node node = newNode.save();
+		if (node == null){
+			return node;
+		}
+		tourNodes.get(idx).setPrevNode(node.getNodeId());
+		if (idx > 0){
+			tourNodes.get(idx - 1).setNextNode(node.getNodeId());
+		}
+		tourNodes.insertElementAt(node, idx);
+		return node;
 	}
 
 

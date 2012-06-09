@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.util.UUID;
 
 import android.content.Context;
+import android.os.Environment;
 import android.util.Log;
 
 public class Utils {
@@ -21,6 +22,10 @@ public class Utils {
 		tempFile.createNewFile();
 		return tempFile; 
 	}	
+	
+	public static File getRealFile() throws IOException{
+		return new File (Environment.getExternalStorageDirectory(), UUID.randomUUID().toString()); 
+	}
 	
 	/* Class to get around BitmapFactory.decodeStream bug */
 	public static class FlushedInputStream extends FilterInputStream {

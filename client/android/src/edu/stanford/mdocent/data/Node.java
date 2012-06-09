@@ -75,7 +75,7 @@ public class Node {
 		return new BigInteger(64, random).toString(32);
 	}
 	
-	public void save(final Callback cb){
+	public Node save(){
 		/* Serialize pages and save them, then when save complete 
 		Vector<Page> pages = getPages();   replace all pages and sections */
 		HashMap <String, File> fileMap = new HashMap <String, File>();
@@ -131,21 +131,18 @@ public class Node {
 		System.out.println("Before Save");
 		System.out.println(jo.toString());
 		
-		DBInteract.postData(jo, fileMap, typeMap, Constants.NODE_URL, new Callback(){
-			@Override
-			public void onFinish(JsonElement result){
-				Node finished = null;
-				if (result == null || !result.isJsonObject()){
-					cb.onFinish(finished);
-				}
-				JsonObject res = result.getAsJsonObject();
-				if (!res.has("result") || !res.get("result").isJsonObject()){
-					cb.onFinish(finished);
-				}
-				res = res.get("result").getAsJsonObject();
-				cb.onFinish(gson.fromJson(res, Node.class));
-			}
-		});
+		JsonElement result= DBInteract.postData(jo, fileMap, typeMap, Constants.NODE_URL);
+		Node finished = null;
+		if (result == null || !result.isJsonObject()){
+			return null;
+		}
+		JsonObject res = result.getAsJsonObject();
+		if (!res.has("result") || !res.get("result").isJsonObject()){
+			return null;
+		}
+		res = res.get("result").getAsJsonObject();
+		return gson.fromJson(res, Node.class);
+		
 	}
 	
 	public Integer getTourId() {

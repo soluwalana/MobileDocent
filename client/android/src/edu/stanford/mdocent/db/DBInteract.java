@@ -133,9 +133,9 @@ public class DBInteract {
 	}
 
 	public static JsonElement postData (JsonElement jo, HashMap<String, File> files, 
-			HashMap<String, String> types, String url, final Callback cb){
+			HashMap<String, String> types, String url){
 
-		if (jo == null || files == null || types == null || url == null || cb == null){
+		if (jo == null || files == null || types == null || url == null ){
 			return null;
 		}
 		DefaultHttpClient httpclient = new DefaultHttpClient();
@@ -157,32 +157,24 @@ public class DBInteract {
 			httppost.setEntity(reqEntity);
 			
 			/* Run the post asynchronously and return to the callback when finished */
-			httpclient.execute(httppost, new ResponseHandler<Object>(){
-				@Override
-				public Object handleResponse(HttpResponse response){
-					JsonElement recvObj = null;
-					if (response != null){
-						try {
-							String str = inputStreamToString(response.getEntity().getContent()).toString();
-							JsonParser parser = new JsonParser();
-							recvObj = parser.parse(str);
-							Log.v(TAG, "Httppost returned: " + recvObj.toString());
-							cb.onFinish(recvObj);
-							return null;
-						} catch (Exception err){
-							Log.e(TAG, "Error parsing the response Multipart Post");
-							Log.e(TAG, err.toString());
-							err.printStackTrace();
-							return null;
-						}
-					} else {
-						recvObj = null;
-						cb.onFinish(recvObj);
-						return null;
-					}
+			HttpResponse response = httpclient.execute(httppost);
+			JsonElement recvObj = null;
+			if (response != null){
+				try {
+					String str = inputStreamToString(response.getEntity().getContent()).toString();
+					JsonParser parser = new JsonParser();
+					recvObj = parser.parse(str);
+					Log.v(TAG, "Httppost returned: " + recvObj.toString());
+					return recvObj;
+				} catch (Exception err){
+					Log.e(TAG, "Error parsing the response Multipart Post");
+					Log.e(TAG, err.toString());
+					err.printStackTrace();
+					return null;
 				}
-			});
-			
+			} else {
+				return null;
+			}
 		} catch (Exception err){
 			Log.e(TAG, "Failed to post files");
 		} finally {
@@ -197,10 +189,10 @@ public class DBInteract {
 	 * @param outputFile
 	 * @return
 	 */
-	public static void getFile (String fileId, final Context context, final Callback cb){
+	public static File getFile (String fileId, final Context context){
 		if (fileId == null || context == null){
 			Log.e(TAG, "Invalid parameters");
-			return;
+			return null;
 		}
 		DefaultHttpClient httpclient = new DefaultHttpClient();
 		if (cookieStore != null){
@@ -213,54 +205,40 @@ public class DBInteract {
 		String url = Constants.SERVER_URL + Constants.MONGO_FILE_URL+"?"+urlQuery;
 		Log.v(TAG, url);
 		
-		try {
-			HttpGet httpget = new HttpGet(url);
-			httpclient.execute(httpget, new ResponseHandler<Object>(){
-				@Override
-				public Object handleResponse(HttpResponse response){
-					File outputFile = null;
-					if (response != null){
-						try {
-							outputFile = Utils.getTempFile(context);
-							if (outputFile == null || !outputFile.canWrite()){
-								Log.e(TAG, "Couldn't write File");
-								outputFile = null;
-								cb.onFinish(outputFile);
-								return null;
-							}
-							for (int i = 0; i < response.getAllHeaders().length; i ++){
-								Header h = response.getAllHeaders()[i];
-								Log.v(TAG, h.getName()+": "+h.getValue());
-							}
-							
-							BufferedOutputStream outStream = new BufferedOutputStream(new FileOutputStream(outputFile));
-							BufferedHttpEntity entity = new BufferedHttpEntity(response.getEntity());
-							entity.writeTo(outStream);
-							outStream.flush();
-							outStream.close();
-							cb.onFinish(outputFile);
-							return null;
-						} catch (Exception err){
-							Log.e(TAG, "Error parsing the response");
-							Log.e(TAG, err.toString());
-
-							return null;
-						}
-					} else {
-						cb.onFinish(outputFile);
-						return null;
-					}
+		HttpGet httpget = new HttpGet(url);
+		HttpResponse response = null;
+		try{
+			response = httpclient.execute(httpget);
+		} catch (Exception ignored){}
+		
+		File outputFile = null;
+		if (response != null){
+			try {
+				outputFile = Utils.getTempFile(context);
+				if (outputFile == null || !outputFile.canWrite()){
+					Log.e(TAG, "Couldn't write File");
+					return null;
 				}
-			});
-			return;
-		} catch (Exception e) {
-			Log.v(TAG, "Failure");
-			e.printStackTrace();
-		} finally {
-			try { httpclient.getConnectionManager().shutdown(); } catch (Exception ignored){}
+				for (int i = 0; i < response.getAllHeaders().length; i ++){
+					Header h = response.getAllHeaders()[i];
+					Log.v(TAG, h.getName()+": "+h.getValue());
+				}
+				
+				BufferedOutputStream outStream = new BufferedOutputStream(new FileOutputStream(outputFile));
+				BufferedHttpEntity entity = new BufferedHttpEntity(response.getEntity());
+				entity.writeTo(outStream);
+				outStream.flush();
+				outStream.close();
+				return outputFile;
+			} catch (Exception err){
+				Log.e(TAG, "Error parsing the response");
+				Log.e(TAG, err.toString());
+				return null;
+			}
+		} else {
+			Log.e(TAG, "Response was null");
+			return null;
 		}
-		Log.e(TAG, "Http get failed. Posted");
-		return;
 	}
 	
 	public static StringBuilder inputStreamToString(InputStream is) {

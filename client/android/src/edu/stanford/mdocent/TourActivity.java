@@ -221,10 +221,10 @@ public class TourActivity extends MapActivity {
 		  Intent intent = new Intent(TourActivity.this, NodeTabLayoutActivity.class);
 		  intent.putExtra("node_title", info.getTitle());
 		  intent.putExtra("node_details", info.getDesc());
-		  info.setPhotoURL("http://blogs.ubc.ca/CourseBlogSample01/wp-content/themes/thesis/rotator/sample-1.jpg");
+		  /*info.setPhotoURL("http://blogs.ubc.ca/CourseBlogSample01/wp-content/themes/thesis/rotator/sample-1.jpg");
 		  intent.putExtra("node_photo", info.getPhotoURL());
 		  info.setAudioURL("http://www.dccl.org/Sounds/songsparrow.wav");
-		  intent.putExtra("node_audio", info.getAudioURL());
+		  intent.putExtra("node_audio", info.getAudioURL());*/
 		  startActivity(intent);
 
 		  return true;

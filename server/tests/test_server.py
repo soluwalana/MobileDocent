@@ -513,12 +513,12 @@ def test_get_nodes():
         node_id = node['nodeId']
         mongo_id = node['mongoId']
         res = send_request('nodeContent?nodeId='+str(node_id), None, cookie)[0]
-        assert_small_node(res[0], mongo_id, idx)
+        assert_small_node(res, mongo_id, idx)
         
     for idx, node in enumerate(tour['nodes']):
         mongo_id = node['mongoId']
         res = send_request('nodeContent?mongoId='+str(mongo_id), None, cookie)[0]
-        assert_small_node(res[0], mongo_id, idx)
+        assert_small_node(res, mongo_id, idx)
 
     print 'Node Retrieval Tests Successful'
 
@@ -533,8 +533,7 @@ def test_file_retreive():
     node_id = tour['nodes'][0]['nodeId']
     mongo_id = tour['nodes'][0]['mongoId']
     res = send_request('nodeContent?nodeId='+str(node_id), None, cookie)[0]
-    print res
-    content_id = res[0]['content'][0]['page'][0]['contentId']
+    content_id = res['content'][0]['page'][0]['contentId']
     res = send_request('mongoFile?mongoFileId='+content_id, None, cookie, True)[0]
     
     compare = open('IMG_0137.JPG').read()

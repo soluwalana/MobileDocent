@@ -55,6 +55,13 @@ __MobileDocent__ A full Server Stack and IOS/Android interaction project
 
     underscore         http://underscorejs.org
 
+
+## Java References
+   ApacheHTTP Client        http://hc.apache.org/httpcomponents-client-ga/httpclient/apidocs/index.html
+   
+    
+    
+    
 ## C++ Node Extension 
 
    Basics

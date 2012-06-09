@@ -57,14 +57,11 @@ public class AddNodeActivity extends Activity {
 				newNode.setLatitude(nodeLat);
 				newNode.setLongitude(nodeLon);
 				
-				curTour.appendNode(newNode, new Callback(){
-					@Override
-					public void onFinish(Node node){
-						Toast.makeText(getApplicationContext(), 
-								"New Node Added.", Toast.LENGTH_LONG).show();
-						startCreateTourSuccess();	
-					}
-				});
+				Node node = curTour.appendNode(newNode);
+				Toast.makeText(getApplicationContext(), 
+						"New Node Added.", Toast.LENGTH_LONG).show();
+				startCreateTourSuccess();	
+			
 			}
 		});
 		
