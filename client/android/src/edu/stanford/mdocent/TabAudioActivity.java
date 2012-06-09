@@ -8,6 +8,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 
 public class TabAudioActivity extends Activity{
 
@@ -16,42 +17,24 @@ public class TabAudioActivity extends Activity{
 		final String audio_filename = getIntent().getStringExtra("node_audio");
 		setContentView(R.layout.audio_layout);
 
-		final MediaPlayer mp = new MediaPlayer();
-		mp.reset();
-		try {
+		String title = getIntent().getStringExtra("node_title");
+		TextView text = (TextView) findViewById(R.id.textView1);
+		text.setText(title);
 			
+		try {
+			final MediaPlayer mp = new MediaPlayer();
+			mp.reset();
+			mp.setDataSource(getBaseContext(), Uri.parse(audio_filename));
+			mp.setLooping(false); // Set looping
+			mp.prepare();
 
 			Button play_but = (Button) findViewById(R.id.button1);
 			play_but.setOnClickListener(new View.OnClickListener() {
 
 				public void onClick(View v) { 
-					try {
-						mp.setDataSource(getBaseContext(), Uri.parse(audio_filename));
-					} catch (IllegalArgumentException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					} catch (SecurityException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					} catch (IllegalStateException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-					mp.setLooping(false); // Set looping
-					try {
-						mp.prepare();
-					} catch (IllegalStateException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-					mp.start();
+					mp.start();	
 				}
+
 			});
 
 			Button pause_but = (Button) findViewById(R.id.button2);
@@ -61,21 +44,28 @@ public class TabAudioActivity extends Activity{
 					mp.pause();
 				}
 			});
-			
+
 			Button stop_but = (Button) findViewById(R.id.button3);
 			stop_but.setOnClickListener(new View.OnClickListener() {
 
 				public void onClick(View v) { 
-					mp.stop();
-					mp.reset();
-					//mp.release();
-
-					//mp.prepare();
+					try {
+						mp.stop();
+						mp.reset();
+						mp.setDataSource(getBaseContext(), Uri.parse(audio_filename));
+						mp.setLooping(false); // Set looping
+						mp.prepare();
+					} catch (IllegalStateException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					
 				}
 			});
 
-
-			//mp.start();
 		}
 		catch(Exception e){                 
 			e.printStackTrace();

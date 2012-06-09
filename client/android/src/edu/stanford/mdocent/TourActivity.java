@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Vector;
 
 import android.content.Context;
 import android.content.Intent;
@@ -13,6 +14,7 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
@@ -34,6 +36,10 @@ import com.google.android.maps.MapView;
 import com.google.android.maps.MyLocationOverlay;
 import com.google.android.maps.OverlayItem;
 
+import edu.stanford.mdocent.data.Node;
+import edu.stanford.mdocent.data.Node.Brief;
+import edu.stanford.mdocent.data.Tour;
+
 
 public class TourActivity extends MapActivity {
 
@@ -46,6 +52,8 @@ public class TourActivity extends MapActivity {
 	Drawable drawable;
 	TourItemizedOverlay itemizedOverlay;
 	MyLocationOverlay myLocationOverlay;
+	GeoPoint[] TourGeoPoints;
+	Vector<Node> nodes;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -59,8 +67,24 @@ public class TourActivity extends MapActivity {
 		mapOverlays = mapView.getOverlays();
 		drawable = this.getResources().getDrawable(R.drawable.icon);
 		itemizedOverlay = new TourItemizedOverlay(drawable, this);
+		
+		//get tours, populate overlays, populate array of geopoints
+		String tourName = getIntent().getStringExtra("tour_name");
+		Tour tour = Tour.getTourByName(tourName, false);
+		if(tour == null)Log.e("tour", "null");
+		nodes = tour.getTourNodes();
+		if(nodes == null)Log.e("nodes", "null");
+		Log.e("number of nodes", Integer.toString(nodes.size()));
+		
+		TourGeoPoints = new GeoPoint[nodes.size()];
 
-		final GeoPoint test_point = new GeoPoint((int)(37.424 * 1E6),(int)(-122.174 * 1E6));
+		for(int i = 0; i < nodes.size(); i++){
+			GeoPoint gp = new GeoPoint((int)(nodes.get(i).getLatitude()* 1E6),(int)(nodes.get(i).getLongitude()* 1E6));
+			TourGeoPoints[i] = gp;
+			OverlayItem overlayitem = new OverlayItem(gp, "", "");
+			itemizedOverlay.addOverlay(overlayitem);
+		}
+		/*final GeoPoint test_point = new GeoPoint((int)(37.424 * 1E6),(int)(-122.174 * 1E6));
 		OverlayItem overlayitem = new OverlayItem(test_point, "", "");
 		GeoPoint point2 = new GeoPoint((int)(37.426 * 1E6),(int)(-122.172 * 1E6));
 		OverlayItem overlayitem2 = new OverlayItem(point2, "Main Quad", "this is the second node in the tour. You are at Main Quad.");
@@ -69,12 +93,12 @@ public class TourActivity extends MapActivity {
 
 		itemizedOverlay.addOverlay(overlayitem);
 		itemizedOverlay.addOverlay(overlayitem2);
-		itemizedOverlay.addOverlay(overlayitem3);
+		itemizedOverlay.addOverlay(overlayitem3);*/
 
 		mapOverlays.add(itemizedOverlay);
 
 		mapController = mapView.getController();
-		mapController.animateTo(test_point);
+		mapController.animateTo(TourGeoPoints[0]);
 		mapController.setZoom(16); 
 
 		//create overlay for current position
@@ -110,7 +134,7 @@ public class TourActivity extends MapActivity {
 				int closestNode = 0;
 				float shortestDistance = 0;
 				Location tempLocation = new Location("");
-				for(int i=0; i<3; i++){
+				for(int i = 0; i < nodes.size(); i++){
 					GeoPoint gp = itemizedOverlay.getItem(i).getPoint();
 					float latitude = (float) (gp.getLatitudeE6() / 1E6);
 					float longitude = (float) (gp.getLongitudeE6() / 1E6);
@@ -178,7 +202,10 @@ public class TourActivity extends MapActivity {
 		
 		@Override
 		protected boolean onTap(int index) {
+			Log.e("index of on Tap",Integer.toString(index));
 		  OverlayItem item = mOverlays.get(index);
+		  Node node = nodes.get(index);
+		  Brief info = node.getBrief();
 		  /*GeoPoint geo=item.getPoint();
 		  PopupPanel panel = new PopupPanel(R.layout.node_tabs_layout);
 		  
@@ -192,9 +219,12 @@ public class TourActivity extends MapActivity {
 		                          MapView.LayoutParams.BOTTOM_CENTER);
 		  mapView.addView(popUp, mapParams);*/
 		  Intent intent = new Intent(TourActivity.this, NodeTabLayoutActivity.class);
-		  intent.putExtra("node_details", "This is all the text details/information about this particular node. Lots of info yo.");
-		  intent.putExtra("node_photo", "http://blogs.ubc.ca/CourseBlogSample01/wp-content/themes/thesis/rotator/sample-1.jpg");
-		  intent.putExtra("node_audio", "http://www.dccl.org/Sounds/songsparrow.wav");
+		  intent.putExtra("node_title", info.getTitle());
+		  intent.putExtra("node_details", info.getDesc());
+		  info.setPhotoURL("http://blogs.ubc.ca/CourseBlogSample01/wp-content/themes/thesis/rotator/sample-1.jpg");
+		  intent.putExtra("node_photo", info.getPhotoURL());
+		  info.setAudioURL("http://www.dccl.org/Sounds/songsparrow.wav");
+		  intent.putExtra("node_audio", info.getAudioURL());
 		  startActivity(intent);
 
 		  return true;

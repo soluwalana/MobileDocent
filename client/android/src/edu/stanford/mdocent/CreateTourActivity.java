@@ -80,7 +80,7 @@ public class CreateTourActivity extends MapActivity  {
 		}
 	}
 	private void renderPoints(){
-		newTour = Tour.getTourById(newTour.getTourId());  //CHANEG UPON PULL TODO
+		newTour = Tour.getTourById(newTour.getTourId(), false);  //CHANEG UPON PULL TODO
 		double prevLat = -900.0;
 		double prevLong = -900.0;
 		boolean firstNode = true;

@@ -15,12 +15,17 @@ import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 public class TabPhotosActivity extends Activity{
 
 	public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.photos_layout);
+        
+        String title = getIntent().getStringExtra("node_title");
+        TextView text = (TextView) findViewById(R.id.textView1);
+		text.setText(title);
         String image_filename = getIntent().getStringExtra("node_photo");
         ImageView image = (ImageView) findViewById(R.id.imageView1);
         
