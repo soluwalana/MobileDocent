@@ -40,13 +40,13 @@ app.configure(function(){
 });
 
 app.get('/mongoFile', function(req, res){
-    var mongoFile = req.query.mongoFile;
-    if (!mongoFile){
+    var mongoFileId = req.query.mongoFileId;
+    if (!mongoFileId){
         logger.error('Missing Required parameter for node file');
         return res.send({'error' : 'Missing Required Parameters'});
     }
     
-    req.ds.mongoGrid(mongoFile, function(err, gs){
+    req.ds.mongoGrid(mongoFileId, function(err, gs){
         if (err) return res.send(err);
         res.contentType(gs.contentType);
         /*gs.read(function(err, data){

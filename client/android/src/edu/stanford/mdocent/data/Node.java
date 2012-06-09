@@ -28,30 +28,12 @@ public class Node {
 		private String title = null;
 		private String desc = null;
 		private String thumbId = null;
-		private String photoURL = null;
-		private String audioURL = null;
-		
+
 		public String thumbType = Constants.PLAIN_TEXT;
 		public transient File thumbImg = null;
 						
 		public Brief(){}
 		
-		public String getPhotoURL(){
-			return photoURL;
-		}
-		
-		public String getAudioURL(){
-			return audioURL;
-		}
-		
-		public void setPhotoURL(String url){
-			photoURL = url;
-		}
-		
-		public void setAudioURL(String url){
-			audioURL = url;
-		}
-
 		public String getTitle() {
 			return title;
 		}
@@ -63,9 +45,6 @@ public class Node {
 		}
 		public void setDesc(String desc) {
 			this.desc = desc;
-		}
-		public String getThumJsonElementbId() {
-			return thumbId;
 		}
 		public String getThumbId() {
 			return this.thumbId;

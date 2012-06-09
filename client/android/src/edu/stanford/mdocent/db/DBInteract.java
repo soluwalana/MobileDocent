@@ -15,12 +15,14 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.Vector;
 
+import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.*;
 
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.BufferedHttpEntity;
 import org.apache.http.entity.FileEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.entity.mime.MultipartEntity;
@@ -207,8 +209,10 @@ public class DBInteract {
 		
 		HttpConnectionParams.setConnectionTimeout(httpclient.getParams(), 10000);
 		
-		String urlQuery = new QueryString("mongoId", fileId).toString();
+		String urlQuery = new QueryString("mongoFileId", fileId).toString();
 		String url = Constants.SERVER_URL + Constants.MONGO_FILE_URL+"?"+urlQuery;
+		Log.v(TAG, url);
+		
 		try {
 			HttpGet httpget = new HttpGet(url);
 			httpclient.execute(httpget, new ResponseHandler<Object>(){
@@ -224,9 +228,15 @@ public class DBInteract {
 								cb.onFinish(outputFile);
 								return null;
 							}
+							for (int i = 0; i < response.getAllHeaders().length; i ++){
+								Header h = response.getAllHeaders()[i];
+								Log.v(TAG, h.getName()+": "+h.getValue());
+							}
+							
 							BufferedOutputStream outStream = new BufferedOutputStream(new FileOutputStream(outputFile));
-							HttpEntity entity = response.getEntity();
+							BufferedHttpEntity entity = new BufferedHttpEntity(response.getEntity());
 							entity.writeTo(outStream);
+							outStream.flush();
 							outStream.close();
 							cb.onFinish(outputFile);
 							return null;
@@ -242,7 +252,7 @@ public class DBInteract {
 					}
 				}
 			});
-
+			return;
 		} catch (Exception e) {
 			Log.v(TAG, "Failure");
 			e.printStackTrace();

@@ -1,10 +1,13 @@
 package edu.stanford.mdocent.tests;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Vector;
 
@@ -13,6 +16,8 @@ import org.json.JSONObject;
 import android.app.Dialog;
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.BitmapFactory.Options;
 import android.util.Log;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -252,23 +257,32 @@ public class SimpleTest{
 					assert(section.getContentType().equals(Constants.PNG_TYPE));
 					assert(section.getWidth().equals(new Integer(132)));
 					
-					/*DBInteract.getFile(section.getContentId(), context, new Callback(){
+					DBInteract.getFile(section.getContentId(), context, new Callback(){
 						@Override
-						public void onFinish(File output){
-							
-						}
-					});*/
-					
-					LinearLayout layout = new LinearLayout(context);
-					ImageView image = new ImageView(context);
-					image.setImageBitmap(mBitmap);
-					layout.addView(image);
-					
-					Dialog dialog = new Dialog(appContext);
-					dialog.setContentView(layout);
-					dialog.setTitle("Custom Dialog");
+						public void onFinish(File input){
+							try{
+								if (input == null){
+									Log.e(TAG, "Was null");
+								}
+								//InputStream inStream = new Utils.FlushedInputStream(new FileInputStream(input));
+								BufferedInputStream inStream = new BufferedInputStream(new FileInputStream(input));								Bitmap inBitmap = BitmapFactory.decodeStream(inStream);
+								inStream.close();
 								
-					dialog.show();
+								LinearLayout layout = new LinearLayout(context);
+								ImageView image = new ImageView(context);
+								image.setImageBitmap(inBitmap);
+								layout.addView(image);
+								
+								Dialog dialog = new Dialog(appContext);
+								dialog.setContentView(layout);
+								dialog.setTitle("Custom Dialog");
+								
+								dialog.show();
+							} catch (Exception err){
+								Log.e(TAG, err.toString());
+							}
+						}
+					});
 
 				}
 			});

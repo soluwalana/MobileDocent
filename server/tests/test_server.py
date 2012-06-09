@@ -535,7 +535,7 @@ def test_file_retreive():
     res = send_request('nodeContent?nodeId='+str(node_id), None, cookie)[0]
     print res
     content_id = res[0]['content'][0]['page'][0]['contentId']
-    res = send_request('mongoFile?mongoFile='+content_id, None, cookie, True)[0]
+    res = send_request('mongoFile?mongoFileId='+content_id, None, cookie, True)[0]
     
     compare = open('IMG_0137.JPG').read()
     x = open('out1.jpg', 'w')
