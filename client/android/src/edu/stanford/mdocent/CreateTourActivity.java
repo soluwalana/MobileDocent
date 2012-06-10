@@ -61,6 +61,7 @@ public class CreateTourActivity extends MapActivity  {
 		if (resultCode == RESULT_OK ||resultCode == RESULT_CANCELED){
 			Log.v(TAG, "RESULT_OK");
 			//RENDER POINTS
+			tourID = data.getExtras().getInt("tourID");
 			renderPoints();
 		}
 		else if (resultCode ==Constants.RESULT_RETURN){
@@ -113,6 +114,7 @@ public class CreateTourActivity extends MapActivity  {
 		mapView.getOverlays().add(mapOverlay);
 		mapController.setZoom(18);
 		mapView.invalidate();
+		
 		//addNewNode(newLat, newLong);
 	}
 	public void finishCreateTour (){
@@ -261,8 +263,8 @@ public class CreateTourActivity extends MapActivity  {
 						(int) e.getY());
 			}     
 			Log.v(TAG,"Inside touch event " + tourID);
-			if(p.getLatitudeE6()!=0 && tourID != -1 && Tour.getTourById(tourID).getTourNodes()!=null){
-				Vector<Node> curNodes = Tour.getTourById(tourID).getTourNodes();
+			if(p.getLatitudeE6()!=0 && tourID != -1 && Tour.getTourById(tourID, true).getTourNodes()!=null){
+				Vector<Node> curNodes = Tour.getTourById(tourID, false).getTourNodes();
 				Log.v(TAG,"Inside touch event conditions");
 				for(int i = 0; i < curNodes.size(); i++){
 					Node curNode = curNodes.get(i);

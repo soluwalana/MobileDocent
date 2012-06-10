@@ -67,7 +67,6 @@ public class SignInActivity extends Activity {
 					popUpNotification();
 				}
 			}
-
 		});
 
 		Button signupButton = (Button) findViewById(R.id.signup_button);
@@ -122,6 +121,7 @@ public class SignInActivity extends Activity {
 		public ImageDialog(Context context, Bitmap bmap) {
 			super(context);
 			this.bmap = bmap;
+
 		}
 
 		@Override

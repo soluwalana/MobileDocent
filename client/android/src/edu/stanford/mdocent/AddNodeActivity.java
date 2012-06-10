@@ -1,5 +1,6 @@
 package edu.stanford.mdocent;
 
+import java.util.Vector;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -23,7 +24,7 @@ public class AddNodeActivity extends Activity {
 	private Tour curTour;
 	private int curTourID;
 	private int curNodeID;
-	
+
 	@Override
 	public void onActivityResult(int requestCode,int resultCode,Intent data){
 		super.onActivityResult(requestCode, resultCode, data);
@@ -42,11 +43,11 @@ public class AddNodeActivity extends Activity {
 			finish();
 		}
 	}
-	
+
 	private void retrieveNode(Intent data){
 		curTourID = data.getExtras().getInt("tourID");
 		curNodeID = data.getExtras().getInt("nodeID");
-		curTour = Tour.getTourById(curTourID);
+		curTour = Tour.getTourById(curTourID, false);
 		Vector<Node> nodeVec = curTour.getTourNodes();
 		for(int i = 0; i < nodeVec.size(); i++){
 			if(nodeVec.get(i).getNodeId()==curNodeID){
@@ -58,21 +59,22 @@ public class AddNodeActivity extends Activity {
 			}
 		}
 	}
-	
+
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
 		setContentView(R.layout.addnode);
+		Intent sender = getIntent();
+		curTourID = sender.getExtras().getInt("tourID");
+		curTour = Tour.getTourById(curTourID, true);
 
-        curTourID = sender.getExtras().getInt("tourID");
-		curTour = Tour.getTourById(curTourID);
 		newNode = new Node();
 		newNode.setLatitude(sender.getExtras().getDouble("nodeLat"));
 		newNode.setLongitude(sender.getExtras().getDouble("nodeLon"));
-		Node node = curTour.appendNode(newNode);
+		curTour.appendNode(newNode);
+
 		curNodeID =  newNode.getNodeId();
-		
 		Button loginButton = (Button) findViewById(R.id.button1);
 		loginButton.setOnClickListener(new OnClickListener(){
 			@Override
@@ -85,7 +87,6 @@ public class AddNodeActivity extends Activity {
 				Brief newBrief = newNode.getBrief();
 				newBrief.setDesc(descriptionStr);
 				newBrief.setTitle(nameStr);
-
 				Toast.makeText(getApplicationContext(),"New Node Added.", Toast.LENGTH_LONG).show();
 				startCreateTourSuccess();
 
@@ -108,7 +109,7 @@ public class AddNodeActivity extends Activity {
 				startCreateTourCancel();	
 			}
 		});
-		
+
 		Button addPageButton = (Button) findViewById(R.id.button3);
 		addPageButton.setOnClickListener(new OnClickListener(){
 			public void onClick(View v) {
