@@ -72,7 +72,7 @@ public class AddNodeActivity extends Activity {
 		newNode = new Node();
 		newNode.setLatitude(sender.getExtras().getDouble("nodeLat"));
 		newNode.setLongitude(sender.getExtras().getDouble("nodeLon"));
-		curTour.appendNode(newNode);
+		newNode = curTour.appendNode(newNode);
 
 		curNodeID =  newNode.getNodeId();
 		Button loginButton = (Button) findViewById(R.id.button1);

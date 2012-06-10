@@ -12,9 +12,9 @@ exports.keys = {
     locationKeys : ['locId', 'country', 'region', 'city', 'postalCode', 'latitude',
                     'longitude', 'metroCode', 'areaCode'],
     ipBlockKeys : ['locId', 'startipnum', 'endipnum'],
-    userKeys : ['userId', 'userName', 'password', 'salt', 'about', 'email', 'fbId', 'twitterId'],
+    userKeys : ['userId', 'userName', 'password', 'salt', 'about', 'email', 'fbId', 'twitterId', 'createTime'],
     tourKeys : ['tourId', 'userId', 'tourName', 'tourDesc', 'locId',
-                'tourDist', 'official', 'active'],
+                'tourDist', 'official', 'active', 'createTime'],
     tourHistoryKeys : ['userId', 'tourId', 'timeStarted', 'finished', 'timeFinished', 'rating'],
     tagKeys : ['tagId', 'tagName', 'tagDesc', 'userId'],
     tourTagKeys : ['tagId', 'tourId', 'userId'],
@@ -96,6 +96,9 @@ exports.queries= {
         'update nodes as N1, (select nodeId, prevNode from nodes where nodeId = ?) as N2 '+
         'set N1.prevNode=N2.prevNode where N1.prevNode = N2.nodeId;'+
         'delete from nodes where nodeId = ?;',
+
+    updateNode : 'update nodes as N1 set latitude = ?, longitude = ?, tourId = ? where nodeId = ?; '+
+        'select * from nodes where nodeId = ?;',
     
     // Needs mongoId, nodeId
     bindMongoToSql: 'update nodes set mongoId = ? where nodeId = ?;',

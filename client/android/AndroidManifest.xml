@@ -25,28 +25,16 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity 
-            android:name=".MainPageActivity" >
-        </activity>
-        <activity 
-            android:name=".SignupActivity" >
-        </activity>
-        <activity 
-            android:name=".TourActivity" >
-        </activity>
-        <activity 
-            android:name=".MyToursActivity" >
-        </activity>
-        <activity 
-            android:name=".TourSearchActivity" >
-        </activity>
-        <activity 
-            android:name=".CreateTourActivity" >
-        </activity>
+        
+        <activity android:name=".MainPageActivity" />
+        <activity android:name=".SignupActivity" />
+        <activity android:name=".TourActivity" />
+        <activity android:name=".MyToursActivity" />
+        <activity android:name=".TourSearchActivity" />
+        <activity android:name=".CreateTourActivity" />
 
        	<!--  Node Tabs -->
-        <activity android:name=".NodeTabLayoutActivity" />
-        
+        <activity android:name=".NodeTabLayoutActivity" />     
         <!--  Tab Audio Activity -->
         <activity android:name=".TabAudioActivity" />
  
@@ -56,25 +44,11 @@
         <!--  Tab Photos Activity -->
         <activity android:name=".TabPhotosActivity" />
         
-
-        <activity 
-            android:name=".TourNameActivity" >
-        </activity>
-        <activity 
-            android:name=".AddNodeActivity" >
-        </activity>
-        <activity 
-            android:name=".AddPageActivity" >
-        </activity>
-        
-        <activity 
-            android:name=".NodeActivity" >
-        </activity>
-        
-     	<activity 
-            android:name=".RelativeLayoutActivity" >
-        </activity>
-        
+        <activity android:name=".TourNameActivity" />
+        <activity android:name=".AddNodeActivity" /> 
+        <activity android:name=".AddPageActivity" />
+        <activity android:name=".NodeActivity" />
+        <activity android:name=".RelativeLayoutActivity" />
         <uses-library android:name="com.google.android.maps" />
     </application>
 

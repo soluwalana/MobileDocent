@@ -8,7 +8,7 @@ var errorWrap = function (retCallback, callback){
     return errorHelper(logger, getLineNum(), callback, retCallback);
 };
 var errorCallback = function (msg, callback){
-    logger.error(msg);
+    logger.error(msg, getLineNum());
     return callback({ error : msg });
 };
 

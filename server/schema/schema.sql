@@ -41,7 +41,8 @@ create table users (
 	about text default null,
 	email varchar(256) default null,
 	fbId integer default null,
-	twitterId integer default null, 
+	twitterId integer default null,
+    createTime timestamp default current_timestamp, 
 	primary key (userId),
 	unique(userName)
 ) ENGINE InnoDB character set utf8 collate utf8_general_ci;
@@ -55,6 +56,7 @@ create table tours (
   	tourDist double default null,
     official tinyint(1) default 0,
     active tinyint(1) default 0,
+    createTime timestamp default current_timestamp, 
 	primary key(tourId),
     unique (tourName, official),
     foreign key (userId) references users(userId) on delete cascade,

@@ -81,6 +81,8 @@ public class Node {
 		getPages();
 		JsonObject jo = new JsonObject();
 		jo.addProperty("tourId", tourId);
+		jo.addProperty("nodeId", nodeId);
+		jo.addProperty("mongoId", mongoId);
 		jo.addProperty("latitude", latitude);
 		jo.addProperty("longitude", longitude);
 
@@ -92,6 +94,7 @@ public class Node {
 				fileMap.put(fileId, brief.thumbImg);
 				typeMap.put(fileId, brief.thumbType);
 				jBrief.addProperty("thumbId", fileId);
+				jBrief.addProperty("update", true);
 			}
 			if (brief.title != null && brief.desc != null){
 				jBrief.addProperty("title", brief.getTitle());
@@ -116,6 +119,7 @@ public class Node {
 					fileMap.put(fileId, section.getTempData());
 					typeMap.put(fileId, section.getContentType());
 					jSection.addProperty("contentId", fileId);
+					jSection.addProperty("update", true);
 				}
 				jSections.add(jSection);
 			}
@@ -162,8 +166,8 @@ public class Node {
 		this.longitude = longitude;
 	}
 	public Brief getBrief() {
-		if (brief == null && nodeId != null){
-			QueryString qs = new QueryString("nodeId", nodeId.toString());
+		if (brief == null && mongoId != null){
+			QueryString qs = new QueryString("mongoId", mongoId);
 			JsonElement je = DBInteract.getData(Constants.NODE_CONTENT_URL, qs.toString());
 			if (!je.isJsonObject()){
 				Log.e(TAG, "Was expecting a JSON object but got "+je.toString());

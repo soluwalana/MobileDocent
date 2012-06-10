@@ -35,7 +35,8 @@ var addWarning = function (result, err){
    [ [{}, {}], [{},{}], [{}, {}] ]
    where the top array describes the node the second
    level describes the page and the lowest level describes
-   a section*/
+   a section, if section Ids exist then they will be
+   retained */
 var convertContent = function (nodeContent){
     if (!nodeContent){
         return null;
@@ -48,8 +49,8 @@ var convertContent = function (nodeContent){
         var page = [];
         var pageId = uuid.v4();
         for (var j = 0; j < nodeContent[i].length; j++){
-            var sectionId = uuid.v1();
             var section = nodeContent[i][j];
+            var sectionId = section.sectionId ? section.sectionId : uuid.v1();
             node.sections[sectionId] = section;
             page.push(sectionId);
         }
@@ -145,7 +146,9 @@ var TourManager = function(store){
         if (!params.tourId && !params.tourName){
             return errorCallback('Required Fields Missing From Get Tour', callback);
         }
-        
+        if (params.tourId && !(/^\d+$/).test(params.tourId)){
+            return errorCallback('Tour Id must be an integer', callback);
+        }
         self.store.sqlConn(errorWrap(callback, function (conn){
             var sql = params.tourId ? SQL.getTourById: SQL.getTourByName;
             var sqlParams = params.tourId ? [params.tourId] :
@@ -225,6 +228,9 @@ var TourManager = function(store){
         if (!params.tourId || !params.authUserId){
             return errorCallback('Missing Required Parameters', callback);
         }
+        if (!(/^\d+$/).test(params.tourId)){
+            return errorCallback('Tour Id must be an integer', callback);
+        }
         self._verifyOwnership(
             SQL.checkTourOwnership,
             [params.authUserId, params.tourId],
@@ -265,9 +271,8 @@ var TourManager = function(store){
             }
         };
 
-        nodeData.content = convertContent(nodeData.content);
-        
         var nodeContent = nodeData.content;
+        logger.debug(nodeContent);
         sections = nodeContent ? nodeContent.sections : {};
         
         if (!nodeContent && !nodeData.brief){
@@ -278,14 +283,16 @@ var TourManager = function(store){
         var filesMetaData = [];
         var fileMeta = {};
         for (var key in sections){
-            if (sections[key].contentId){
+            if (sections[key].contentId && sections[key].update){
+                delete sections[key].update;
                 var fileId = sections[key].contentId;
                 filesMetaData.push({'sectionId' : key , 'fileId' : fileId});
                 numberSubmitted ++;
             }
         }
         
-        if (nodeData.brief && nodeData.brief.thumbId){
+        if (nodeData.brief && nodeData.brief.thumbId && nodeData.brief.update){
+            delete nodeData.brief.update;
             var thumbId = nodeData.brief.thumbId;
             sections.thumb = {};
             if (!files[thumbId]){
@@ -317,7 +324,75 @@ var TourManager = function(store){
             self._storeFile(files, fileMeta, fileCallback);
         }
     };
+
+    self.mergeAndSave = function (nodeData, savedNode, files, conn, callback){
+        var i, page, section;
+        logger.warn("Merge and save was called");
+        
+        var newContent = convertToMongo(nodeData.content);
+        
+        /* Release all saved files associated with the sections
+           which are to be removed */
+        var toDelete = [];
+        if (savedNode.content){
+            _.each(savedNode.content, function (page){
+                for (section in page.page){
+                    if (section.contentId){
+                        toDelete.push(section.contentId);
+                    }
+                }
+            });
+        }
+        
+        var toSave = [];
+        if (newContent){
+            _.each(newContent, function (page){
+                for (section in page.page){
+                    if (section.contentId && !section.update){
+                        toSave.push(section.contentId);
+                    }
+                }
+            });
+        }
+        _.difference(toDelete, toSave);
+        if(savedNode.brief && savedNode.brief.thumbId && nodeData.brief && nodeData.brief.update){
+            toDelete.push(savedNode.brief.thumbId);
+        }
+        if (toDelete.length > 0){
+            /* Deletes all of the no longer acsessible content, Should stage for delete
+              so that people using the files don't get hosed... but its late.... */
+            _.each(toDelete, function(mongoId){
+                self.store.mongoDelete(mongoId, null);
+            });
+        }
+        // Delete the Node from Mongo cause it will soon be replaced
+        self.store.mongoCollection(
+            constants.NODE_COLLECTION,
+            errorWrap(callback, function (collection){
+                var query = { '_id' : self.store.getMongoIdFromHex(savedNode._id) };
+                collection.remove(query, errorWrap(callback, function(){
+                    return self._createNode(nodeData, files, conn, callback);
+                }));
+            })
+        );
+    };
     
+    self._modifyNode = function (nodeData, files, oldNode, conn, callback){
+        self.store.mongoCollection(
+            constants.NODE_COLLECTION,
+            errorWrap(callback, function (collection){
+                var _id = self.store.getMongoIdFromHex(oldNode.mongoId);
+                if (!_id){
+                    return errorCallback('Invalid Node Id '+oldNode.mongoId, callback);
+                }
+                var query = { _id : _id };
+                collection.findOne(query, errorWrap(callback, function (record){
+                    record._id = record._id.toHexString();
+                    return self.mergeAndSave(nodeData, record, files, conn, callback);
+                }));
+            })
+        );
+    };
     
     self.createNode = function (params, files, callback){
         logger.info('File Upload Recieved');
@@ -332,28 +407,43 @@ var TourManager = function(store){
         
         if (!nodeData || !nodeData.latitude || !params.authUserId ||
             !nodeData.longitude || !nodeData.tourId){
-            logger.warn(nodeData, nodeData.latitude, params.authUserId, nodeData.longitude, nodeData.tourId);
             return errorCallback('Missing Required Parameters', callback);
         }
+        if (nodeData.nodeId && !(/^\d+$/).test(nodeData.nodeId)){
+            return errorCallback('Node Id must be an integer', callback);
+        }
+        
         self._verifyOwnership(
             SQL.checkTourOwnership,
             [params.authUserId, nodeData.tourId],
             errorWrap(callback, function(conn, tour){
                 nodeData._tour = tour[0];
-                if (nodeData.prevNode){
+
+                nodeData.content = convertContent(nodeData.content);
+
+                if (nodeData.nodeId || nodeData.prevNode){
+
                     var sql = SQL.getNodeById;
-                    var sqlParams = [nodeData.prevNode];
+                    var sqlParams = [nodeData.nodeId ?
+                                     nodeData.nodeId : nodeData.prevNode];
+
                     conn.query(sql, sqlParams).execute(errorWrap(
                         callback, function (rows, cols){
                             if (rows.length === 0){
-                                var msg = 'The previous node specified doesnt exist';
+                                var msg0 = 'The previous node specified doesnt exist';
+                                var msg1 = 'The node to modify doesnt exist';
+                                var msg = nodeData.prevNode ? msg0 : msg1
                                 return errorCallback(msg, callback);
                             }
-                            self._createNode(nodeData, files, conn, callback);
+                            if (nodeData.prevNode){
+                                return self._createNode(nodeData, files, conn, callback);
+                            } else {
+                                return self._modifyNode(nodeData, files, rows[0], conn, callback);
+                            }
                         }
                     ));
                     return null;
-                }
+                } 
                 self._createNode(nodeData, files, conn, callback);
             })
         );                    
@@ -379,6 +469,10 @@ var TourManager = function(store){
                 sqlParams = [latitude, longitude, prevNode, pseudo, tourId,
                               prevNode, prevNode, prevNode];
             }
+        }
+        if (nodeData.nodeId){
+            sql = SQL.updateNode;
+            sqlParams = [latitude, longitude, tourId, nodeData.nodeId, nodeData.nodeId];
         }
             
         if (nodeData.brief && nodeData.brief.thumbId){
@@ -422,7 +516,7 @@ var TourManager = function(store){
             mongoObject.tourId = tourId;
             mongoObject.nodeId = nodeId;
 
-            store.mongoCollection(
+            self.store.mongoCollection(
                 constants.NODE_COLLECTION,
                 errorWrap(callback, function (collection){
                     collection.insert(
@@ -457,16 +551,24 @@ var TourManager = function(store){
         if (!params.nodeId && !params.mongoId){
             return errorCallback('Missing Required Parameters', callback);
         }
+        if (params.nodeId && !(/^\d+$/).test(params.nodeId)){
+            return errorCallback('Node Id must be an integer', callback);
+        }
+        
         var getMongoNode = function (mongoId){
-            store.mongoCollection(
+            self.store.mongoCollection(
                 constants.NODE_COLLECTION,
                 errorWrap(callback, function (collection){
+                    
                     var _id = self.store.getMongoIdFromHex(mongoId);
                     if (!_id){
-                        return errorCallback('Invalid Node Id', callback);
+                        return errorCallback('Invalid Mongo Id '+mongoId, callback);
                     }
                     var query = { _id : _id };
                     collection.findOne(query, errorWrap(callback, function (record){
+                        if (! record ){
+                            return errorCallback('Invalid Mongo Id '+mongoId, callback);
+                        }
                         record._id = record._id.toHexString();
                         callback(record);
                     }));
@@ -492,13 +594,7 @@ var TourManager = function(store){
         }
     };
     
-    self.modifyNode = function (params, files, callback){
-        //if (!params.nodeData || !params.nodeData.nodeId){
-            return errorCallback('Missing Required Parameters', callback);
-        //}
-        //return self.createNode(params, files, callback);
-    };
-
+    
     self._storeFile = function (files, data, callback){
         var fileId = data.fileId;
         var sectionId = data.sectionId;

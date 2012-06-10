@@ -114,8 +114,24 @@ public class SignInActivity extends Activity {
 
 			}
 		});
+		
+		Button videoButton = (Button) findViewById(R.id.video_button);
+		Button textButton = (Button) findViewById(R.id.text_button);
+		Button audioButton = (Button) findViewById(R.id.audio_button);
+		Button activityButton = (Button) findViewById(R.id.activity_button);
+		activityButton.setOnClickListener(new OnClickListener(){
+			@Override
+			public void onClick(View v){
+				startRelativeThing();
+			}
+		});
+				
 	}
-
+	private void startRelativeThing() {
+		Intent intent = new Intent (this, RelativeLayoutActivity.class);
+		startActivity(intent);
+	}
+	
 	private class ImageDialog extends Dialog implements OnDismissListener, OnCancelListener{
 		private Bitmap bmap;
 		public ImageDialog(Context context, Bitmap bmap) {
@@ -189,8 +205,7 @@ public class SignInActivity extends Activity {
 		showDialog(1);
 	}
 
-
-	public void startMainPage (){
+		public void startMainPage (){
 		Intent intent = new Intent(this, MainPageActivity.class );
 		startActivity(intent);
 	}

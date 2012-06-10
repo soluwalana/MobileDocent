@@ -156,7 +156,6 @@ function DataStore (initCallback){
        collection */
     self.mongoCollection = function(collectionName, callback){
         if (self.authenticatedAccess(callback, 'MongoDB')){
-            
             mongoConn.collection(collectionName, callback);
         }        
     };
@@ -201,6 +200,15 @@ function DataStore (initCallback){
                 }
                 callback(null, gs);
             });
+        }
+    };
+
+    /* Delete the mongoId File
+       @param {string} mongoId
+       @param {function} callback */
+    self.mongoDelete = function(mongoId, callback){
+        if (self.authenticatedAccess(callback)){
+            var gs =  mongodb.GridStore.unlink(mongoDb, mongoId, callback);
         }
     };
     

@@ -1,13 +1,9 @@
 #!/usr/local/bin/python2.7
-import urllib2, json, time, os, re
-
+import urllib2, json, time, os, re, pprint
 from poster.encode import multipart_encode
 from poster.streaminghttp import register_openers
 
-os.system('./reset_db.sh')
-
-register_openers()
-
+pp = pprint.PrettyPrinter(indent=4)
 SERVER_ADDR = 'http://samo.stanford.edu:8787/'
 
 def send_files(link = '', file_map = {}, cookie = None):
@@ -290,31 +286,36 @@ def test_create_tour():
             'title' : 'Test Node',
             'desc' : 'This is a test node that has three repetive pics',
             'thumbId' : 'thumb1',
-            'thumbType' : 'image/jpg'
+            'thumbType' : 'image/jpeg',
+            'update' : True
         },
         'content' : [
             [{'xpos' : 0, 'ypos' : 0,
               'width' : 20, 'height': 20,
-              'contentType' : 'image/jpg',
+              'contentType' : 'image/jpeg',
               'contentId' : 'image1',
-              'title' : 'A picture'},
+              'title' : 'A picture',
+              'update' : True},
              {'xpos' : 20, 'ypos' : 0,
               'width' : 40, 'height': 20,
               'contentType' : 'text/plain',
               'content' : 'Hello World this is plain'
+              
               },
              {'xpos' : 60, 'ypos': 0,
               'width': 20, 'height': 20,
-              'contentType' : 'image/jpg',
+              'contentType' : 'image/jpeg',
               'contentId' : 'image2',
-              'title' : 'Something Else'
+              'title' : 'Something Else',
+              'update' : True
               }
              ],
             [{'xpos' : 0, 'ypos' : 0,
               'width': 60, 'height' : 60,
-              'contentType' : 'image/jpg',
+              'contentType' : 'image/jpeg',
               'contentId' : 'image3',
-              'random' : 'A random key which should have no effect on anything'
+              'random' : 'A random key which should have no effect on anything',
+              'update' : True
               },
              {'xpos' : 0, 'ypos' : 60,
               'width':60, 'height':60,
@@ -349,7 +350,8 @@ def test_create_tour():
                     'title' : 'Test Node',
                     'desc' : 'This is a test node that has three repetive pics',
                     'thumbId' : 'thumb1',
-                    'thumbType' : 'image/jpg'
+                    'thumbType' : 'image/jpeg',
+                    'update' : True
                     }
                 })}
     res = send_request('node', brief_node, cookie)[0];
@@ -518,6 +520,7 @@ def test_get_nodes():
     for idx, node in enumerate(tour['nodes']):
         mongo_id = node['mongoId']
         res = send_request('nodeContent?mongoId='+str(mongo_id), None, cookie)[0]
+        print res
         assert_small_node(res, mongo_id, idx)
 
     print 'Node Retrieval Tests Successful'
@@ -832,6 +835,161 @@ def test_search():
     
     print 'Search Test Successful'
 
+def test_modify_node():
+    cookie = success_test('login', 'Successfully authenticated',
+                          {'userName' : 'samo',
+                           'pass' : 'samo'
+                           })
+
+    
+    success_test('tour', 'Tour Created', {'tourName' : 'ModifyTour1',
+                                          'tourDesc' : 'Tour of Memorable Stanford Locations',
+                                          }, cookie)
+    tour = send_request('tour?tourName=ModifyTour1', None, cookie)[0]
+    assert tour['tourName'] == 'ModifyTour1'
+    assert tour['tourDesc'] == 'Tour of Memorable Stanford Locations'
+    
+    node_data = {
+        'tourId' : tour['tourId'],
+        'latitude': 777,
+        'longitude': -32.172,
+        'brief' : {
+            'title' : 'Test Node',
+            'desc' : 'This is a test node that has three repetive pics',
+            'thumbId' : 'thumb1',
+            'thumbType' : 'image/jpeg',
+            'update' : True
+        },
+        'content' : [
+            [{'xpos' : 0, 'ypos' : 0,
+              'width' : 20, 'height': 20,
+              'contentType' : 'image/jpeg',
+              'contentId' : 'image1',
+              'title' : 'A picture',
+              'update' : True},
+             {'xpos' : 20, 'ypos' : 0,
+              'width' : 40, 'height': 20,
+              'contentType' : 'text/plain',
+              'content' : 'Hello World this is plain'
+              }
+             ],
+            [{'xpos' : 0, 'ypos' : 0,
+              'width': 60, 'height' : 60,
+              'contentType' : 'image/jpeg',
+              'contentId' : 'image3',
+              'update' : True
+              },
+             {'xpos' : 0, 'ypos' : 60,
+              'width':60, 'height':60,
+              'contentType' : 'text/html',
+              'content' : '<h1>Hello</h1><p>Html World</p><p>For pretty formating perhaps</p>'
+              }
+             ]
+            ]
+        }
+    data = {'image1' : open('IMG_0137.JPG'),
+            'image2' : open('IMG_0137.JPG'),
+            'image3' : open('IMG_0137.JPG'),
+            'thumb1' : open('IMG_0137.JPG'),
+            'nodeData' : json.dumps(node_data)
+            }
+
+    
+    #Node 1
+    res = send_files('node', data, cookie)
+    assert_result(res)
+
+    node_data['latitude'] = 888
+    data = {'image1' : open('IMG_0137.JPG'),
+            'image2' : open('IMG_0137.JPG'),
+            'image3' : open('IMG_0137.JPG'),
+            'thumb1' : open('IMG_0137.JPG'),
+            'nodeData' : json.dumps(node_data)
+            }
+
+    #Node 2
+    res = send_files('node', data, cookie)
+    assert_result(res)
+
+    
+    #Tests missing file and missing content, only brief available
+    #Node 3
+    brief_node = {
+        'nodeData' : json.dumps({
+                'tourId' : tour['tourId'],
+                'latitude': 999,
+                'longitude': -122.172,
+                'brief' : {
+                    'title' : 'Test Node',
+                    'desc' : 'This is a test node that has three repetive pics',
+                    
+                    }
+                })}
+
+    res = send_request('node', brief_node, cookie)[0];
+    assert_result(res)
+
+    tour = send_request('tour?tourName=ModifyTour1', None, cookie)[0]
+    
+    assert_tour(tour, 'ModifyTour1', 3)
+
+    node_ids = {}
+    for idx, node in enumerate(tour['nodes']):
+        assert 'nodeId' in node
+        assert 'mongoId' in node
+        node_id = node['nodeId']
+        mongo_id = node['mongoId']
+        res = send_request('nodeContent?nodeId='+str(node_id), None, cookie)[0]
+        res['tourId'] = tour['tourId']
+        
+        print res
+        del res['_id']
+        node_ids[node['latitude']] = {'node_id' : node_id, 'mongo_id' : mongo_id}
+        if node['latitude'] == 999:
+            res['content'] = [
+                [
+                    {'xpos' : 60, 'ypos': 0,
+                     'width': 20, 'height': 20,
+                     'contentType' : 'text/plain',
+                     'content' : 'Modify this node please'
+                     }
+                    ]
+                ]
+                
+        elif node['latitude'] == 888:
+            content = []
+            
+            for idx, page in enumerate(res['content']):
+                page0 = page['page']
+                page0[0] = {
+                    'xpos' : 60, 'ypos': 0,
+                    'width': 20, 'height': 20,
+                    'contentType' : 'text/plain',
+                    'content' : 'Modify this node please on page: '+str(idx)
+                    }
+                content.append(page0)
+            res['content'] = content
+        elif node['latitude'] == 777:
+            #Delete all Content from this node
+            res['content'] = []
+            
+        res['latitude'] =  0.418
+        res['longitude'] = -32.172
+        
+        res = send_request('node', {'nodeData' : json.dumps(res)}, cookie)[0];
+        assert_result(res)
+
+    for key, value in node_ids.items():
+        
+        err_test('nodeContent?mongoId='+str(value['mongo_id']),
+                 'Invalid Mongo Id '+str(value['mongo_id']), None, cookie)
+        
+        res = send_request('nodeContent?nodeId='+str(value['node_id']), None, cookie)[0]
+        
+        pp.pprint(res)
+    print 'Successfully created tour with 2 nodes and modified them'
+    
+    
 def set_defaults():
     #success test
     success_test('user', 'User Created Successfully',
@@ -841,7 +999,9 @@ def set_defaults():
                   'about' : 'I like CS',
                   'email' : 'soluwalana@gmail.com'}
                  )
-    
+
+register_openers()
+os.system('./reset_db.sh')
 
 test_user_create()
 test_user_auth()
@@ -855,5 +1015,9 @@ test_modify_tour()
 test_tags()
 test_search()
 set_defaults()
+
+#os.system('mysql -u docent -pDocent_2012 -e \'delete from docent_db.tours where tourname="modifytour1"\'')
+test_modify_node()
+
 
 

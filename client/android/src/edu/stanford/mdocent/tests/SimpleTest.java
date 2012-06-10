@@ -172,7 +172,7 @@ public class SimpleTest{
 		Log.v(TAG, "Test Picture Upload From Gallery");
 		Administration.login("samo", "samo");
 		try {
-			final Tour tour = Tour.getTourById(1, false);
+			Tour tour = Tour.getTourById(1, false);
 			Log.v(TAG, tour.toString());
 
 			Section newSection = new Section();
