@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -20,7 +21,8 @@ public class TourNameActivity extends Activity {
 		super.onCreate(savedInstanceState);
 
 		setContentView(R.layout.tourname);
-
+		EditText descriptionText = (EditText)findViewById(R.id.editText2);
+		descriptionText.setGravity(Gravity.TOP);
 		Button loginButton = (Button) findViewById(R.id.button1);
 		loginButton.setOnClickListener(new OnClickListener(){
 			@Override

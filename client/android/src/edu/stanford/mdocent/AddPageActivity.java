@@ -373,7 +373,7 @@ public class AddPageActivity extends Activity {
 		final EditText input = new EditText(this);
 		input.setLines(5);
 		input.setText("");
-
+		input.setGravity(Gravity.TOP);
 		helpBuilder.setView(input);
 		helpBuilder.setMessage("Type in text information here.");
 		helpBuilder.setPositiveButton("Finish",

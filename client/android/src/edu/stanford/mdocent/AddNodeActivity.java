@@ -6,6 +6,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -80,6 +81,9 @@ public class AddNodeActivity extends Activity {
 
 		curNodeID =  newNode.getNodeId();
 		Log.v(TAG, "New Node is not null: " +(newNode!=null));
+		
+		EditText descriptionText = (EditText)findViewById(R.id.editText2);
+		descriptionText.setGravity(Gravity.TOP);
 		
 		Button loginButton = (Button) findViewById(R.id.button1);
 		loginButton.setOnClickListener(new OnClickListener(){
