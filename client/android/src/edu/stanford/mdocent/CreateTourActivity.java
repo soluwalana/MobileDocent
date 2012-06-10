@@ -114,7 +114,7 @@ public class CreateTourActivity extends MapActivity  {
 		mapView.getOverlays().add(mapOverlay);
 		mapController.setZoom(18);
 		mapView.invalidate();
-		
+
 		//addNewNode(newLat, newLong);
 	}
 	public void finishCreateTour (){
@@ -158,7 +158,7 @@ public class CreateTourActivity extends MapActivity  {
 		if(!newTour.save()){
 			Log.v(TAG,"Create tour error: " + tourName);
 		}
-		Log.v(TAG, "New tour ID: "+newTour.getTourId());
+		Log.v(TAG, "New tour ID: "+newTour.toString());
 		mapView = (CreateMapView) findViewById(R.id.map_view);
 		mapView.setBuiltInZoomControls(true);
 		mapController = mapView.getController();
@@ -176,12 +176,14 @@ public class CreateTourActivity extends MapActivity  {
 				runOnUiThread(new Runnable() {
 					@Override
 					public void run() {
-						mapView.getOverlays().clear();
-						Intent intent = new Intent(getBaseContext(), AddNodeActivity.class );
-						intent.putExtra("tourID", newTour.getTourId());
-						intent.putExtra("nodeLat", (double)longpressLocation.getLatitudeE6()/ (double)1E6);
-						intent.putExtra("nodeLon", (double)longpressLocation.getLongitudeE6()/ (double)1E6);
-						startActivityForResult(intent,tourRequestCode);
+						if(newTour!=null){
+							mapView.getOverlays().clear();
+							Intent intent = new Intent(getBaseContext(), AddNodeActivity.class );
+							intent.putExtra("tourID", newTour.getTourId());
+							intent.putExtra("nodeLat", (double)longpressLocation.getLatitudeE6()/ (double)1E6);
+							intent.putExtra("nodeLon", (double)longpressLocation.getLongitudeE6()/ (double)1E6);
+							startActivityForResult(intent,tourRequestCode);
+						}
 					}
 				});
 			}
@@ -226,7 +228,7 @@ public class CreateTourActivity extends MapActivity  {
 
 	class MapOverlayPoint extends Overlay
 	{
-		
+
 		private GeoPoint pointToDraw;
 
 		public void setPointToDraw(GeoPoint point) {
@@ -252,7 +254,7 @@ public class CreateTourActivity extends MapActivity  {
 			canvas.drawBitmap(bmp, screenPts.x, screenPts.y - 24, null);
 			return true;
 		}
-
+		/*
 		@Override
 		public boolean onTouchEvent(MotionEvent e, MapView mapView) 
 		{   
@@ -261,7 +263,8 @@ public class CreateTourActivity extends MapActivity  {
 				p = mapView.getProjection().fromPixels(
 						(int) e.getX(),
 						(int) e.getY());
-			}     
+			}
+
 			Log.v(TAG,"Inside touch event " + tourID);
 			if(p.getLatitudeE6()!=0 && tourID != -1 && Tour.getTourById(tourID, true).getTourNodes()!=null){
 				Vector<Node> curNodes = Tour.getTourById(tourID, false).getTourNodes();
@@ -280,7 +283,7 @@ public class CreateTourActivity extends MapActivity  {
 				}
 			}
 			return false;
-		}  
+		}  */
 
 	} 
 }

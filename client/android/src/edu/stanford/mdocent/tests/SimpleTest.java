@@ -126,8 +126,6 @@ public class SimpleTest{
 			newSection.setYpos(0);
 			Page newPage = new Page();
 			newPage.appendSection(newSection);
-
-
 			Node newNode = new Node();
 			Brief newBrief = newNode.getBrief();
 			newBrief.setDesc("This is a Node that you can observe");

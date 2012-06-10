@@ -34,7 +34,15 @@ public interface Constants {
 	public static final int RESULT_CAMERA = 5;
 	public static final int RESULT_VIDEO_CAMERA = 6;
 	public static final int RESULT_AUDIO = 7;
+	public static final int RESULT_VIDEO_PICKER = 8;
+	public static final int RESULT_AUDIO_PICKER = 9;
+	
 
+	public static final int FILE_TYPE_IMAGE = 0;
+	public static final int FILE_TYPE_VIDEO = 1;
+	public static final int FILE_TYPE_AUDIO = 2;
+	
+	public static final int SECTIONS_PER_PAGE = 4;
 
 	public static final Integer DEFAULT_QUALITY = 80;
 	public static final String DEFAULT_IMG_MIME_TYPE = PNG_TYPE;

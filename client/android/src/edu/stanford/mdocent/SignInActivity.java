@@ -3,6 +3,7 @@ package edu.stanford.mdocent;
 import java.io.File;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -36,7 +37,6 @@ import edu.stanford.mdocent.utilities.Utils;
 public class SignInActivity extends Activity {
 
 	private static final String TAG = "SignInActivity";
-	private PopupWindow pw;
 
 	private static Uri cameraUri ;
 
@@ -57,14 +57,11 @@ public class SignInActivity extends Activity {
 
 				EditText pword = (EditText)findViewById(R.id.txt_password);
 				String password = pword.getText().toString();
-
-
-
 				if (Administration.login(username, password)){
-
 					startMainPage();
 				} else {
-					popUpNotification();
+					showPopUp();
+					//popUpNotification();
 				}
 			}
 		});
@@ -258,21 +255,20 @@ public class SignInActivity extends Activity {
 		}
 
 	}
+	private void showPopUp() {
+		 AlertDialog.Builder helpBuilder = new AlertDialog.Builder(this);
+		 helpBuilder.setTitle("Error");
+		 helpBuilder.setMessage("Incorrect Username or Password");
+		 helpBuilder.setPositiveButton("Close",
+		   new DialogInterface.OnClickListener() {
 
+		    public void onClick(DialogInterface dialog, int which) {
+		     // Do nothing but close the dialog
+		    }
+		   });
 
-	public void popUpNotification () {
-		// Make a View from our XML file
-		LayoutInflater inflater = (LayoutInflater)
-				this.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-		View layout = inflater.inflate(R.layout.popup,
-				(ViewGroup) findViewById(R.id.MyLinearLayout));
+		 AlertDialog helpDialog = helpBuilder.create();
+		 helpDialog.show();
 
-		pw = new PopupWindow( layout,  350,  250,  true);
-		pw.showAtLocation(layout, Gravity.CENTER, 0, 0);
-	}
-
-	public void closePopUp (View target) {
-		pw.dismiss();
-	}
-
+		}
 }

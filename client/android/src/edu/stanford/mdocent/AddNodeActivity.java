@@ -1,6 +1,7 @@
 package edu.stanford.mdocent;
 
 import java.util.Vector;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -12,6 +13,8 @@ import android.widget.EditText;
 import android.widget.Toast;
 import edu.stanford.mdocent.data.Node;
 import edu.stanford.mdocent.data.Node.Brief;
+import edu.stanford.mdocent.data.Page;
+import edu.stanford.mdocent.data.Section;
 import edu.stanford.mdocent.data.Tour;
 import edu.stanford.mdocent.db.Constants;
 
@@ -34,7 +37,7 @@ public class AddNodeActivity extends Activity {
 		}
 		if (resultCode == RESULT_CANCELED){
 			Log.v(TAG, "RESULT_CANCELED");
-			retrieveNode(data);
+			//etrieveNode(data);
 		}
 		else if (resultCode ==Constants.RESULT_RETURN){
 			Log.v(TAG, "RESULT_RETURN");
@@ -70,11 +73,14 @@ public class AddNodeActivity extends Activity {
 		curTour = Tour.getTourById(curTourID, true);
 
 		newNode = new Node();
+		newNode.appendPage(new Page());
 		newNode.setLatitude(sender.getExtras().getDouble("nodeLat"));
 		newNode.setLongitude(sender.getExtras().getDouble("nodeLon"));
 		newNode = curTour.appendNode(newNode);
 
 		curNodeID =  newNode.getNodeId();
+		Log.v(TAG, "New Node is not null: " +(newNode!=null));
+		
 		Button loginButton = (Button) findViewById(R.id.button1);
 		loginButton.setOnClickListener(new OnClickListener(){
 			@Override
@@ -84,9 +90,23 @@ public class AddNodeActivity extends Activity {
 				EditText descriptionText = (EditText)findViewById(R.id.editText2);
 				String descriptionStr = descriptionText.getText().toString();
 				//ADD NODE TO TOUR
+
+				Log.v(TAG, "New Node is not null: " +(newNode!=null));
+				Log.v(TAG, "Current node ID: "+curNodeID);
+				
 				Brief newBrief = newNode.getBrief();
 				newBrief.setDesc(descriptionStr);
 				newBrief.setTitle(nameStr);
+				/*newNode.save();// start test
+				Page curPage = newNode.getPages().get(0);
+				
+					Section newSection = new Section();
+					newSection.setContentType(Constants.PLAIN_TEXT);
+					newSection.setContent("OK BRO");
+					curPage.appendSection(newSection);
+
+				newNode.save();//end test */
+				newNode.save();
 				Toast.makeText(getApplicationContext(),"New Node Added.", Toast.LENGTH_LONG).show();
 				startCreateTourSuccess();
 
@@ -118,6 +138,7 @@ public class AddNodeActivity extends Activity {
 		});
 
 	}
+	
 	public void startAddPage (){
 		Intent intent = new Intent(this, AddPageActivity.class );
 		intent.putExtra("tourID", curTourID);
