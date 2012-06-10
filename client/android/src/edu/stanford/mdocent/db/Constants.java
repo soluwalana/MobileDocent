@@ -21,13 +21,13 @@ public interface Constants {
 	public static final String CREATE_USER_URL = "/user";
 	public static final String LOGIN_URL = "/login";
 	public static final String LOGOUT_URL = "/logout";
-	
+
 	public static final String PLAIN_TEXT = "text/plain";
 	public static final String HTML_TEXT = "text/html";
-	
+
 	public static final String JPEG_TYPE = "img/jpeg";
 	public static final String PNG_TYPE = "img/png";
-	
+
 	public static final int RESULT_RETURN = 3;
 
 	public static final int RESULT_IMAGE_PICKER = 4;
@@ -35,7 +35,7 @@ public interface Constants {
 	public static final int RESULT_VIDEO_CAMERA = 6;
 	public static final int RESULT_AUDIO = 7;
 
-	
+
 	public static final Integer DEFAULT_QUALITY = 80;
 	public static final String DEFAULT_IMG_MIME_TYPE = PNG_TYPE;
 	public static final Bitmap.CompressFormat DEFAULT_IMG_TYPE = Bitmap.CompressFormat.PNG;

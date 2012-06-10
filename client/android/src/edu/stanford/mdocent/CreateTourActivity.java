@@ -9,34 +9,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 
-import edu.stanford.mdocent.RoadProvider;
-import edu.stanford.mdocent.data.CreateMapView;
-import edu.stanford.mdocent.data.MapOverlay;
-import edu.stanford.mdocent.data.Node;
-import edu.stanford.mdocent.data.Road;
-import edu.stanford.mdocent.data.Tour;
-import edu.stanford.mdocent.db.Constants;
-
-import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
 import android.graphics.Point;
-import android.graphics.Bitmap.Config;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Message;
-import android.os.Parcel;
-import android.os.Parcelable;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
+
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.ViewGroup.LayoutParams;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -48,16 +33,23 @@ import com.google.android.maps.MapController;
 import com.google.android.maps.MapView;
 import com.google.android.maps.Overlay;
 
+import edu.stanford.mdocent.data.CreateMapView;
+import edu.stanford.mdocent.data.MapOverlay;
+import edu.stanford.mdocent.data.Node;
+import edu.stanford.mdocent.data.Road;
+import edu.stanford.mdocent.data.Tour;
+import edu.stanford.mdocent.db.Constants;
+
 public class CreateTourActivity extends MapActivity  {
 
 	private static final String TAG = "CreateTourActivity";
 
 	LinearLayout linearLayout;
 	CreateMapView mapView;
-	public Vector<Road> roadVec = new Vector<Road>(); 
+	public Vector<Road> roadVec = new Vector<Road>();
 	private MapController mapController;
 	//Vector<NodeData> nodeVector = new Vector<NodeData>();
-	private ArrayList _displayedMarkers; 
+	private ArrayList _displayedMarkers;
 	private LinearLayout _bubbleLayout;
 	private Tour newTour;
 	private int tourID = -1;
@@ -113,7 +105,7 @@ public class CreateTourActivity extends MapActivity  {
 		}
 	}
 	private void renderPoint(double newLat, double newLong){
-		GeoPoint point = new GeoPoint(  //LatLng 
+		GeoPoint point = new GeoPoint(  //LatLng
 				(int) (newLat * 1E6),
 				(int) (newLong * 1E6));
 		MapOverlayPoint mapOverlay = new MapOverlayPoint();
@@ -141,14 +133,16 @@ public class CreateTourActivity extends MapActivity  {
 		setContentView(R.layout.createtour);
 		Button finishButton = (Button) findViewById(R.id.button1);
 		finishButton.setOnClickListener(new OnClickListener(){
+			@Override
 			public void onClick(View v) {
-				finishCreateTour();	
+				finishCreateTour();
 			}
 		});
 		Button cancelButton = (Button) findViewById(R.id.button2);
 		cancelButton.setOnClickListener(new OnClickListener(){
+			@Override
 			public void onClick(View v) {
-				createTourCancel();	
+				createTourCancel();
 			}
 		});
 
@@ -166,17 +160,19 @@ public class CreateTourActivity extends MapActivity  {
 		mapView = (CreateMapView) findViewById(R.id.map_view);
 		mapView.setBuiltInZoomControls(true);
 		mapController = mapView.getController();
-		mapController.setZoom(18); 
+		mapController.setZoom(18);
 
-		Toast.makeText(getApplicationContext(), 
+		Toast.makeText(getApplicationContext(),
 				"Press and Hold to make a new Node", Toast.LENGTH_LONG).show();
 
 		mapView.setOnLongpressListener(new CreateMapView.OnLongpressListener() {
 
 			private static final String TAG = "setOnLongpressListener";
 
+			@Override
 			public void onLongpress(final MapView view, final GeoPoint longpressLocation) {
 				runOnUiThread(new Runnable() {
+					@Override
 					public void run() {
 						mapView.getOverlays().clear();
 						Intent intent = new Intent(getBaseContext(), AddNodeActivity.class );
@@ -191,6 +187,7 @@ public class CreateTourActivity extends MapActivity  {
 	}
 
 	Handler mHandler = new Handler() {
+		@Override
 		public void handleMessage(android.os.Message msg) {
 			for(int i = 0; i < roadVec.size(); i++){
 				Road mRoad = roadVec.get(i);
@@ -242,7 +239,7 @@ public class CreateTourActivity extends MapActivity  {
 
 		@Override
 		public boolean draw(Canvas canvas, MapView mapView, boolean shadow, long when) {
-			super.draw(canvas, mapView, shadow);           
+			super.draw(canvas, mapView, shadow);
 
 			// convert point to pixels
 			Point screenPts = new Point();
@@ -250,9 +247,10 @@ public class CreateTourActivity extends MapActivity  {
 
 			// add marker
 			Bitmap bmp = BitmapFactory.decodeResource( getResources(), R.drawable.cur_pos);
-			canvas.drawBitmap(bmp, screenPts.x, screenPts.y - 24, null);    
+			canvas.drawBitmap(bmp, screenPts.x, screenPts.y - 24, null);
 			return true;
 		}
+
 		@Override
 		public boolean onTouchEvent(MotionEvent e, MapView mapView) 
 		{   
@@ -283,5 +281,4 @@ public class CreateTourActivity extends MapActivity  {
 		}  
 
 	} 
-
 }

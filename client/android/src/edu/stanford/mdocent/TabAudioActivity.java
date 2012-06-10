@@ -12,6 +12,7 @@ import android.widget.TextView;
 
 public class TabAudioActivity extends Activity{
 
+	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		final String audio_filename = getIntent().getStringExtra("node_audio");
@@ -20,7 +21,7 @@ public class TabAudioActivity extends Activity{
 		String title = getIntent().getStringExtra("node_title");
 		TextView text = (TextView) findViewById(R.id.textView1);
 		text.setText(title);
-			
+
 		try {
 			final MediaPlayer mp = new MediaPlayer();
 			mp.reset();
@@ -31,8 +32,9 @@ public class TabAudioActivity extends Activity{
 			Button play_but = (Button) findViewById(R.id.button1);
 			play_but.setOnClickListener(new View.OnClickListener() {
 
-				public void onClick(View v) { 
-					mp.start();	
+				@Override
+				public void onClick(View v) {
+					mp.start();
 				}
 
 			});
@@ -40,7 +42,8 @@ public class TabAudioActivity extends Activity{
 			Button pause_but = (Button) findViewById(R.id.button2);
 			pause_but.setOnClickListener(new View.OnClickListener() {
 
-				public void onClick(View v) { 
+				@Override
+				public void onClick(View v) {
 					mp.pause();
 				}
 			});
@@ -48,7 +51,8 @@ public class TabAudioActivity extends Activity{
 			Button stop_but = (Button) findViewById(R.id.button3);
 			stop_but.setOnClickListener(new View.OnClickListener() {
 
-				public void onClick(View v) { 
+				@Override
+				public void onClick(View v) {
 					try {
 						mp.stop();
 						mp.reset();
@@ -62,12 +66,12 @@ public class TabAudioActivity extends Activity{
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
-					
+
 				}
 			});
 
 		}
-		catch(Exception e){                 
+		catch(Exception e){
 			e.printStackTrace();
 		}
 

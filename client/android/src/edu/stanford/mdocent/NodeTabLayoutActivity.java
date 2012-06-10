@@ -7,7 +7,7 @@ import android.widget.TabHost;
 import android.widget.TabHost.TabSpec;
 
 public class NodeTabLayoutActivity extends TabActivity{
-	/** Called when the activity is first created. */  
+	/** Called when the activity is first created. */
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		Intent caller = getIntent();

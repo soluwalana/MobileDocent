@@ -1,15 +1,12 @@
 package edu.stanford.mdocent;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Vector;
 
 import android.content.Context;
 import android.content.Intent;
-import android.location.Address;
-import android.location.Geocoder;
+import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -17,16 +14,9 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewGroup.LayoutParams;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
-import android.widget.Toast;
-
-import com.google.android.maps.Overlay;
-import android.graphics.Canvas;
-import android.graphics.Point;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.drawable.Drawable;
 
 import com.google.android.maps.GeoPoint;
 import com.google.android.maps.ItemizedOverlay;
@@ -34,6 +24,7 @@ import com.google.android.maps.MapActivity;
 import com.google.android.maps.MapController;
 import com.google.android.maps.MapView;
 import com.google.android.maps.MyLocationOverlay;
+import com.google.android.maps.Overlay;
 import com.google.android.maps.OverlayItem;
 
 import edu.stanford.mdocent.data.Node;
@@ -61,21 +52,25 @@ public class TourActivity extends MapActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.tour);
 
-		mapView = (MapView) findViewById(R.id.map_view);       
+		mapView = (MapView) findViewById(R.id.map_view);
 		mapView.setBuiltInZoomControls(true);
 
 		mapOverlays = mapView.getOverlays();
 		drawable = this.getResources().getDrawable(R.drawable.icon);
 		itemizedOverlay = new TourItemizedOverlay(drawable, this);
-		
+
 		//get tours, populate overlays, populate array of geopoints
 		String tourName = getIntent().getStringExtra("tour_name");
 		Tour tour = Tour.getTourByName(tourName, false);
-		if(tour == null)Log.e("tour", "null");
+		if(tour == null) {
+			Log.e("tour", "null");
+		}
 		nodes = tour.getTourNodes();
-		if(nodes == null)Log.e("nodes", "null");
+		if(nodes == null) {
+			Log.e("nodes", "null");
+		}
 		Log.e("number of nodes", Integer.toString(nodes.size()));
-		
+
 		TourGeoPoints = new GeoPoint[nodes.size()];
 
 		for(int i = 0; i < nodes.size(); i++){
@@ -99,38 +94,39 @@ public class TourActivity extends MapActivity {
 
 		mapController = mapView.getController();
 		mapController.animateTo(TourGeoPoints[0]);
-		mapController.setZoom(16); 
+		mapController.setZoom(16);
 
 		//create overlay for current position
 		myLocationOverlay = new MyLocationOverlay(this, mapView);
 		myLocationOverlay.enableMyLocation();
-		
+
 		/*View popUp = getLayoutInflater().inflate(R.layout.popup, mapView, false);
-		
-		MapView.LayoutParams mapParams = new MapView.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, 
+
+		MapView.LayoutParams mapParams = new MapView.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT, test_point, MapView.LayoutParams.BOTTOM_CENTER);
 		mapView.addView(popUp, mapParams);*/
 
 
-		/*locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);  
+		/*locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
         locationListener = new GPSLocationListener();
 
         locationManager.requestLocationUpdates(
-          LocationManager.GPS_PROVIDER, 
-          0, 
-          0, 
+          LocationManager.GPS_PROVIDER,
+          0,
+          0,
           locationListener);*/
 
 		LocationManager manager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
 		// Location listener
 		LocationListener listener = new LocationListener(){
 
-			
+
+			@Override
 			public void onLocationChanged(Location loc) {
 				// TODO Auto-generated method stub
 				GeoPoint cur_point = new GeoPoint((int)(loc.getLatitude()* 1E6),(int)(loc.getLongitude()* 1E6));
-				
+
 				int closestNode = 0;
 				float shortestDistance = 0;
 				Location tempLocation = new Location("");
@@ -141,41 +137,45 @@ public class TourActivity extends MapActivity {
 
 					tempLocation.setLatitude(latitude);
 					tempLocation.setLongitude(longitude);
-					
+
 					float tempDistance = tempLocation.distanceTo(loc);
-					if(i == 0) shortestDistance = tempDistance;
-					else if(tempDistance < shortestDistance) {
+					if(i == 0) {
+						shortestDistance = tempDistance;
+					} else if(tempDistance < shortestDistance) {
 						shortestDistance = tempDistance;
 						closestNode = i;
 					}
-					
+
 				}
-				
+
 				mapController.setCenter(itemizedOverlay.getItem(closestNode).getPoint());
-				
-				
+
+
 				mapOverlays.add(myLocationOverlay);
-				
+
 				itemizedOverlay.onTap(closestNode);
-				
+
 			}
-			
+
+			@Override
 			public void onProviderDisabled(String provider) {
 				// TODO Auto-generated method stub
 			}
-			
+
+			@Override
 			public void onProviderEnabled(String provider) {
 				// TODO Auto-generated method stub
 			}
-			
+
+			@Override
 			public void onStatusChanged(String provider, int status,
 					Bundle extras) {
 				// TODO Auto-generated method stub
 			}
 		};
 		// Register to get location updates
-		manager.requestLocationUpdates(LocationManager.GPS_PROVIDER,0,0,listener); 
-		
+		manager.requestLocationUpdates(LocationManager.GPS_PROVIDER,0,0,listener);
+
 
 	}
 
@@ -183,122 +183,123 @@ public class TourActivity extends MapActivity {
 	protected boolean isRouteDisplayed() {
 		return false;
 	}
-	
-	
+
+
 	private class TourItemizedOverlay extends ItemizedOverlay {
 
 		private Context mContext;
 		private ArrayList<OverlayItem> mOverlays = new ArrayList<OverlayItem>();
-		
+
 		public TourItemizedOverlay(Drawable defaultMarker) {
 			super(boundCenterBottom(defaultMarker));
 
 		}
-		
+
 		public TourItemizedOverlay(Drawable defaultMarker, Context context) {
-			  super(boundCenterBottom(defaultMarker));
-			  mContext = context;
+			super(boundCenterBottom(defaultMarker));
+			mContext = context;
 		}
-		
+
 		@Override
 		protected boolean onTap(int index) {
 			Log.e("index of on Tap",Integer.toString(index));
-		  OverlayItem item = mOverlays.get(index);
-		  Node node = nodes.get(index);
-		  Brief info = node.getBrief();
-		  /*GeoPoint geo=item.getPoint();
+			OverlayItem item = mOverlays.get(index);
+			Node node = nodes.get(index);
+			Brief info = node.getBrief();
+			/*GeoPoint geo=item.getPoint();
 		  PopupPanel panel = new PopupPanel(R.layout.node_tabs_layout);
-		  
+
 		  Point pt=mapView.getProjection().toPixels(geo, null);
 		  panel.show(pt.y*2>mapView.getHeight());*/
-	 
-		  /*View popUp = getLayoutInflater().inflate(R.layout.node_tabs_layout, mapView, false);
-		  MapView.LayoutParams mapParams = new MapView.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, 
+
+			/*View popUp = getLayoutInflater().inflate(R.layout.node_tabs_layout, mapView, false);
+		  MapView.LayoutParams mapParams = new MapView.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
 		                          ViewGroup.LayoutParams.WRAP_CONTENT,
 		                          item.getPoint(),
 		                          MapView.LayoutParams.BOTTOM_CENTER);
 		  mapView.addView(popUp, mapParams);*/
-		  Intent intent = new Intent(TourActivity.this, NodeTabLayoutActivity.class);
-		  intent.putExtra("node_title", info.getTitle());
-		  intent.putExtra("node_details", info.getDesc());
-		  /*info.setPhotoURL("http://blogs.ubc.ca/CourseBlogSample01/wp-content/themes/thesis/rotator/sample-1.jpg");
+			Intent intent = new Intent(TourActivity.this, NodeTabLayoutActivity.class);
+			intent.putExtra("node_title", info.getTitle());
+			intent.putExtra("node_details", info.getDesc());
+			/*info.setPhotoURL("http://blogs.ubc.ca/CourseBlogSample01/wp-content/themes/thesis/rotator/sample-1.jpg");
 		  intent.putExtra("node_photo", info.getPhotoURL());
 		  info.setAudioURL("http://www.dccl.org/Sounds/songsparrow.wav");
 		  intent.putExtra("node_audio", info.getAudioURL());*/
-		  startActivity(intent);
+			startActivity(intent);
 
-		  return true;
+			return true;
 		}
 
 		@Override
 		protected OverlayItem createItem(int i) {
-			
+
 			return mOverlays.get(i);
 
 		}
 
 		@Override
 		public int size() {
-			
+
 			return mOverlays.size();
 		}
-		
+
 		public void addOverlay(OverlayItem overlay) {
-		    mOverlays.add(overlay);
-		    populate();
+			mOverlays.add(overlay);
+			populate();
 		}
 
 	}
-	
-	
-	class PopupPanel {
-	    View popup;
-	    boolean isVisible=false;
-	    
-	    PopupPanel(int layout) {
-	      ViewGroup parent=(ViewGroup)mapView.getParent();
 
-	      popup=getLayoutInflater().inflate(layout, parent, false);
-	                  
-	      popup.setOnClickListener(new View.OnClickListener() {
-	        public void onClick(View v) {
-	          hide();
-	        }
-	      });
-	    }
-	    
-	    View getView() {
-	      return(popup);
-	    }
-	    
-	    void show(boolean alignTop) {
-	      RelativeLayout.LayoutParams lp=new RelativeLayout.LayoutParams(
-	            RelativeLayout.LayoutParams.WRAP_CONTENT,
-	            RelativeLayout.LayoutParams.WRAP_CONTENT
-	      );
-	      
-	      if (alignTop) {
-	        lp.addRule(RelativeLayout.ALIGN_PARENT_TOP);
-	        lp.setMargins(0, 20, 0, 0);
-	      }
-	      else {
-	        lp.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
-	        lp.setMargins(0, 0, 0, 60);
-	      }
-	      
-	      hide();
-	      
-	      ((ViewGroup)mapView.getParent()).addView(popup, lp);
-	      isVisible=true;
-	    }
-	    
-	    void hide() {
-	      if (isVisible) {
-	        isVisible=false;
-	        ((ViewGroup)popup.getParent()).removeView(popup);
-	      }
-	    }
-	  }
+
+	class PopupPanel {
+		View popup;
+		boolean isVisible=false;
+
+		PopupPanel(int layout) {
+			ViewGroup parent=(ViewGroup)mapView.getParent();
+
+			popup=getLayoutInflater().inflate(layout, parent, false);
+
+			popup.setOnClickListener(new View.OnClickListener() {
+				@Override
+				public void onClick(View v) {
+					hide();
+				}
+			});
+		}
+
+		View getView() {
+			return(popup);
+		}
+
+		void show(boolean alignTop) {
+			RelativeLayout.LayoutParams lp=new RelativeLayout.LayoutParams(
+					LayoutParams.WRAP_CONTENT,
+					LayoutParams.WRAP_CONTENT
+					);
+
+			if (alignTop) {
+				lp.addRule(RelativeLayout.ALIGN_PARENT_TOP);
+				lp.setMargins(0, 20, 0, 0);
+			}
+			else {
+				lp.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
+				lp.setMargins(0, 0, 0, 60);
+			}
+
+			hide();
+
+			((ViewGroup)mapView.getParent()).addView(popup, lp);
+			isVisible=true;
+		}
+
+		void hide() {
+			if (isVisible) {
+				isVisible=false;
+				((ViewGroup)popup.getParent()).removeView(popup);
+			}
+		}
+	}
 
 
 

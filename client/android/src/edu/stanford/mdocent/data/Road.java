@@ -1,6 +1,5 @@
 package edu.stanford.mdocent.data;
 
-import edu.stanford.mdocent.data.Point;
 
 
 public class Road {

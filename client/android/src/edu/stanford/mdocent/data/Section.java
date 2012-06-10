@@ -3,7 +3,7 @@ package edu.stanford.mdocent.data;
 import java.io.File;
 
 public class Section {
-	
+
 	/* Required Fields that will always be saved */
 	private String sectionId = null;
 	private String title = null;
@@ -12,14 +12,14 @@ public class Section {
 	private Integer width = null;
 	private Integer height = null;
 	private String contentType = null;
-	
+
 	private String contentId = null;
 	private String content = null;
-	
+
 	private transient File tempData = null;
-		
+
 	public Section (){}
-	
+
 	/**
 	 * 
 	 * @param tempData - Set this to stage data to be pushed on node save
@@ -95,5 +95,5 @@ public class Section {
 	public String getContentId() {
 		return contentId;
 	}
-		
+
 }

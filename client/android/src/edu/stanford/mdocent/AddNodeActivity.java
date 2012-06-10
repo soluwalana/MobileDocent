@@ -1,31 +1,22 @@
 package edu.stanford.mdocent;
 
-import java.util.Vector;
-
-import edu.stanford.mdocent.data.Node;
-import edu.stanford.mdocent.data.Tour;
-import edu.stanford.mdocent.data.Node.Brief;
-import edu.stanford.mdocent.db.Constants;
-import edu.stanford.mdocent.db.DBInteract;
-import edu.stanford.mdocent.utilities.Callback;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.widget.AdapterView;
-import android.widget.AdapterView.OnItemClickListener;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ListView;
-import android.widget.TextView;
 import android.widget.Toast;
+import edu.stanford.mdocent.data.Node;
+import edu.stanford.mdocent.data.Node.Brief;
+import edu.stanford.mdocent.data.Tour;
+import edu.stanford.mdocent.db.Constants;
 
 
 public class AddNodeActivity extends Activity {
-	
+
 	private static final String TAG = "AddNodeActivity";
 	private final static int nodeRequestCode = 4;
 	private Node newNode;
@@ -73,8 +64,8 @@ public class AddNodeActivity extends Activity {
 		super.onCreate(savedInstanceState);
 
 		setContentView(R.layout.addnode);
-		
-		curTourID = sender.getExtras().getInt("tourID");
+
+        curTourID = sender.getExtras().getInt("tourID");
 		curTour = Tour.getTourById(curTourID);
 		newNode = new Node();
 		newNode.setLatitude(sender.getExtras().getDouble("nodeLat"));
@@ -84,6 +75,7 @@ public class AddNodeActivity extends Activity {
 		
 		Button loginButton = (Button) findViewById(R.id.button1);
 		loginButton.setOnClickListener(new OnClickListener(){
+			@Override
 			public void onClick(View v) {
 				EditText nameText = (EditText)findViewById(R.id.editText1);
 				String nameStr = nameText.getText().toString();
@@ -99,9 +91,10 @@ public class AddNodeActivity extends Activity {
 
 			}
 		});
-		
+
 		Button cancelButton = (Button) findViewById(R.id.button2);
 		cancelButton.setOnClickListener(new OnClickListener(){
+			@Override
 			public void onClick(View v) {
 				Vector<Node>nodeVec=curTour.getTourNodes();
 				for(int i = 0; i < nodeVec.size(); i++){
@@ -134,13 +127,13 @@ public class AddNodeActivity extends Activity {
 		Intent intent = new Intent(this, CreateTourActivity.class );
 		intent.putExtra("tourID", curTourID);
 		setResult(RESULT_CANCELED, intent);
-	    finish();
+		finish();
 	}
 	public void startCreateTourSuccess (){
 		Intent intent = new Intent(this, CreateTourActivity.class );
 		intent.putExtra("tourID", curTourID);
 		setResult(RESULT_OK, intent);
-	    finish();
+		finish();
 	}
 	/*
 	public void finishCreateTour (){

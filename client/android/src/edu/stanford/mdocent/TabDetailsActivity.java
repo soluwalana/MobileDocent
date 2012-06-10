@@ -5,7 +5,8 @@ import android.os.Bundle;
 import android.widget.TextView;
 
 public class TabDetailsActivity extends Activity {
-	 
+
+	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		String title = getIntent().getStringExtra("node_title");

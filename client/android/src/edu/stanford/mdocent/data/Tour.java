@@ -1,6 +1,5 @@
 package edu.stanford.mdocent.data;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Vector;
 
@@ -17,8 +16,8 @@ import edu.stanford.mdocent.db.DBInteract;
 import edu.stanford.mdocent.utilities.Callback;
 import edu.stanford.mdocent.utilities.QueryString;
 
-public class Tour {	
-	
+public class Tour {
+
 	private static final String TAG = "Tour";
 	private Integer tourId = null;
 	private Integer userId = null;
@@ -36,15 +35,15 @@ public class Tour {
 	/* A private cache for non saved Tours */
 	private static HashMap<Integer, Tour> tourCache = new HashMap<Integer, Tour>();
 	private static HashMap<String, Integer> nameMap = new HashMap<String, Integer>();
-	
+
 	public Tour(){}
-			
+
 	public boolean save(){
 		try {
 			Gson gson = new Gson();
 			JsonElement jsonElem = new JsonParser().parse(gson.toJson(this));
 			if (this.tourId == null){
-				
+
 				JsonElement result = DBInteract.postData(jsonElem, Constants.TOUR_URL);
 				if (result == null || !result.isJsonObject()){
 					Log.v(TAG, "Something horrible happened when saving tour");
@@ -53,8 +52,8 @@ public class Tour {
 				JsonObject createResult = result.getAsJsonObject();
 				JsonElement tourId = createResult.get("tourId");
 				JsonElement userId = createResult.get("userId");
-				
-				if (tourId == null || userId == null || 
+
+				if (tourId == null || userId == null ||
 						!tourId.isJsonPrimitive() || !userId.isJsonPrimitive()){
 					Log.v(TAG, "Something horrible happened when saving tour");
 					return false;
@@ -93,11 +92,11 @@ public class Tour {
 			return false;
 		}
 	}
-	
+
 	public Double getLatitude() {
 		return latitude;
 	}
-	
+
 	public void setLatitude(Double latitude){
 		this.latitude = latitude;
 	}
@@ -109,7 +108,7 @@ public class Tour {
 	public void setLongitude(Double longitude){
 		this.longitude = longitude;
 	}
-	
+
 	public String getTourName() {
 		return tourName;
 	}
@@ -171,7 +170,7 @@ public class Tour {
 			tourNodes.add(gson.fromJson(nodes.get(i), Node.class));
 		}
 	}
-	
+
 	public Vector<Node> getTourNodes() {
 		if (tourNodes == null){
 			loadNodes();
@@ -189,7 +188,7 @@ public class Tour {
 		tourNodes.add(node);
 		return node;
 	}
-	
+
 	public Node insertNode(Node newNode, final int idx, final Callback cb){
 		if (idx >= tourNodes.size() || idx < 0){
 			return null;
@@ -236,7 +235,7 @@ public class Tour {
 	public Vector<TourTag> getTourTags() {
 		return tourTags;
 	}
-	
+
 	@Override
 	public String toString() {
 		String nodes = "null";
@@ -245,21 +244,21 @@ public class Tour {
 		}
 		String tags = "null";
 		if (tourTags != null){
-			tags = tourTags.toString(); 
+			tags = tourTags.toString();
 		}
 		return "Tour [tourId=" + tourId + ", userId=" + userId + ", latitude="
-				+ latitude + ", longitude=" + longitude + ", tourName="
-				+ tourName + ", tourDesc=" + tourDesc + ", locId="
-				+ locId + ", tourDist=" + tourDist
-				+ ", tourNodes=" +  nodes + ", official="
-				+ official + ", active=" + active + ", tourTags="
-				+ tags + "]";
+		+ latitude + ", longitude=" + longitude + ", tourName="
+		+ tourName + ", tourDesc=" + tourDesc + ", locId="
+		+ locId + ", tourDist=" + tourDist
+		+ ", tourNodes=" +  nodes + ", official="
+		+ official + ", active=" + active + ", tourTags="
+		+ tags + "]";
 	}
 
 	/* Static Functions on the tour object*/
-	
+
 	/***
-	 * Returns an array of tours based on the 
+	 * Returns an array of tours based on the
 	 * @param tours
 	 * @return
 	 */
@@ -276,19 +275,19 @@ public class Tour {
 		}
 		return null;
 	}
-	
+
 	//For now only returns true if json array is present. eventually needs to return elements of array
-	public static Vector<Tour> tourKeywordSearch(String searchStr) { 	
+	public static Vector<Tour> tourKeywordSearch(String searchStr) {
 		QueryString qs = new QueryString("q", searchStr);
 
 		try {
 			JsonElement result = DBInteract.getData(Constants.SEARCH_TOURS_URL, qs.toString());
-			
+
 			if(result == null || !result.isJsonArray()) {
 				Log.v(TAG, result.toString());
 				return null;
 			}
-			
+
 			JsonArray tours = result.getAsJsonArray();
 			Log.v(TAG, "Tour Search successful "+ tours.toString());
 			return getToursFromJsonArray(tours);
@@ -296,11 +295,11 @@ public class Tour {
 			e1.printStackTrace();
 		}
 		return null;
-	} 
+	}
 
 
 	//For now only returns true if json array is present. eventually needs to return elements of arraytoString
-	public static Vector<Tour> tourUserSearch() { 	
+	public static Vector<Tour> tourUserSearch() {
 		QueryString qs = new QueryString("userId", "true");
 		try {
 			JsonElement result = DBInteract.getData(Constants.SEARCH_TOURS_URL, qs.toString());
@@ -315,8 +314,8 @@ public class Tour {
 			e1.printStackTrace();
 		}
 		return null;
-	} 
-	
+	}
+
 	public static Tour getTourById (Integer tourId, boolean cached){
 		if (cached && tourCache.containsKey(tourId)){
 			return tourCache.get(tourId);
@@ -341,9 +340,9 @@ public class Tour {
 		}
 		return null;
 	}
-	
+
 	public static Tour getTourByName (String tourName, boolean cached){
-		if (cached && nameMap.containsKey(tourName) && 
+		if (cached && nameMap.containsKey(tourName) &&
 				tourCache.containsKey(nameMap.get(tourName))){
 			return tourCache.get(nameMap.get(tourName));
 		}

@@ -1,29 +1,18 @@
 package edu.stanford.mdocent.db;
 
 
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Set;
-import java.util.Vector;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
-import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.*;
-
+import org.apache.http.client.CookieStore;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.BufferedHttpEntity;
-import org.apache.http.entity.FileEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.entity.mime.MultipartEntity;
 import org.apache.http.entity.mime.content.FileBody;
@@ -33,19 +22,17 @@ import org.apache.http.message.BasicHeader;
 import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.protocol.HTTP;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
-
-import edu.stanford.mdocent.db.Constants;
-import edu.stanford.mdocent.utilities.Callback;
-import edu.stanford.mdocent.utilities.QueryString;
-import edu.stanford.mdocent.utilities.Utils;
-
 import android.content.Context;
 import android.util.Log;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
+
+import edu.stanford.mdocent.utilities.QueryString;
+import edu.stanford.mdocent.utilities.Utils;
+
 public class DBInteract {
-	
+
 	private static final String TAG = "DBInteract";
 	private static CookieStore cookieStore = null;
 
@@ -57,20 +44,21 @@ public class DBInteract {
 		if (cookieStore != null){
 			httpclient.setCookieStore(cookieStore);
 		}
-		
+
 		HttpConnectionParams.setConnectionTimeout(httpclient.getParams(), 10000);
-		
+
 		try {
 			HttpPost post = new HttpPost(Constants.SERVER_URL + url);
-			StringEntity se = new StringEntity( jo.toString());  
+			StringEntity se = new StringEntity( jo.toString());
 			se.setContentType(new BasicHeader(HTTP.CONTENT_TYPE, "application/json"));
 			post.setEntity(se);
 			HttpResponse response = httpclient.execute(post);
 
 			if (response != null){
-				String str = inputStreamToString(response.getEntity().getContent()).toString();
+				StringWriter writer = new StringWriter();
+				IOUtils.copy(response.getEntity().getContent(), writer, "UTF-8");
 				JsonParser parser = new JsonParser();
-				JsonElement recvObj = parser.parse(str);
+				JsonElement recvObj = parser.parse(writer.toString());
 				Log.v(TAG, "Httpget returned: " + recvObj.toString());
 				if (cookieStore == null){
 					cookieStore = httpclient.getCookieStore();
@@ -101,12 +89,13 @@ public class DBInteract {
 		}
 		HttpConnectionParams.setConnectionTimeout(httpclient.getParams(), 10000);
 		try {
-			HttpGet get = new HttpGet(Constants.SERVER_URL + url); 
+			HttpGet get = new HttpGet(Constants.SERVER_URL + url);
 			HttpResponse response = httpclient.execute(get);
 			if (response != null){
-				String str = inputStreamToString(response.getEntity().getContent()).toString();
+				StringWriter writer = new StringWriter();
+				IOUtils.copy(response.getEntity().getContent(), writer, "UTF-8");
 				JsonParser parser = new JsonParser();
-				JsonElement recvElem = parser.parse(str);
+				JsonElement recvElem = parser.parse(writer.toString());
 
 				if (recvElem == null){
 					Log.v(TAG, "Error in HttpGet. recieved null");
@@ -132,7 +121,7 @@ public class DBInteract {
 		return null;
 	}
 
-	public static JsonElement postData (JsonElement jo, HashMap<String, File> files, 
+	public static JsonElement postData (JsonElement jo, HashMap<String, File> files,
 			HashMap<String, String> types, String url){
 
 		if (jo == null || files == null || types == null || url == null ){
@@ -155,15 +144,16 @@ public class DBInteract {
 			}
 			reqEntity.addPart("nodeData", new StringBody(jo.toString()));
 			httppost.setEntity(reqEntity);
-			
+
 			/* Run the post asynchronously and return to the callback when finished */
 			HttpResponse response = httpclient.execute(httppost);
 			JsonElement recvObj = null;
 			if (response != null){
 				try {
-					String str = inputStreamToString(response.getEntity().getContent()).toString();
+					StringWriter writer = new StringWriter();
+					IOUtils.copy(response.getEntity().getContent(), writer, "UTF-8");
 					JsonParser parser = new JsonParser();
-					recvObj = parser.parse(str);
+					recvObj = parser.parse(writer.toString());
 					Log.v(TAG, "Httppost returned: " + recvObj.toString());
 					return recvObj;
 				} catch (Exception err){
@@ -182,14 +172,9 @@ public class DBInteract {
 		}
 		return null;
 	}
-	
-	/**
-	 * Asynchronously returns the file to the callback given
-	 * @param fileId
-	 * @param outputFile
-	 * @return
-	 */
-	public static File getFile (String fileId, final Context context){
+
+
+	public static File getFile (String fileId, Context context){
 		if (fileId == null || context == null){
 			Log.e(TAG, "Invalid parameters");
 			return null;
@@ -198,19 +183,19 @@ public class DBInteract {
 		if (cookieStore != null){
 			httpclient.setCookieStore(cookieStore);
 		}
-		
+
 		HttpConnectionParams.setConnectionTimeout(httpclient.getParams(), 10000);
-		
+
 		String urlQuery = new QueryString("mongoFileId", fileId).toString();
 		String url = Constants.SERVER_URL + Constants.MONGO_FILE_URL+"?"+urlQuery;
 		Log.v(TAG, url);
-		
+
 		HttpGet httpget = new HttpGet(url);
 		HttpResponse response = null;
 		try{
 			response = httpclient.execute(httpget);
 		} catch (Exception ignored){}
-		
+
 		File outputFile = null;
 		if (response != null){
 			try {
@@ -223,12 +208,9 @@ public class DBInteract {
 					Header h = response.getAllHeaders()[i];
 					Log.v(TAG, h.getName()+": "+h.getValue());
 				}
-				
-				BufferedOutputStream outStream = new BufferedOutputStream(new FileOutputStream(outputFile));
-				BufferedHttpEntity entity = new BufferedHttpEntity(response.getEntity());
-				entity.writeTo(outStream);
-				outStream.flush();
-				outStream.close();
+
+				FileOutputStream outStream = new FileOutputStream(outputFile);
+				response.getEntity().writeTo(outStream);
 				return outputFile;
 			} catch (Exception err){
 				Log.e(TAG, "Error parsing the response");
@@ -240,22 +222,5 @@ public class DBInteract {
 			return null;
 		}
 	}
-	
-	public static StringBuilder inputStreamToString(InputStream is) {
-		String line = "";
-		StringBuilder total = new StringBuilder();
-		// Wrap a BufferedReader around the InputStream
-		BufferedReader rd = new BufferedReader(new InputStreamReader(is));
-		// Read response until the end
-		try {
-			while ((line = rd.readLine()) != null) { 
-				total.append(line); 
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		// Return full string
-		return total;
-	}
-	
+
 }

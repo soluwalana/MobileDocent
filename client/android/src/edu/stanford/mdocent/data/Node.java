@@ -2,7 +2,6 @@ package edu.stanford.mdocent.data;
 
 import java.io.File;
 import java.math.BigInteger;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Random;
 import java.util.Vector;
@@ -17,23 +16,22 @@ import com.google.gson.JsonParser;
 
 import edu.stanford.mdocent.db.Constants;
 import edu.stanford.mdocent.db.DBInteract;
-import edu.stanford.mdocent.utilities.Callback;
 import edu.stanford.mdocent.utilities.QueryString;
 
 
 public class Node {
 
 	public class Brief {
-		
+
 		private String title = null;
 		private String desc = null;
 		private String thumbId = null;
 
 		public String thumbType = Constants.PLAIN_TEXT;
 		public transient File thumbImg = null;
-						
+
 		public Brief(){}
-		
+
 		public String getTitle() {
 			return title;
 		}
@@ -56,7 +54,7 @@ public class Node {
 	}
 
 	private static final String TAG = "Node";
-	
+
 	private Integer tourId = null;
 	private Integer nodeId = null;
 	private Integer prevNode = null;
@@ -68,33 +66,33 @@ public class Node {
 	private Brief brief = null;
 
 	public Node(){}
-	
+
 	private Random random = new Random();
-	
+
 	private String randomId(){
 		return new BigInteger(64, random).toString(32);
 	}
-	
+
 	public Node save(){
-		/* Serialize pages and save them, then when save complete 
+		/* Serialize pages and save them, then when save complete
 		Vector<Page> pages = getPages();   replace all pages and sections */
 		HashMap <String, File> fileMap = new HashMap <String, File>();
 		HashMap <String, String> typeMap = new HashMap <String, String>();
-        getPages();
-        JsonObject jo = new JsonObject();
+		getPages();
+		JsonObject jo = new JsonObject();
 		jo.addProperty("tourId", tourId);
 		jo.addProperty("latitude", latitude);
 		jo.addProperty("longitude", longitude);
-		
+
 		if (brief != null){
 			JsonObject jBrief = new JsonObject();
-			
+
 			if (brief.thumbImg != null && brief.thumbType != null){
 				String fileId = randomId();
 				fileMap.put(fileId, brief.thumbImg);
 				typeMap.put(fileId, brief.thumbType);
 				jBrief.addProperty("thumbId", fileId);
-			} 
+			}
 			if (brief.title != null && brief.desc != null){
 				jBrief.addProperty("title", brief.getTitle());
 				jBrief.addProperty("desc", brief.getDesc());
@@ -104,35 +102,35 @@ public class Node {
 		final Gson gson = new Gson();
 		JsonParser parser = new JsonParser();
 		JsonArray jPages = new JsonArray();
-		
+
 		for (int i = 0; i < pages.size(); i ++){
 			Vector<Section> sections = pages.get(i).getSections();
 			JsonArray jSections = new JsonArray();
-			
+
 			for (int j = 0; j < sections.size(); j ++){
 				Section section = sections.get(j);
 				JsonObject jSection = parser.parse(gson.toJson(section)).getAsJsonObject();
-				
+
 				if (section.getTempData() != null){
 					String fileId = randomId();
 					fileMap.put(fileId, section.getTempData());
 					typeMap.put(fileId, section.getContentType());
 					jSection.addProperty("contentId", fileId);
 				}
-				jSections.add(jSection);				
+				jSections.add(jSection);
 			}
 			jPages.add(jSections);
 		}
-		
+
 		if (jPages.size() > 0){
 			jo.add("content", jPages);
 		}
-		
+
 		System.out.println("Before Save");
 		System.out.println(jo.toString());
-		
+
 		JsonElement result= DBInteract.postData(jo, fileMap, typeMap, Constants.NODE_URL);
-		Node finished = null;
+		
 		if (result == null || !result.isJsonObject()){
 			return null;
 		}
@@ -142,9 +140,9 @@ public class Node {
 		}
 		res = res.get("result").getAsJsonObject();
 		return gson.fromJson(res, Node.class);
-		
+
 	}
-	
+
 	public Integer getTourId() {
 		return tourId;
 	}
@@ -180,7 +178,7 @@ public class Node {
 			if (nodeData.has("content")){
 				loadPages(je);
 			}
-		} 
+		}
 		if (brief == null){
 			brief = new Brief();
 		}
@@ -204,7 +202,7 @@ public class Node {
 	public String getMongoId() {
 		return mongoId;
 	}
-	
+
 	private void loadPages (JsonElement je){
 		pages = new Vector<Page>();
 		if (!je.isJsonObject()){
@@ -217,9 +215,9 @@ public class Node {
 		JsonArray nodePages = nodeData.get("content").getAsJsonArray();
 		for (int i = 0; i < nodePages.size(); i ++){
 			pages.add(new Page(nodePages.get(i)));
-		}			
+		}
 	}
-	
+
 	public Vector<Page> getPages() {
 		if (pages == null && mongoId == null){
 			pages = new Vector<Page>();
@@ -237,14 +235,14 @@ public class Node {
 		getPages();
 		pages.add(page);
 	}
-	
+
 	public void insertPage(Page page, int idx){
 		getPages();
 		if (idx > 0 && idx < pages.size()){
 			pages.insertElementAt(page, idx);
 		}
 	}
-		
+
 	public void removePage(int idx){
 		getPages();
 		if (idx > 0 && idx < pages.size()){

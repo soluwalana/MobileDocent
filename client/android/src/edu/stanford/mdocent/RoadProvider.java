@@ -2,7 +2,6 @@ package edu.stanford.mdocent;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
 import java.util.Stack;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -37,17 +36,17 @@ public class RoadProvider {
 	public static String getUrl(double fromLat, double fromLon, double toLat,
 			double toLon) {// connect to map web service
 		StringBuffer urlString = new StringBuffer();
-			urlString.append("http://maps.google.com/maps?f=d&hl=en&dirflg=w");
-			urlString.append("&saddr=");// from
-			urlString.append(Double.toString(fromLat));
-			urlString.append(",");
-			urlString.append(Double.toString(fromLon));
-			urlString.append("&daddr=");// to
-			urlString.append(Double.toString(toLat));
-			urlString.append(",");
-			urlString.append(Double.toString(toLon));
-			urlString.append("&ie=UTF8&0&om=0&output=kml");
-			return urlString.toString();
+		urlString.append("http://maps.google.com/maps?f=d&hl=en&dirflg=w");
+		urlString.append("&saddr=");// from
+		urlString.append(Double.toString(fromLat));
+		urlString.append(",");
+		urlString.append(Double.toString(fromLon));
+		urlString.append("&daddr=");// to
+		urlString.append(Double.toString(toLat));
+		urlString.append(",");
+		urlString.append(Double.toString(toLon));
+		urlString.append("&ie=UTF8&0&om=0&output=kml");
+		return urlString.toString();
 	}
 }
 
@@ -63,6 +62,7 @@ class KMLHandler extends DefaultHandler {
 		mRoad = new Road();
 	}
 
+	@Override
 	public void startElement(String uri, String localName, String name,
 			Attributes attributes) throws SAXException {
 		mCurrentElement.push(localName);
@@ -70,18 +70,21 @@ class KMLHandler extends DefaultHandler {
 			isPlacemark = true;
 			mRoad.mPoints = addPoint(mRoad.mPoints);
 		} else if (localName.equalsIgnoreCase("ItemIcon")) {
-			if (isPlacemark)
+			if (isPlacemark) {
 				isItemIcon = true;
+			}
 		}
 		mString = new String();
 	}
 
+	@Override
 	public void characters(char[] ch, int start, int length)
 			throws SAXException {
 		String chars = new String(ch, start, length).trim();
 		mString = mString.concat(chars);
 	}
 
+	@Override
 	public void endElement(String uri, String localName, String name)
 			throws SAXException {
 		if (mString.length() > 0) {
@@ -101,10 +104,11 @@ class KMLHandler extends DefaultHandler {
 			} else if (localName.equalsIgnoreCase("description")) {
 				if (isPlacemark) {
 					String description = cleanup(mString);
-					if (!isRoute)
+					if (!isRoute) {
 						mRoad.mPoints[mRoad.mPoints.length - 1].mDescription = description;
-					else
+					} else {
 						mRoad.mDescription = description;
+					}
 				}
 			} else if (localName.equalsIgnoreCase("href")) {
 				if (isItemIcon) {
@@ -128,9 +132,10 @@ class KMLHandler extends DefaultHandler {
 						}
 						for (int i = 0; i < lenNew; i++) {
 							String[] xyParsed = split(coodrinatesParsed[i], ",");
-							for (int j = 0; j < 2 && j < xyParsed.length; j++)
+							for (int j = 0; j < 2 && j < xyParsed.length; j++) {
 								temp[lenOld + i][j] = Double
-								.parseDouble(xyParsed[j]);
+										.parseDouble(xyParsed[j]);
+							}
 						}
 						mRoad.mRoute = temp;
 					}
@@ -140,19 +145,22 @@ class KMLHandler extends DefaultHandler {
 		mCurrentElement.pop();
 		if (localName.equalsIgnoreCase("Placemark")) {
 			isPlacemark = false;
-			if (isRoute)
+			if (isRoute) {
 				isRoute = false;
+			}
 		} else if (localName.equalsIgnoreCase("ItemIcon")) {
-			if (isItemIcon)
+			if (isItemIcon) {
 				isItemIcon = false;
+			}
 		}
 	}
 
 	private String cleanup(String value) {
 		String remove = "<br/>";
 		int index = value.indexOf(remove);
-		if (index != -1)
+		if (index != -1) {
 			value = value.substring(0, index);
+		}
 		remove = "&#160;";
 		index = value.indexOf(remove);
 		int len = remove.length();
@@ -166,8 +174,9 @@ class KMLHandler extends DefaultHandler {
 
 	public Point[] addPoint(Point[] points) {
 		Point[] result = new Point[points.length + 1];
-		for (int i = 0; i < points.length; i++)
+		for (int i = 0; i < points.length; i++) {
 			result[i] = points[i];
+		}
 		result[points.length] = new Point();
 		return result;
 	}
