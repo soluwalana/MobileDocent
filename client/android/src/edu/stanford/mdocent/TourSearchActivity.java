@@ -30,7 +30,7 @@ public class TourSearchActivity extends ListActivity {
 
 		Button loginButton = (Button) findViewById(R.id.Button00);
 		loginButton.setOnClickListener(new OnClickListener(){
-			@Override
+			
 			public void onClick(View v) {
 				EditText searchText = (EditText)findViewById(R.id.editText1);
 				String searchStr = searchText.getText().toString();
@@ -50,7 +50,7 @@ public class TourSearchActivity extends ListActivity {
 					listView.setTextFilterEnabled(true);
 
 					listView.setOnItemClickListener(new OnItemClickListener() {
-						@Override
+						
 						public void onItemClick(AdapterView<?> parent, View view,
 								int position, long id) {
 							// When clicked, show a toast with the TextView text

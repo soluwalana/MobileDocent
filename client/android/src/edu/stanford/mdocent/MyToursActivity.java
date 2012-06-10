@@ -45,7 +45,6 @@ public class MyToursActivity extends ListActivity {
 			listView.setTextFilterEnabled(true);
 
 			listView.setOnItemClickListener(new OnItemClickListener() {
-				@Override
 				public void onItemClick(AdapterView<?> parent, View view,
 						int position, long id) {
 					// When clicked, show a toast with the TextView text

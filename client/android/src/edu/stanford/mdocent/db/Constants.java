@@ -25,8 +25,8 @@ public interface Constants {
 	public static final String PLAIN_TEXT = "text/plain";
 	public static final String HTML_TEXT = "text/html";
 
-	public static final String JPEG_TYPE = "img/jpeg";
-	public static final String PNG_TYPE = "img/png";
+	public static final String JPEG_TYPE = "image/jpeg";
+	public static final String PNG_TYPE = "image/png";
 
 	public static final int RESULT_RETURN = 3;
 

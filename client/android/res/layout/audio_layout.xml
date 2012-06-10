@@ -11,11 +11,13 @@
         android:layout_height="wrap_content"
         android:padding="15dip"
         android:text="Audio sound file goes here"
+        android:id="@+id/textView1"
         android:textSize="18dip" />
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" >
+        android:layout_height="wrap_content"
+        android:orientation="horizontal" >
 
         <Button
             android:id="@+id/button1"

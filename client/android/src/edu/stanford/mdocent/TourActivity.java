@@ -45,6 +45,7 @@ public class TourActivity extends MapActivity {
 	MyLocationOverlay myLocationOverlay;
 	GeoPoint[] TourGeoPoints;
 	Vector<Node> nodes;
+	String tourName;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -60,7 +61,7 @@ public class TourActivity extends MapActivity {
 		itemizedOverlay = new TourItemizedOverlay(drawable, this);
 
 		//get tours, populate overlays, populate array of geopoints
-		String tourName = getIntent().getStringExtra("tour_name");
+		tourName = getIntent().getStringExtra("tour_name");
 		Tour tour = Tour.getTourByName(tourName, false);
 		if(tour == null) {
 			Log.e("tour", "null");
@@ -100,29 +101,12 @@ public class TourActivity extends MapActivity {
 		myLocationOverlay = new MyLocationOverlay(this, mapView);
 		myLocationOverlay.enableMyLocation();
 
-		/*View popUp = getLayoutInflater().inflate(R.layout.popup, mapView, false);
-
-		MapView.LayoutParams mapParams = new MapView.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT, test_point, MapView.LayoutParams.BOTTOM_CENTER);
-		mapView.addView(popUp, mapParams);*/
-
-
-		/*locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-
-        locationListener = new GPSLocationListener();
-
-        locationManager.requestLocationUpdates(
-          LocationManager.GPS_PROVIDER,
-          0,
-          0,
-          locationListener);*/
 
 		LocationManager manager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
 		// Location listener
 		LocationListener listener = new LocationListener(){
 
 
-			@Override
 			public void onLocationChanged(Location loc) {
 				// TODO Auto-generated method stub
 				GeoPoint cur_point = new GeoPoint((int)(loc.getLatitude()* 1E6),(int)(loc.getLongitude()* 1E6));
@@ -157,17 +141,17 @@ public class TourActivity extends MapActivity {
 
 			}
 
-			@Override
+			
 			public void onProviderDisabled(String provider) {
 				// TODO Auto-generated method stub
 			}
 
-			@Override
+			
 			public void onProviderEnabled(String provider) {
 				// TODO Auto-generated method stub
 			}
 
-			@Override
+		
 			public void onStatusChanged(String provider, int status,
 					Bundle extras) {
 				// TODO Auto-generated method stub
@@ -206,22 +190,14 @@ public class TourActivity extends MapActivity {
 			OverlayItem item = mOverlays.get(index);
 			Node node = nodes.get(index);
 			Brief info = node.getBrief();
-			/*GeoPoint geo=item.getPoint();
-		  PopupPanel panel = new PopupPanel(R.layout.node_tabs_layout);
-
-		  Point pt=mapView.getProjection().toPixels(geo, null);
-		  panel.show(pt.y*2>mapView.getHeight());*/
-
-			/*View popUp = getLayoutInflater().inflate(R.layout.node_tabs_layout, mapView, false);
-		  MapView.LayoutParams mapParams = new MapView.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
-		                          ViewGroup.LayoutParams.WRAP_CONTENT,
-		                          item.getPoint(),
-		                          MapView.LayoutParams.BOTTOM_CENTER);
-		  mapView.addView(popUp, mapParams);*/
-			Intent intent = new Intent(TourActivity.this, NodeTabLayoutActivity.class);
-			intent.putExtra("node_title", info.getTitle());
+			
+			
+			Intent intent = new Intent(TourActivity.this, NodeActivity.class);
+			intent.putExtra("tour_name", tourName);
+			/* Intent intent = new Intent(TourActivity.this, NodeTabLayoutActivity.class);
+			 * intent.putExtra("node_title", info.getTitle());
 			intent.putExtra("node_details", info.getDesc());
-			/*info.setPhotoURL("http://blogs.ubc.ca/CourseBlogSample01/wp-content/themes/thesis/rotator/sample-1.jpg");
+			info.setPhotoURL("http://blogs.ubc.ca/CourseBlogSample01/wp-content/themes/thesis/rotator/sample-1.jpg");
 		  intent.putExtra("node_photo", info.getPhotoURL());
 		  info.setAudioURL("http://www.dccl.org/Sounds/songsparrow.wav");
 		  intent.putExtra("node_audio", info.getAudioURL());*/
@@ -248,57 +224,6 @@ public class TourActivity extends MapActivity {
 			populate();
 		}
 
-	}
-
-
-	class PopupPanel {
-		View popup;
-		boolean isVisible=false;
-
-		PopupPanel(int layout) {
-			ViewGroup parent=(ViewGroup)mapView.getParent();
-
-			popup=getLayoutInflater().inflate(layout, parent, false);
-
-			popup.setOnClickListener(new View.OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					hide();
-				}
-			});
-		}
-
-		View getView() {
-			return(popup);
-		}
-
-		void show(boolean alignTop) {
-			RelativeLayout.LayoutParams lp=new RelativeLayout.LayoutParams(
-					LayoutParams.WRAP_CONTENT,
-					LayoutParams.WRAP_CONTENT
-					);
-
-			if (alignTop) {
-				lp.addRule(RelativeLayout.ALIGN_PARENT_TOP);
-				lp.setMargins(0, 20, 0, 0);
-			}
-			else {
-				lp.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
-				lp.setMargins(0, 0, 0, 60);
-			}
-
-			hide();
-
-			((ViewGroup)mapView.getParent()).addView(popup, lp);
-			isVisible=true;
-		}
-
-		void hide() {
-			if (isVisible) {
-				isVisible=false;
-				((ViewGroup)popup.getParent()).removeView(popup);
-			}
-		}
 	}
 
 
