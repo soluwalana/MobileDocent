@@ -33,6 +33,8 @@ public interface Constants {
 	
 	public static final String MP4_VIDEO_TYPE = "video/mp4";
 	
+	public static final String AUDIO_MPEG_TYPE = "audio/mpeg";
+	
 	
 	public static final int RESULT_RETURN = 3;
 

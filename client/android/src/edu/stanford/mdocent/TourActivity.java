@@ -105,8 +105,8 @@ public class TourActivity extends MapActivity {
 		}
 
 		//mapOverlays.add(new RoutePathOverlay(TourGeoPoints));
-		mapOverlays.add(itemizedOverlay);
 		drawRoadRoute();
+		mapOverlays.add(itemizedOverlay);
 
 		mapController = mapView.getController();
 		mapController.animateTo(TourGeoPoints.get(0));
