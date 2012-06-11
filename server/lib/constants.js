@@ -18,3 +18,7 @@ exports.FILE_BUF_SIZE = 4*1024;
 
 exports.MAX_RESULT = 10000;
 exports.MAX_RETURN = 1000;
+
+exports.MAX_IMG_WIDTH = 500;
+exports.MAX_IMG_HEIGHT = 700;
+exports.MAX_THUMB_DIM = 170;

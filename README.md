@@ -7,6 +7,9 @@ __MobileDocent__ A full Server Stack and IOS/Android interaction project
     MongoDB+GridFS (Storing of Video/Audio/Node Data) v1.9.1+
    	Node v0.6.15
 	jsdoc (http://code.google.com/p/jsdoc-toolkit/)
+
+    apt-get install imagemagick
+    apt-get install graphicsmagick
 	
 ## NPM Modules
     Express           - Web Server
@@ -19,6 +22,8 @@ __MobileDocent__ A full Server Stack and IOS/Android interaction project
 	supervisor		  - Auto Reload
 	crypto			  - SHA1 HMAC for passwords
     node-uuid         - uuid generation for unique filenames
+    easyimage         - Image Manipulation Module
+    gm                - GraphicsMagick module
     
 
 ## Unused NPM Modules
@@ -54,6 +59,7 @@ __MobileDocent__ A full Server Stack and IOS/Android interaction project
     node-uuid          https://github.com/broofa/node-uuid
 
     underscore         http://underscorejs.org
+    gm                 http://aheckmann.github.com/gm/docs.html 
 
 
 ## Java References

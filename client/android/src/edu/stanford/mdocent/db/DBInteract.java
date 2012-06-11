@@ -194,8 +194,9 @@ public class DBInteract {
 
 		HttpConnectionParams.setConnectionTimeout(httpclient.getParams(), 10000);
 
-		String urlQuery = new QueryString("mongoFileId", fileId).toString();
-		String url = Constants.SERVER_URL + Constants.MONGO_FILE_URL+"?"+urlQuery;
+		QueryString urlQuery = new QueryString("mongoFileId", fileId);
+		urlQuery.add("scaleDown", "true");
+		String url = Constants.SERVER_URL + Constants.MONGO_FILE_URL+"?"+urlQuery.toString();
 		Log.v(TAG, url);
 
 		HttpGet httpget = new HttpGet(url);
