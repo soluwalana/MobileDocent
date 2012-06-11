@@ -2,6 +2,8 @@ package edu.stanford.mdocent.data;
 
 import java.io.File;
 
+import android.net.Uri;
+
 public class Section {
 
 	/* Required Fields that will always be saved */
@@ -16,7 +18,7 @@ public class Section {
 	private String contentId = null;
 	private String content = null;
 
-	private transient File tempData = null;
+	private transient Uri tempData = null;
 
 	public Section (){}
 
@@ -24,11 +26,11 @@ public class Section {
 	 * 
 	 * @param tempData - Set this to stage data to be pushed on node save
 	 */
-	public void setTempData(File tempData) {
+	public void setTempData(Uri tempData) {
 		this.tempData = tempData;
 	}
 
-	public File getTempData(){
+	public Uri getTempData(){
 		return this.tempData;
 	}
 
@@ -76,10 +78,10 @@ public class Section {
 		return contentType;
 	}
 
-	public void setContentType(String contentType) {
+	public void setContentType(String contentType){
 		this.contentType = contentType;
 	}
-
+	
 	public String getContent() {
 		return content;
 	}

@@ -155,7 +155,7 @@ public class CreateTourActivity extends MapActivity  {
 		newTour = new Tour();
 		newTour.setTourName(tourName);
 		newTour.setTourDesc(tourDescription);
-		if(!newTour.save()){
+		if(!newTour.save(getContentResolver())){
 			Log.v(TAG,"Create tour error: " + tourName);
 		}
 		Log.v(TAG, "New tour ID: "+newTour.toString());

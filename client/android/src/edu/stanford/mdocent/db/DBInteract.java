@@ -3,6 +3,7 @@ package edu.stanford.mdocent.db;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -16,13 +17,16 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.entity.mime.MultipartEntity;
 import org.apache.http.entity.mime.content.FileBody;
+import org.apache.http.entity.mime.content.InputStreamBody;
 import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.protocol.HTTP;
 
+import android.content.ContentResolver;
 import android.content.Context;
+import android.net.Uri;
 import android.util.Log;
 
 import com.google.gson.JsonElement;
@@ -121,10 +125,10 @@ public class DBInteract {
 		return null;
 	}
 
-	public static JsonElement postData (JsonElement jo, HashMap<String, File> files,
-			HashMap<String, String> types, String url){
+	public static JsonElement postData (JsonElement jo, HashMap<String, Uri> files, 
+			HashMap<String, String> typeMap, String url, ContentResolver cr){
 
-		if (jo == null || files == null || types == null || url == null ){
+		if (jo == null || files == null || url == null ){
 			return null;
 		}
 		DefaultHttpClient httpclient = new DefaultHttpClient();
@@ -139,7 +143,10 @@ public class DBInteract {
 			Iterator<String> itr = files.keySet().iterator();
 			while(itr.hasNext()){
 				String key = itr.next();
-				FileBody bin = new FileBody(files.get(key), types.get(key));
+				Uri file = files.get(key);
+				
+				InputStream is = cr.openInputStream(file);
+				InputStreamBody bin = new InputStreamBody(is, typeMap.get(key), file.getLastPathSegment());
 				reqEntity.addPart(key, bin);
 			}
 			reqEntity.addPart("nodeData", new StringBody(jo.toString()));
@@ -167,6 +174,7 @@ public class DBInteract {
 			}
 		} catch (Exception err){
 			Log.e(TAG, "Failed to post files");
+			err.printStackTrace();
 		} finally {
 			try { httpclient.getConnectionManager().shutdown(); } catch (Exception ignored){}
 		}
@@ -199,7 +207,7 @@ public class DBInteract {
 		File outputFile = null;
 		if (response != null){
 			try {
-				outputFile = Utils.getTempFile(context);
+				outputFile = Utils.getTempFile(context, "");
 				if (outputFile == null || !outputFile.canWrite()){
 					Log.e(TAG, "Couldn't write File");
 					return null;

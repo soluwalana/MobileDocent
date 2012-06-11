@@ -1,6 +1,8 @@
 package edu.stanford.mdocent;
 
 import java.io.File;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Vector;
 
 import edu.stanford.mdocent.data.Node;
@@ -40,15 +42,10 @@ public class AddPageActivity extends Activity {
 
 	private static final String TAG = "AddPageActivity";
 
-	private static Uri imageUri;
-	private static Uri videoUri;
-	private static Uri audioUri;
-	private File audioFile;
-	private File videoFile;
-	private File imageFile;
-
-	private int curTourID;
-	private int curNodeID;
+	private static Uri savedUri;
+	
+	private Integer curTourID;
+	private Integer curNodeID;
 	private Node curNode;
 	private Tour curTour;
 
@@ -61,14 +58,11 @@ public class AddPageActivity extends Activity {
 		Intent sender = getIntent();
 		curTourID = sender.getExtras().getInt("tourID");
 		curNodeID = sender.getExtras().getInt("nodeID");
-		Vector<Node> curNodes = Tour.getTourById(curTourID, true).getTourNodes();
 		
-		for(int i = 0; i<curNodes.size();i++){
-			if(curNodes.get(i).getNodeId()==curNodeID){
-				curNode = curNodes.get(i);
-			}
-		}
+		curNode = Node.getNodeById(curNodeID);
+
 		Log.v(TAG, "Current tour: "+curTourID+" Current Node: "+curNodeID);
+		Log.v(TAG, curNode.toString());
 
 		Toast.makeText(getApplicationContext(), 
 				"Select a type of content to add.", Toast.LENGTH_LONG).show();
@@ -145,7 +139,7 @@ public class AddPageActivity extends Activity {
 		Toast.makeText(getApplicationContext(),"Saving new file", Toast.LENGTH_LONG).show();
 		if (curNode != null){
 			Toast.makeText(getApplicationContext(),"Node found", Toast.LENGTH_LONG).show();
-			Page curPage = curNode.getPages().get(curNode.getPages().size()-1);
+			Page curPage = curNode.getPages().get(curNode.getPages().size() - 1);
 			if(curPage.getSections().size() >= Constants.SECTIONS_PER_PAGE){
 				Log.v(TAG, "Adding a new page into node "+curNodeID);
 				curPage = new Page();
@@ -154,30 +148,36 @@ public class AddPageActivity extends Activity {
 
 			Section newSection = new Section();
 			ContentResolver cr = getContentResolver();
+			cr.notifyChange(savedUri, null);
+			newSection.setTempData(savedUri);
+			
 			switch(fileType){
 			case Constants.FILE_TYPE_IMAGE:
 				Toast.makeText(getApplicationContext(),"New image section being created", Toast.LENGTH_LONG).show();
-				newSection.setContentType(cr.getType(imageUri));
-				newSection.setTempData(imageFile);
-				Log.v(TAG, "saving object of type "+cr.getType(imageUri)+ " into node "+curNodeID);
+				Log.v(TAG, "Image URI "+savedUri.toString());
+				if (cr.getType(savedUri) == null){
+					newSection.setContentType(Constants.DEFAULT_IMG_TYPE);
+				}
 				break;
 			case Constants.FILE_TYPE_VIDEO:
-				Toast.makeText(getApplicationContext(),"New video section being created", Toast.LENGTH_LONG).show();
-				newSection.setContentType(cr.getType(videoUri));
-				newSection.setTempData(videoFile);
-				Log.v(TAG, "saving object of type "+cr.getType(videoUri)+ " into node "+curNodeID);
+				Toast.makeText(getApplicationContext(),"New video section being created", Toast.LENGTH_LONG).show();				newSection.setTempData(savedUri);
+				Log.v(TAG, "saving object of type "+cr.getType(savedUri)+ " into node "+curNodeID);
+				if (cr.getType(savedUri) == null){
+					newSection.setContentType(Constants.DEFAULT_VIDEO_TYPE);
+				}
 				break;
 			case Constants.FILE_TYPE_AUDIO:
 				Toast.makeText(getApplicationContext(),"New audio section being created", Toast.LENGTH_LONG).show();
-				newSection.setContentType(cr.getType(audioUri));
-				newSection.setTempData(audioFile);
-				Log.v(TAG, "saving object of type "+cr.getType(audioUri)+ " into node "+curNodeID);
+				if (cr.getType(savedUri) == null){
+					newSection.setContentType(Constants.DEFAULT_AUDIO_TYPE);
+				}
 				break;
 			}
 			curPage.appendSection(newSection);
+			
 			Log.v(TAG, curNode.toString());
 			//curNode.appendPage(curPage);
-			curNode.save();
+			curNode = curNode.save(cr);
 			Toast.makeText(getApplicationContext(),"Succesfully saved new file", Toast.LENGTH_LONG).show();
 		}
 	}
@@ -191,10 +191,9 @@ public class AddPageActivity extends Activity {
 			if (resultCode == Activity.RESULT_OK){
 				Uri selectedImage = data.getData();
 				Log.v(TAG, selectedImage.toString());
+				savedUri = selectedImage;
 				try {
-					imageFile = new File(selectedImage.getPath());
 					saveToNode(Constants.FILE_TYPE_IMAGE);
-					Log.v(TAG, "Image from file: "+(imageFile != null));
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -203,11 +202,10 @@ public class AddPageActivity extends Activity {
 		case Constants.RESULT_CAMERA:
 			Toast.makeText(getApplicationContext(),"Retrieved image from camera", Toast.LENGTH_LONG).show();
 			if (resultCode == Activity.RESULT_OK){
-				Uri selectedImage = imageUri;
+				Uri selectedImage = savedUri;
+				savedUri = selectedImage;
 				try{
-					imageFile = new File(selectedImage.getPath());
 					saveToNode(Constants.FILE_TYPE_IMAGE);
-					Log.v(TAG, "Image from camera: "+(imageFile != null));
 				} catch(Exception e){
 					e.printStackTrace();
 				}
@@ -217,10 +215,9 @@ public class AddPageActivity extends Activity {
 			if (resultCode == Activity.RESULT_OK){
 				Toast.makeText(getApplicationContext(),"Retrieved image from video camera", Toast.LENGTH_LONG).show();
 				Uri selectedVideo = data.getData();
+				savedUri = selectedVideo;
 				try{
-					videoFile = new File(selectedVideo.getPath());
 					saveToNode(Constants.FILE_TYPE_VIDEO);
-					Log.v(TAG, "Video from Camera "+(videoFile != null));
 				} catch(Exception e){
 					e.printStackTrace();
 				}
@@ -230,11 +227,10 @@ public class AddPageActivity extends Activity {
 			Toast.makeText(getApplicationContext(),"Retrieved saved video", Toast.LENGTH_LONG).show();
 			if (resultCode == Activity.RESULT_OK){
 				Uri selectedVideo = data.getData();
+				savedUri = selectedVideo;
 				Log.v(TAG, selectedVideo.toString());
 				try {
-					videoFile = new File(selectedVideo.getPath());
 					saveToNode(Constants.FILE_TYPE_VIDEO);
-					Log.v(TAG, "Video from file "+(videoFile != null));
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -244,11 +240,10 @@ public class AddPageActivity extends Activity {
 			Toast.makeText(getApplicationContext(),"Retrieved saved audio", Toast.LENGTH_LONG).show();
 			if (resultCode == Activity.RESULT_OK){
 				Uri selectedAudio = data.getData();
+				savedUri = selectedAudio;
 				Log.v(TAG, selectedAudio.toString());
 				try {
-					audioFile = new File(selectedAudio.getPath());
 					saveToNode(Constants.FILE_TYPE_AUDIO);
-					Log.v(TAG, "Audio from file "+(audioFile != null));
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -260,10 +255,9 @@ public class AddPageActivity extends Activity {
 				Toast.makeText(getApplicationContext(),"Recorded audio recorded correctly", Toast.LENGTH_LONG).show();
 				Toast.makeText(getApplicationContext(),"Recorded audio data is null: "+(data==null), Toast.LENGTH_LONG).show();
 				Uri selectedAudio = data.getData();
+				savedUri = selectedAudio;
 				try{
-					audioFile = new File(selectedAudio.getPath());
 					saveToNode(Constants.FILE_TYPE_AUDIO);
-					Log.v(TAG, "Audio from mic "+(audioFile != null));
 				} catch(Exception e){
 					e.printStackTrace();
 				}
@@ -292,13 +286,13 @@ public class AddPageActivity extends Activity {
 					File newPhoto = null;
 					Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
 					try {
-						newPhoto = Utils.getRealFile();
+						newPhoto = Utils.getRealFile(".jpg");
 					} catch (Exception e) {
 						e.printStackTrace();
 						return;
 					}
 					cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(newPhoto));
-					imageUri = Uri.fromFile(newPhoto);
+					savedUri = Uri.fromFile(newPhoto);
 					startActivityForResult(cameraIntent, Constants.RESULT_CAMERA);
 					break;
 				case 1: 
@@ -399,7 +393,7 @@ public class AddPageActivity extends Activity {
 
 					Log.v(TAG, curNode.toString());
 					//curNode.appendPage(curPage);
-					curNode.save();
+					curNode = curNode.save(getContentResolver());
 					Toast.makeText(getApplicationContext(),"Succesfully saved new text", Toast.LENGTH_LONG).show();
 				}
 

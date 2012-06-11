@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.Random;
 import java.util.Vector;
 
+import android.content.ContentResolver;
+import android.net.Uri;
 import android.util.Log;
 
 import com.google.gson.Gson;
@@ -28,7 +30,7 @@ public class Node {
 		private String thumbId = null;
 
 		public String thumbType = Constants.PLAIN_TEXT;
-		public transient File thumbImg = null;
+		public transient Uri thumbImg = null;
 
 		public Brief(){}
 
@@ -47,7 +49,7 @@ public class Node {
 		public String getThumbId() {
 			return this.thumbId;
 		}
-		public void setThumbImg(File thumbnail, String type){
+		public void setThumbImg(Uri thumbnail, String type){
 			this.thumbImg = thumbnail;
 			this.thumbType = type;
 		}
@@ -55,6 +57,8 @@ public class Node {
 
 	private static final String TAG = "Node";
 
+	private static HashMap<Integer, Node> nodeCache = new   HashMap<Integer, Node>(); 
+	
 	private Integer tourId = null;
 	private Integer nodeId = null;
 	private Integer prevNode = null;
@@ -73,10 +77,10 @@ public class Node {
 		return new BigInteger(64, random).toString(32);
 	}
 
-	public Node save(){
+	public Node save(ContentResolver cr){
 		/* Serialize pages and save them, then when save complete
 		Vector<Page> pages = getPages();   replace all pages and sections */
-		HashMap <String, File> fileMap = new HashMap <String, File>();
+		HashMap <String, Uri> uriMap = new HashMap <String, Uri>();
 		HashMap <String, String> typeMap = new HashMap <String, String>();
 		getPages();
 		JsonObject jo = new JsonObject();
@@ -91,8 +95,7 @@ public class Node {
 
 			if (brief.thumbImg != null && brief.thumbType != null){
 				String fileId = randomId();
-				fileMap.put(fileId, brief.thumbImg);
-				typeMap.put(fileId, brief.thumbType);
+				uriMap.put(fileId, brief.thumbImg);
 				jBrief.addProperty("thumbId", fileId);
 				jBrief.addProperty("update", true);
 			}
@@ -112,12 +115,19 @@ public class Node {
 
 			for (int j = 0; j < sections.size(); j ++){
 				Section section = sections.get(j);
+				
+				
 				JsonObject jSection = parser.parse(gson.toJson(section)).getAsJsonObject();
 
 				if (section.getTempData() != null){
 					String fileId = randomId();
-					fileMap.put(fileId, section.getTempData());
-					typeMap.put(fileId, section.getContentType());
+					String type = cr.getType(section.getTempData());
+					if (type == null){
+						type = section.getContentType();
+					}
+					uriMap.put(fileId, section.getTempData());
+					typeMap.put(fileId, type);
+					jSection.addProperty("contentType", type);
 					jSection.addProperty("contentId", fileId);
 					jSection.addProperty("update", true);
 				}
@@ -133,7 +143,7 @@ public class Node {
 		System.out.println("Before Save");
 		System.out.println(jo.toString());
 
-		JsonElement result= DBInteract.postData(jo, fileMap, typeMap, Constants.NODE_URL);
+		JsonElement result= DBInteract.postData(jo, uriMap, typeMap, Constants.NODE_URL, cr);
 		
 		if (result == null || !result.isJsonObject()){
 			return null;
@@ -143,7 +153,11 @@ public class Node {
 			return null;
 		}
 		res = res.get("result").getAsJsonObject();
-		return gson.fromJson(res, Node.class);
+		Log.v(TAG, "Saving node retrieved "+res.toString());
+		Node newNode = gson.fromJson(res, Node.class);
+		nodeCache.put(newNode.getNodeId(), newNode);
+		Log.v(TAG, "Deserialized object "+newNode.toString());
+		return newNode;
 
 	}
 
@@ -169,8 +183,8 @@ public class Node {
 		if (brief == null && mongoId != null){
 			QueryString qs = new QueryString("mongoId", mongoId);
 			JsonElement je = DBInteract.getData(Constants.NODE_CONTENT_URL, qs.toString());
-			if (!je.isJsonObject()){
-				Log.e(TAG, "Was expecting a JSON object but got "+je.toString());
+			if (je == null || !je.isJsonObject()){
+				Log.e(TAG, "Was expecting a JSON object but got "+je);
 				return null;
 			}
 			JsonObject nodeData = je.getAsJsonObject();
@@ -252,6 +266,21 @@ public class Node {
 		if (idx > 0 && idx < pages.size()){
 			pages.remove(idx);
 		}
+	}
+	
+	public static Node getNodeById (Integer nodeId){
+		if (nodeCache.containsKey(nodeId)){
+			return nodeCache.get(nodeId);
+		}
+		QueryString qs = new QueryString("nodeId", nodeId.toString());
+		JsonElement je = DBInteract.getData(Constants.NODE_CONTENT_URL, qs.toString());
+		if (je != null && je.isJsonObject()){
+			Node node = new Gson().fromJson(je, Node.class);
+			node.loadPages(je);
+			nodeCache.put(node.getNodeId(), node);
+			return node;
+		} 
+		return null;
 	}
 
 	@Override

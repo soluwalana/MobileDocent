@@ -14,17 +14,23 @@ public class Utils {
 
 	private static final String TAG = "Utils";
 
-	public static File getTempFile(Context context) throws IOException{
+	public static File getTempFile(Context context, String ext) throws IOException{
+		if (ext == null){
+			ext = "";
+		}
 		String tempFileName = context.getFilesDir().getPath().toString();
-		tempFileName += "/"+UUID.randomUUID().toString();
+		tempFileName += "/"+UUID.randomUUID().toString()+ext;
 		Log.v(TAG, tempFileName);
 		File tempFile = new File(tempFileName);
 		tempFile.createNewFile();
 		return tempFile;
 	}
 
-	public static File getRealFile() throws IOException{
-		return new File (Environment.getExternalStorageDirectory(), UUID.randomUUID().toString());
+	public static File getRealFile(String ext) throws IOException{
+		if (ext == null){
+			ext = "";
+		}
+		return new File (Environment.getExternalStorageDirectory(), UUID.randomUUID().toString()+ext);
 	}
 
 	/* Class to get around BitmapFactory.decodeStream bug */

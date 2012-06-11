@@ -34,7 +34,7 @@ public class SimpleTest{
 
 	private static final String TAG = "Simple Test";
 
-	public static void testTourCreation(){
+	public static void testTourCreation(Context context){
 		Log.v(TAG, "Test Tour Creation");
 		Administration.login("samo", "samo");
 
@@ -49,7 +49,7 @@ public class SimpleTest{
 			tour.setActive(true);
 			tour.setTourDist(1.5);
 			Log.v(TAG, tour.toString());
-			tour.save();
+			tour.save(context.getContentResolver());
 
 		}
 
@@ -75,16 +75,15 @@ public class SimpleTest{
 		Administration.login("samo", "samo");
 		try {
 
-			File newFile = Utils.getTempFile(context);
+			File newFile = Utils.getTempFile(context, ".jpg");
 			BufferedWriter outStream = new BufferedWriter(new FileWriter(newFile));
 			outStream.write("New File with Shit in it");
 			outStream.close();
-
-			HashMap <String, File> fileMap = new HashMap <String, File>();
-			fileMap.put("test", newFile);
+			Uri newFileUri = Uri.fromFile(newFile);
+			HashMap <String, Uri> fileMap = new HashMap <String, Uri>();
+			fileMap.put("test", newFileUri);
 			HashMap <String, String> typeMap = new HashMap <String, String>();
 			typeMap.put("test", "text/plain");
-
 			JsonObject section = new JsonObject();
 			section.addProperty("contentType", "text/plain");
 			section.addProperty("contentId", "test");
@@ -101,7 +100,8 @@ public class SimpleTest{
 			jo.addProperty("longitude", -122.74);
 			jo.add("content", content);
 
-			JsonElement result = DBInteract.postData(jo, fileMap, typeMap, Constants.NODE_URL);
+			JsonElement result = DBInteract.postData(jo, fileMap, typeMap,
+					Constants.NODE_URL, context.getContentResolver());
 			Log.v(TAG, result.toString());
 
 		} catch (Exception err){
@@ -135,7 +135,7 @@ public class SimpleTest{
 
 			newNode.appendPage(newPage);
 
-			Node node = tour.appendNode(newNode);
+			Node node = tour.appendNode(newNode, context.getContentResolver());
 			Log.v(TAG, "Node 1 Added");
 			Log.v(TAG, node.toString());
 			Log.v(TAG, tour.toString());
@@ -147,7 +147,7 @@ public class SimpleTest{
 			newBrief2.setTitle("Title");
 			newNode2.setLatitude(22.34);
 			newNode2.setLongitude(-122.34);
-			node = tour.appendNode(newNode2);
+			node = tour.appendNode(newNode2, context.getContentResolver());
 			Log.v(TAG, "Node 2 Added");
 			Log.v(TAG, node.toString());
 			Log.v(TAG, tour.toString());
@@ -156,7 +156,7 @@ public class SimpleTest{
 			Node newNode3 = new Node();
 			newNode3.setLatitude(22.35);
 			newNode3.setLongitude(-122.4);
-			node = tour.appendNode(newNode3);
+			node = tour.appendNode(newNode3, context.getContentResolver());
 			Log.v(TAG, "Node 3 Added");
 			Log.v(TAG, node.toString());
 			Log.v(TAG, tour.toString());
@@ -177,7 +177,7 @@ public class SimpleTest{
 
 			/* Code to convert a Gallery BitMap returned from select Intent to a
 			   File */
-			File imgFile = Utils.getTempFile(context);
+			File imgFile = Utils.getTempFile(context, ".jpg");
 			//String name = context.getFilesDir().getPath().toString()+"test.i";
 			//File imgFile = new File(name);
 			if (!imgFile.canWrite()){
@@ -185,13 +185,13 @@ public class SimpleTest{
 			}
 
 			FileOutputStream outStream = new FileOutputStream(imgFile);
-			if (!mBitmap.compress(Constants.DEFAULT_IMG_TYPE, Constants.DEFAULT_QUALITY, outStream)){
+			if (!mBitmap.compress(Constants.DEFAULT_BMAP_IMG_TYPE, Constants.DEFAULT_QUALITY, outStream)){
 				Log.v(TAG, "Error Compressing the File");
 			}
 			outStream.close();
 
-			newSection.setTempData(imgFile);
-			newSection.setContentType(Constants.DEFAULT_IMG_MIME_TYPE);
+			newSection.setTempData(Uri.fromFile(imgFile));
+			newSection.setContentType(Constants.DEFAULT_IMG_TYPE);
 			newSection.setHeight(231);
 			newSection.setWidth(132);
 			newSection.setXpos(0);
@@ -209,7 +209,7 @@ public class SimpleTest{
 
 			newNode.appendPage(newPage);
 
-			Node node = tour.appendNode(newNode);
+			Node node = tour.appendNode(newNode, context.getContentResolver());
 
 			Log.v(TAG, "Node 1 Added");
 			Log.v(TAG, node.toString());

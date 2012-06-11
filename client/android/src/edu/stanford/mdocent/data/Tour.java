@@ -3,6 +3,7 @@ package edu.stanford.mdocent.data;
 import java.util.HashMap;
 import java.util.Vector;
 
+import android.content.ContentResolver;
 import android.util.Log;
 
 import com.google.gson.Gson;
@@ -38,7 +39,7 @@ public class Tour {
 
 	public Tour(){}
 
-	public boolean save(){
+	public boolean save(ContentResolver cr){
 		try {
 			Gson gson = new Gson();
 			JsonElement jsonElem = new JsonParser().parse(gson.toJson(this));
@@ -78,7 +79,7 @@ public class Tour {
 				for (int i = 0; i < tourNodes.size(); i ++){
 					Node n = tourNodes.get(i);
 					n.setTourId(tourId);
-					Node newNode = n.save();
+					Node newNode = n.save(cr);
 					if (newNode == null){
 						Log.e(TAG, "A node failed to load");
 					} else {
@@ -178,10 +179,10 @@ public class Tour {
 		return tourNodes;
 	}
 
-	public Node appendNode(Node newNode){
+	public Node appendNode(Node newNode, ContentResolver cr){
 		getTourNodes();
 		newNode.setTourId(tourId);
-		Node node = newNode.save();
+		Node node = newNode.save(cr);
 		if (node == null){
 			return null;
 		}
@@ -189,13 +190,13 @@ public class Tour {
 		return node;
 	}
 
-	public Node insertNode(Node newNode, final int idx, final Callback cb){
+	public Node insertNode(Node newNode, final int idx, ContentResolver cr){
 		if (idx >= tourNodes.size() || idx < 0){
 			return null;
 		}
 		newNode.setPrevNode(tourNodes.get(idx).getPrevNode());
 		newNode.setTourId(tourId);
-		Node node = newNode.save();
+		Node node = newNode.save(cr);
 		if (node == null){
 			return node;
 		}

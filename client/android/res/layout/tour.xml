@@ -13,7 +13,7 @@
   android:layout_height="fill_parent"
   android:clickable="true"  
   android:enabled="true"
-  android:apiKey="0qxBwiyitm83oVJZGSp0U-lI60xIAyxvF-1eawg" />
+  android:apiKey="0BMOLkPWQDuQZgjb7YWrLb1ymryTdTQXq4Q2-qw" />
      <!-- - android:apiKey="0qxBwiyitm83oVJZGSp0U-lI60xIAyxvF-1eawg" jared's api key -->
      <!-- - android:apiKey="0BMOLkPWQDuQZgjb7YWrLb1ymryTdTQXq4Q2-qw" samo's google maps api key-->
       <!-- - android:apiKey="0-woKFYeTWCFXk4OT2mqNyIfKVj3Nyui7k2cY7g" claudia robert's google maps api key-->

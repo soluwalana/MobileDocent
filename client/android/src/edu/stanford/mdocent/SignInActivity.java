@@ -86,7 +86,7 @@ public class SignInActivity extends Activity {
 
 				photoPick.setType("image/*");
 				startActivityForResult(photoPick, Constants.RESULT_IMAGE_PICKER);
-				SimpleTest.testTourCreation();
+				SimpleTest.testTourCreation(getBaseContext());
 				SimpleTest.testMultpartPost(getBaseContext());
 				SimpleTest.testSaveNode(getBaseContext());
 			}
@@ -100,7 +100,7 @@ public class SignInActivity extends Activity {
 				File newPhoto = null;
 				Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
 				try {
-					newPhoto = Utils.getRealFile();
+					newPhoto = Utils.getRealFile(".jpg");
 				} catch (Exception e) {
 					e.printStackTrace();
 					return;

@@ -34,36 +34,16 @@ public class AddNodeActivity extends Activity {
 		super.onActivityResult(requestCode, resultCode, data);
 		if (resultCode == RESULT_OK){
 			Log.v(TAG, "RESULT_OK");
-			retrieveNode(data);
 		}
 		if (resultCode == RESULT_CANCELED){
 			Log.v(TAG, "RESULT_CANCELED");
-			//etrieveNode(data);
-		}
-		else if (resultCode ==Constants.RESULT_RETURN){
+		} else if (resultCode == Constants.RESULT_RETURN){
 			Log.v(TAG, "RESULT_RETURN");
 			Intent intent = new Intent(this, CreateTourActivity.class );
 			setResult(Constants.RESULT_RETURN, intent);
 			finish();
 		}
 	}
-
-	private void retrieveNode(Intent data){
-		curTourID = data.getExtras().getInt("tourID");
-		curNodeID = data.getExtras().getInt("nodeID");
-		curTour = Tour.getTourById(curTourID, false);
-		Vector<Node> nodeVec = curTour.getTourNodes();
-		for(int i = 0; i < nodeVec.size(); i++){
-			if(nodeVec.get(i).getNodeId()==curNodeID){
-				curNodeID=nodeVec.get(i).getNodeId();
-				Log.v(TAG, "Retrieved node: "+curNodeID);
-			}
-			else{
-				Log.v(TAG, "Node was null");
-			}
-		}
-	}
-
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -77,7 +57,7 @@ public class AddNodeActivity extends Activity {
 		newNode.appendPage(new Page());
 		newNode.setLatitude(sender.getExtras().getDouble("nodeLat"));
 		newNode.setLongitude(sender.getExtras().getDouble("nodeLon"));
-		newNode = curTour.appendNode(newNode);
+		newNode = curTour.appendNode(newNode, getContentResolver());
 
 		curNodeID =  newNode.getNodeId();
 		Log.v(TAG, "New Node is not null: " +(newNode!=null));
@@ -85,8 +65,8 @@ public class AddNodeActivity extends Activity {
 		EditText descriptionText = (EditText)findViewById(R.id.editText2);
 		descriptionText.setGravity(Gravity.TOP);
 		
-		Button loginButton = (Button) findViewById(R.id.button1);
-		loginButton.setOnClickListener(new OnClickListener(){
+		Button finishButton = (Button) findViewById(R.id.button1);
+		finishButton.setOnClickListener(new OnClickListener(){
 			@Override
 			public void onClick(View v) {
 				EditText nameText = (EditText)findViewById(R.id.editText1);
@@ -95,6 +75,7 @@ public class AddNodeActivity extends Activity {
 				String descriptionStr = descriptionText.getText().toString();
 				//ADD NODE TO TOUR
 
+				newNode = Node.getNodeById(curNodeID);
 				Log.v(TAG, "New Node is not null: " +(newNode!=null));
 				Log.v(TAG, "Current node ID: "+curNodeID);
 				
@@ -110,7 +91,7 @@ public class AddNodeActivity extends Activity {
 					curPage.appendSection(newSection);
 
 				newNode.save();//end test */
-				newNode.save();
+				newNode = newNode.save(getContentResolver());
 				Toast.makeText(getApplicationContext(),"New Node Added.", Toast.LENGTH_LONG).show();
 				startCreateTourSuccess();
 

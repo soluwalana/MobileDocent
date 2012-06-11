@@ -272,7 +272,6 @@ var TourManager = function(store){
         };
 
         var nodeContent = nodeData.content;
-        logger.debug(nodeContent);
         sections = nodeContent ? nodeContent.sections : {};
         
         if (!nodeContent && !nodeData.brief){
@@ -371,6 +370,8 @@ var TourManager = function(store){
             errorWrap(callback, function (collection){
                 var query = { '_id' : self.store.getMongoIdFromHex(savedNode._id) };
                 collection.remove(query, errorWrap(callback, function(){
+                    logger.warn("Attempting to store the following nodeData ");
+                    logger.warn(nodeData);
                     return self._createNode(nodeData, files, conn, callback);
                 }));
             })
@@ -536,6 +537,7 @@ var TourManager = function(store){
                                                       'result': result,
                                                       'mongoObj' : mongoObject};
                                         if (filesResult) retObj.filesResult = filesResult;
+                                        logger.debug(mongoObject);
                                         callback(retObj);
                                     }
                                 )
