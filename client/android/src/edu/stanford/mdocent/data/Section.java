@@ -6,6 +6,14 @@ import android.net.Uri;
 
 public class Section {
 
+	@Override
+	public String toString() {
+		return "Section [sectionId=" + sectionId + ", title=" + title
+				+ ", xpos=" + xpos + ", ypos=" + ypos + ", width=" + width
+				+ ", height=" + height + ", contentType=" + contentType
+				+ ", contentId=" + contentId + ", content=" + content + "]";
+	}
+
 	/* Required Fields that will always be saved */
 	private String sectionId = null;
 	private String title = null;

@@ -40,12 +40,11 @@ import android.view.WindowManager;
 import android.view.ViewGroup.LayoutParams;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
-import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.ViewFlipper;
 
 public class NodeActivity extends Activity implements  android.view.GestureDetector.OnGestureListener{
@@ -60,6 +59,7 @@ public class NodeActivity extends Activity implements  android.view.GestureDetec
 		int height = metrics.heightPixels - 85;
 		int halfHeight = height/2;
 		int halfWidth = width/2;
+		Log.e("WIDTH_HEIGHT", Integer.toString(width) + " " + Integer.toString(height));
 		RelativeLayout.LayoutParams params;
 		
 		switch(sectionSize){
@@ -113,16 +113,16 @@ public class NodeActivity extends Activity implements  android.view.GestureDetec
 		// gestureDetector Object is used to detect gesture events
 		gestureDetector = new GestureDetector(this); 
 
-		String tourName = getIntent().getStringExtra("tour_name");
-		Tour tour = Tour.getTourByName(tourName, false);
-		int nodeIndex = getIntent().getIntExtra("node_index", 0);
-		Vector<Node> nodes = tour.getTourNodes();
-		Vector<Page> pages = nodes.get(nodeIndex).getPages();
+		int nodeID = getIntent().getIntExtra("node_id",0);
+		Node node = Node.getNodeById(nodeID);
+		Log.e("NODE_ID", Integer.toString(nodeID));
+		Vector<Page> pages = node.getPages();
+		Log.v("TEST!", node.toString());
 		Log.e("numpages", Integer.toString(pages.size()));
 
 		//for each page create a relativelayout view and then add them to viewflipper
 		for(int i = 0; i < pages.size(); i++){
-			RelativeLayout relLayout = new RelativeLayout(this);
+			RelativeLayout relLayout = new RelativeLayout(getApplicationContext());
 			relLayout.setId(i+1);
 			Vector<Section> sections = pages.get(i).getSections();
 			Log.e("numSections", Integer.toString(sections.size()));
@@ -133,29 +133,30 @@ public class NodeActivity extends Activity implements  android.view.GestureDetec
 			for(int j = 0; j < sectionSize; j++){
 				Section section = sections.get(j);
 				
+				DisplayMetrics metrics = this.getResources().getDisplayMetrics();
+				int width = metrics.widthPixels - 10;
+				int height = metrics.heightPixels - 85;
+				int halfHeight = height/2;
+				int halfWidth = width/2;
+				
 				Log.e("section content type", section.getContentType());
 				Log.e(TAG, section.toString());
-				if(section.getContentType().equals(Constants.PLAIN_TEXT)){
-					TextView tv = new TextView(this);
-					//params.leftMargin = section.getXpos();
-					//params.topMargin = section.getYpos();
-					//format according to how many sections there are
+				String type = section.getContentType();
+				
+				if(type.equals(Constants.PLAIN_TEXT)){
+					TextView tv = new TextView(getApplicationContext());
 					tv.setGravity(Gravity.TOP);
-					tv.setPadding(25, 25, 25, 25);
+					//tv.setPadding(25, 25, 25, 25);
 
 					tv.setText(section.getContent());
 					relLayout.addView(tv, getParams(sectionSize, j));
 				}
-				else if(section.getContentType().equals(Constants.PNG_TYPE) || 
-						section.getContentType().equals(Constants.JPEG_TYPE)){
-					ImageView iv = new ImageView(this);
-					//params.leftMargin = section.getXpos();
-					//params.topMargin = section.getYpos();
-
-					//format according to how many sections there are
-					if(sectionSize == 1){
+				else if(type.equals(Constants.PNG_TYPE) || 
+						type.equals(Constants.JPEG_TYPE)){
+					ImageView iv = new ImageView(getApplicationContext());
+					//if(sectionSize == 1){
 						iv.setScaleType(ImageView.ScaleType.FIT_XY);
-					}
+					//}
 					
 					File input = DBInteract.getFile(section.getContentId(), this);
 					if (input == null){
@@ -163,7 +164,10 @@ public class NodeActivity extends Activity implements  android.view.GestureDetec
 					}
 
 					try {
-						Bitmap inBitmap = Media.getBitmap(this.getContentResolver(), Uri.fromFile(input));
+						BitmapFactory.Options opts = new BitmapFactory.Options();
+						opts.inSampleSize = 5;
+						Bitmap inBitmap = BitmapFactory.decodeFile(input.getAbsolutePath(), opts);
+						//Bitmap inBitmap = Media.getBitmap(this.getContentResolver(), Uri.fromFile(input));
 						Log.v(TAG, "in bitmap was null? "+(inBitmap == null));
 						iv.setImageBitmap(inBitmap);
 					} catch (Exception e) {
@@ -172,15 +176,15 @@ public class NodeActivity extends Activity implements  android.view.GestureDetec
 					
 					relLayout.addView(iv, getParams(sectionSize, j));
 				}
-				else if(section.getContentType().equals("video")){
-
+				else if(type.equals(Constants.MP4_VIDEO_TYPE)){
+					// Display Video Player MediaStore.AsyncPlayer
 				}
-				else if(section.getContentType().equals("audio")){
+				else if(type.equals(Constants.MP4_AUDIO_TYPE) || type.equals(Constants.AMR_TYPE)){
 					String urlQuery = new QueryString("mongoFileId", section.getContentId()).toString();
 					final String url = Constants.SERVER_URL + Constants.MONGO_FILE_URL+"?"+urlQuery;
 
-					LinearLayout ll = new LinearLayout(this);
-					ll.setOrientation(LinearLayout.HORIZONTAL);
+					LinearLayout ll = new LinearLayout(getApplicationContext());
+					//ll.setOrientation(LinearLayout.HORIZONTAL);
 
 					try {
 						final MediaPlayer mp = new MediaPlayer();
@@ -189,7 +193,7 @@ public class NodeActivity extends Activity implements  android.view.GestureDetec
 						mp.setLooping(false); // Set looping
 						mp.prepare();
 
-						Button play_but = new Button(this, null, android.R.attr.buttonStyleSmall);
+						Button play_but = new Button(getApplicationContext(), null, android.R.attr.buttonStyleSmall);
 						play_but.setText("Play");
 						ll.addView(play_but);
 						play_but.setOnClickListener(new View.OnClickListener() {
@@ -198,7 +202,7 @@ public class NodeActivity extends Activity implements  android.view.GestureDetec
 							}
 						});
 
-						Button pause_but = new Button(this, null, android.R.attr.buttonStyleSmall);
+						Button pause_but = new Button(getApplicationContext(), null, android.R.attr.buttonStyleSmall);
 						pause_but.setText("Pause");
 						ll.addView(pause_but);
 						pause_but.setOnClickListener(new View.OnClickListener() {
@@ -207,7 +211,7 @@ public class NodeActivity extends Activity implements  android.view.GestureDetec
 							}
 						});
 
-						Button stop_but = new Button(this, null, android.R.attr.buttonStyleSmall);
+						Button stop_but = new Button(getApplicationContext(), null, android.R.attr.buttonStyleSmall);
 						stop_but.setText("Stop");
 						ll.addView(stop_but);
 						stop_but.setOnClickListener(new View.OnClickListener() {
@@ -232,52 +236,12 @@ public class NodeActivity extends Activity implements  android.view.GestureDetec
 
 					relLayout.addView(ll, getParams(sectionSize, j));
 				}
-
 			}
-
 			//add page/relativelayout to viewflipper
 			viewFlipper.addView(relLayout, new LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT));
-		}	
-
+		}
+		Toast.makeText(getApplicationContext(), "Swipe screen to flip through pages", Toast.LENGTH_SHORT).show();
 	}
-
-	static class FlushedInputStream extends FilterInputStream {
-		public FlushedInputStream(InputStream inputStream) {
-			super(inputStream);
-		}
-
-		@Override
-		public long skip(long n) throws IOException {
-			long totalBytesSkipped = 0L;
-			while (totalBytesSkipped < n) {
-				long bytesSkipped = in.skip(n - totalBytesSkipped);
-				if (bytesSkipped == 0L) {
-					int b = read();
-					if (b < 0) {
-						break;  // we reached EOF
-					} else {
-						bytesSkipped = 1; // we read one byte
-					}
-				}
-				totalBytesSkipped += bytesSkipped;
-			}
-			return totalBytesSkipped;
-		}
-	}
-
-	private static String readFileToString(File file) throws IOException {
-		FileInputStream stream = new FileInputStream(file);
-		try {
-			FileChannel fc = stream.getChannel();
-			MappedByteBuffer bb = fc.map(FileChannel.MapMode.READ_ONLY, 0, fc.size());
-			/* Instead of using default, pass in a decoder. */
-			return Charset.defaultCharset().decode(bb).toString();
-		}
-		finally {
-			stream.close();
-		}
-	}
-
 
 	public boolean onDown(MotionEvent arg0) {
 		// TODO Auto-generated method stub
@@ -294,6 +258,7 @@ public class NodeActivity extends Activity implements  android.view.GestureDetec
 			this.viewFlipper.setOutAnimation(AnimationUtils.loadAnimation(this,  
 					R.anim.push_left_out));  
 			this.viewFlipper.showNext();  
+			Toast.makeText(getApplicationContext(), "Swipe screen to flip through pages", Toast.LENGTH_SHORT).show();
 			return true;  
 		}
 		else if (arg0.getX() - arg1.getX() < -120)  
@@ -303,6 +268,7 @@ public class NodeActivity extends Activity implements  android.view.GestureDetec
 			this.viewFlipper.setOutAnimation(AnimationUtils.loadAnimation(this,  
 					R.anim.push_right_out));  
 			this.viewFlipper.showPrevious();  
+			Toast.makeText(getApplicationContext(), "Swipe screen to flip through pages", Toast.LENGTH_SHORT).show();
 			return true;  
 		}  
 		return true;
