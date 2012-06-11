@@ -76,6 +76,7 @@ public class SignInActivity extends Activity {
 		});
 
 
+		/*
 		Button testButton = (Button) findViewById(R.id.test_button);
 		testButton.setOnClickListener(new OnClickListener(){
 			@Override
@@ -121,7 +122,7 @@ public class SignInActivity extends Activity {
 			public void onClick(View v){
 				startRelativeThing();
 			}
-		});
+		});*/
 				
 	}
 	private void startRelativeThing() {

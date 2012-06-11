@@ -3,6 +3,7 @@ var logger = require('./customLogger.js').getLogger();
 var LOGIN_URL = '/login';
 var LOGOUT_URL = '/logout';
 var CREATE_URL = '/user';
+var FILE_ACCESS = '/mongoFile';
 
 var authentication = function(req, res, callback){
 	if (req.method === 'POST' && req.url === LOGIN_URL){
@@ -31,7 +32,11 @@ var authentication = function(req, res, callback){
 		/* logout */
 		req.session.destroy();
 		res.send({'success' : 'Logged Out'});
-	} else {
+	} else if ((/^\/mongoFile\?.*$/).test(req.url)){
+        /* Hack for now until we get the stuff working on client */
+        req.ds.allowFileAccess();
+        callback();
+    } else {
 		/* Make sure authenticated and then continue */
 		req.ds.sessionAuthenticate(req.session, function(err, userId){
 			if (err){

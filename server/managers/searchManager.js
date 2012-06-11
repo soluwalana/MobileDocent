@@ -141,8 +141,6 @@ var SearchManager = function(store){
         var sqlParams = [likeWrap(queryStr), likeWrap(queryStr), likeWrap(queryStr)];
         self.store.sqlConn(errorWrap(callback, function(conn){
             conn.query(sql, sqlParams).execute(errorWrap(callback, function(basicRows){
-                
-                
                 store.mongoCollection(
                     constants.NODE_COLLECTION,
                     errorWrap(callback, function (collection){
@@ -171,7 +169,9 @@ var SearchManager = function(store){
                             selectMany(
                                 conn, 'tour', values,
                                 errorWrap(callback, function(rows){
-                                    var allRows = _.uniq(basicRows.concat(rows));
+                                    var allRows = _.uniq(basicRows.concat(rows), false, function(value){
+                                        return value.tourId;
+                                    });
                                     if (sortFn) allRows.sort(sortFn);
                                     callback(allRows.slice(0, constants.MAX_RETURN));
                                 })

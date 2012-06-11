@@ -47,7 +47,6 @@ public class AddPageActivity extends Activity {
 	private Integer curTourID;
 	private Integer curNodeID;
 	private Node curNode;
-	private Tour curTour;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -108,9 +107,11 @@ public class AddPageActivity extends Activity {
 			@Override
 			public void onClick(View v){
 				//previewActivity SAME LAYOUT AS WHEN TAKING A TOUR TODO
+				appendNewPage();
 			}
 		});
-		previewButton.setText("Preview");
+		previewButton.setText("Add New Page");
+		
 		Button saveButton = new Button(getApplicationContext());
 		saveButton.setOnClickListener(new View.OnClickListener(){
 			@Override
@@ -138,7 +139,7 @@ public class AddPageActivity extends Activity {
 	private void saveToNode(int fileType){
 		Toast.makeText(getApplicationContext(),"Saving new file", Toast.LENGTH_LONG).show();
 		if (curNode != null){
-			Toast.makeText(getApplicationContext(),"Node found", Toast.LENGTH_LONG).show();
+			//Toast.makeText(getApplicationContext(),"Node found", Toast.LENGTH_LONG).show();
 			Page curPage = curNode.getPages().get(curNode.getPages().size() - 1);
 			if(curPage.getSections().size() >= Constants.SECTIONS_PER_PAGE){
 				Log.v(TAG, "Adding a new page into node "+curNodeID);
@@ -187,7 +188,7 @@ public class AddPageActivity extends Activity {
 		//super.onActivityResult(requestCode, resultCode, data);
 		switch(requestCode){
 		case Constants.RESULT_IMAGE_PICKER:
-			Toast.makeText(getApplicationContext(),"Retrieved saved image", Toast.LENGTH_LONG).show();
+			Toast.makeText(getApplicationContext(),"Saving image", Toast.LENGTH_LONG).show();
 			if (resultCode == Activity.RESULT_OK){
 				Uri selectedImage = data.getData();
 				Log.v(TAG, selectedImage.toString());
@@ -200,7 +201,7 @@ public class AddPageActivity extends Activity {
 			}
 			break;
 		case Constants.RESULT_CAMERA:
-			Toast.makeText(getApplicationContext(),"Retrieved image from camera", Toast.LENGTH_LONG).show();
+			Toast.makeText(getApplicationContext(),"Saving image", Toast.LENGTH_LONG).show();
 			if (resultCode == Activity.RESULT_OK){
 				Uri selectedImage = savedUri;
 				savedUri = selectedImage;
@@ -213,7 +214,7 @@ public class AddPageActivity extends Activity {
 			break;
 		case Constants.RESULT_VIDEO_CAMERA:
 			if (resultCode == Activity.RESULT_OK){
-				Toast.makeText(getApplicationContext(),"Retrieved image from video camera", Toast.LENGTH_LONG).show();
+				Toast.makeText(getApplicationContext(),"Saving video", Toast.LENGTH_LONG).show();
 				Uri selectedVideo = data.getData();
 				savedUri = selectedVideo;
 				try{
@@ -224,7 +225,7 @@ public class AddPageActivity extends Activity {
 			}
 			break;
 		case Constants.RESULT_VIDEO_PICKER:
-			Toast.makeText(getApplicationContext(),"Retrieved saved video", Toast.LENGTH_LONG).show();
+			Toast.makeText(getApplicationContext(),"Saving video", Toast.LENGTH_LONG).show();
 			if (resultCode == Activity.RESULT_OK){
 				Uri selectedVideo = data.getData();
 				savedUri = selectedVideo;
@@ -237,7 +238,7 @@ public class AddPageActivity extends Activity {
 			}
 			break;
 		case Constants.RESULT_AUDIO_PICKER:
-			Toast.makeText(getApplicationContext(),"Retrieved saved audio", Toast.LENGTH_LONG).show();
+			Toast.makeText(getApplicationContext(),"Saving audio", Toast.LENGTH_LONG).show();
 			if (resultCode == Activity.RESULT_OK){
 				Uri selectedAudio = data.getData();
 				savedUri = selectedAudio;
@@ -250,10 +251,10 @@ public class AddPageActivity extends Activity {
 			}
 			break;
 		case Constants.RESULT_AUDIO:
-			Toast.makeText(getApplicationContext(),"Retrieved recorded audio "+resultCode, Toast.LENGTH_LONG).show();
+			Toast.makeText(getApplicationContext(),"Saving audio", Toast.LENGTH_LONG).show();
 			if (resultCode == Activity.RESULT_OK){
-				Toast.makeText(getApplicationContext(),"Recorded audio recorded correctly", Toast.LENGTH_LONG).show();
-				Toast.makeText(getApplicationContext(),"Recorded audio data is null: "+(data==null), Toast.LENGTH_LONG).show();
+				//Toast.makeText(getApplicationContext(),"Recorded audio recorded correctly", Toast.LENGTH_LONG).show();
+				//Toast.makeText(getApplicationContext(),"Recorded audio data is null: "+(data==null), Toast.LENGTH_LONG).show();
 				Uri selectedAudio = data.getData();
 				savedUri = selectedAudio;
 				try{
@@ -360,6 +361,14 @@ public class AddPageActivity extends Activity {
 		AlertDialog helpDialog = builder.create();
 		helpDialog.show();
 	}
+	
+	private void appendNewPage() {
+		curNode.appendPage(new Page());
+		Toast.makeText(getApplicationContext(),"Appended new page, you are on page #"+
+				curNode.getPages().size(), Toast.LENGTH_LONG).show();
+		
+	}
+	
 	private void textPopUp() {
 		AlertDialog.Builder helpBuilder = new AlertDialog.Builder(this);
 		helpBuilder.setTitle("Add Text");

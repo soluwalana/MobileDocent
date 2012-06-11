@@ -1,6 +1,6 @@
 var express = require('express');
 var fs = require('fs');
-
+var gm = require('gm');
 var authentication = require('./lib/authentication.js').authentication;
 var buildDataStore = require('./lib/datastore.js').buildDataStore;
 var logger = require('./lib/customLogger.js').getLogger();
@@ -49,13 +49,9 @@ app.get('/mongoFile', function(req, res){
     req.ds.mongoGrid(mongoFileId, function(err, gs){
         if (err) return res.send(err);
         res.contentType(gs.contentType);
-        /*gs.read(function(err, data){
-            err ? res.send(err): res.send(data);
-        });*/
-
-        var stream = gs.stream(true);
-        if (req.query.scaleDown){
-            gm(stream).size({'bufferSize' : true}, function(err, size){
+        var stream = gs.stream(false);
+        if (req.query.scaleDown && false){
+            gm(stream).size({bufferSize : true}, function(err, size){
                 if (err) res.end(err);
                 var heightRatio = 1;
                 var widthRatio = 1;
@@ -68,19 +64,21 @@ app.get('/mongoFile', function(req, res){
                     heightRatio = maxHeight / size.height;
                 }
                 var ratio = heightRatio < widthRatio ? heightRatio : widthRatio;
-                if (ratio !== 1){
-                    this.resize(size.width * ratio, size.height * ratio);
-                    this.stream(function(err, outStream, errStream){
-                        outStream.on('data', function(data){ res.write(data); });
-                        
-                        outStream.on('error', function(err){
-                            gs.close(function(){ res.end(err) });
-                        });
-                        outStream.on('end', function(){
-                            gs.close(function(){ res.end() });
-                        });
+                
+                this.resize(size.width * ratio, size.height * ratio);
+                this.stream(function(err, outStream, errStream){
+                    console.log(err);
+                    console.log(outStream);
+                    console.log(errStream);
+                    outStream.on('data', function(data){ res.write(data); });
+                    
+                    outStream.on('error', function(err){
+                        gs.close(function(){ res.end(err) });
                     });
-                }
+                    outStream.on('end', function(){
+                        gs.close(function(){ res.end() });
+                    });
+                });
             });
         } else {
             stream.on('data', function (data){ res.write(data); });

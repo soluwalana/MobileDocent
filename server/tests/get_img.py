@@ -68,7 +68,7 @@ cookie = success_test('login', 'Successfully authenticated',
                        })
 
 content_id = sys.argv[1]
-res = send_request('mongoFile?mongoFileId='+content_id, None, cookie, True)[0]
+res = send_request('mongoFile?scaleDown=true&mongoFileId='+content_id, None, cookie, True)[0]
 x = open('img.png', 'w')
 x.write(res)
 x.close()

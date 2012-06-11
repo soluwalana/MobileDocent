@@ -26,7 +26,8 @@ function DataStore (initCallback){
     var mysqlConn = null;
     var mongoConn = null;
     var authenticated = false;
-
+    var allowedFileAccess = false;
+    
     /* Initialize mysql and mongo db, call the initCallback when finished*/
     self.init = function(initCallback){
         mysqlDb.connect(function(err){
@@ -42,6 +43,10 @@ function DataStore (initCallback){
         });
     };
 
+    self.allowFileAccess = function(){
+        allowedFileAccess = true;
+    };
+    
     /* A function that will print that there is unauthenticated access
        to the data store and return an error to the caller */
     self.authenticatedAccess = function(callback, msg){
@@ -188,7 +193,7 @@ function DataStore (initCallback){
        @param {string} mongoId: the mongo Id for the stored file
        @param {function} callback: should expect err and the gs as parameters*/
     self.mongoGrid = function(mongoId, callback){
-        if (self.authenticatedAccess(callback)){
+        if (allowedFileAccess || self.authenticatedAccess(callback)){
             var gs = new mongodb.GridStore(
                 mongoDb, mongoId, 'r', {chunk_size : constants.FILE_BUF_SIZE});
             gs.open(function(err, gs){
