@@ -256,10 +256,14 @@ MediaPlayer.OnPreparedListener, SurfaceHolder.Callback {
 					//ll.setOrientation(LinearLayout.HORIZONTAL);
 
 					try {
+						File input = DBInteract.getFile(section.getContentId(), this);
 						final MediaPlayer mp_audio = new MediaPlayer();
+												
 						mp_audio.reset();
-						mp_audio.setDataSource(getBaseContext(), Uri.parse(url));
+						//mp_audio.setDataSource(getBaseContext(), Uri.parse(url));
 						//mp_audio.setDataSource(url);
+						FileInputStream fis = new FileInputStream(input);
+						mp_audio.setDataSource(fis.getFD());
 						//mp_audio.setAudioStreamType(AudioManager.STREAM_MUSIC);
 						mp_audio.setLooping(false); // Set looping
 						mp_audio.prepare();

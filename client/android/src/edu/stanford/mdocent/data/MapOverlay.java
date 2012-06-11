@@ -11,7 +11,9 @@ import com.google.android.maps.GeoPoint;
 import com.google.android.maps.MapController;
 import com.google.android.maps.MapView;
 
-
+/**
+   Code from Tutorial on Web
+ **/
 
 public class MapOverlay extends com.google.android.maps.Overlay {
 	Road mRoad;
