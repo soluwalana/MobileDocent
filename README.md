@@ -36,7 +36,7 @@ __MobileDocent__ A full Server Stack and IOS/Android interaction project
 	                   http://nodejs.org/community/
 
 	should-mocha       https://github.com/visionmedia/should.js
-	                   http://visionmedia.github.com/mocha/
+	                   http://mochajs.org/
 
 	db-mysql           http://nodejsdb.org/db-mysql/
 
